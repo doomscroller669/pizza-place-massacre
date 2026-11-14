@@ -1,0 +1,24 @@
+{
+  "name": "pizza-place-massacre",
+  "productName": "Pizza Place Massacre",
+  "version": "0.1.0",
+  "description": "Pizza Place Massacre",
+  "author": "Doomscroller669",
+  "main": "main.js",
+  "private": true,
+  "devDependencies": {
+    "electron": "31.7.7",
+    "electron-builder": "24.13.3"
+  },
+  "build": {
+    "appId": "com.doomscroller.pizzaplacemassacre",
+    "productName": "Pizza Place Massacre",
+    "files": ["main.js", "icon.png", "game/**/*"],
+    "directories": { "output": "dist" },
+    "win": {
+      "target": [{ "target": "portable", "arch": ["x64"] }],
+      "icon": "icon.png"
+    },
+    "portable": { "artifactName": "PizzaPlaceMassacre-Windows.exe" }
+  }
+}

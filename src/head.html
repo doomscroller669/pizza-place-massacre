@@ -1,0 +1,309 @@
+<title>Pizza Place Massacre</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Bungee+Shade&family=Reenie+Beanie&family=Special+Elite&family=VT323&display=swap">
+<style>
+/* Layout: one full-bleed low-res canvas; HUD, Toni's texts, dialogue, notes and menus float above it, kept clear of safe areas. Single dark look by design. */
+:root{
+  --void:#070504;
+  --grease:#efe2c4;
+  --ash:#9a8f7c;
+  --cheese:#f0b93a;
+  --cheese-lo:#a8741c;
+  --sauce:#c8321f;
+  --sauce-hi:#ff5a3a;
+  --basil:#7fae48;
+  --ticket:#f3ecd9;
+  --ink:#1d1611;
+  --led:#ff3b22;
+  --bubble:#2b2f36;
+  --bubble-me:#3a7bf0;
+  --f-ui:"VT323", ui-monospace, "Courier New", monospace;
+  --f-brand:"Bungee", "Arial Black", Impact, sans-serif;
+  --f-type:"Special Elite", "Courier New", Courier, monospace;
+  --f-hand:"Reenie Beanie", "Segoe Print", "Bradley Hand", cursive;
+  --f-sys:system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --gl:max(16px, env(safe-area-inset-left, 0px));
+  --gr:max(16px, env(safe-area-inset-right, 0px));
+  --st:env(safe-area-inset-top, 0px);
+  --sb:env(safe-area-inset-bottom, 0px);
+  color-scheme:dark;
+}
+*{touch-action:manipulation}
+html,body{height:100%}
+body{margin:0;overflow:hidden;background:var(--void);color:var(--grease);font-family:var(--f-ui);font-size:20px;
+  -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
+button{font:inherit;color:inherit}
+#view{position:fixed;inset:0;width:100%;height:100%;display:block;image-rendering:pixelated;image-rendering:crisp-edges;background:var(--void);touch-action:none;cursor:crosshair}
+
+/* ---------- screens ---------- */
+.screen{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;
+  padding:calc(var(--st) + 40px) var(--gr) calc(var(--sb) + 24px) var(--gl);
+  background:linear-gradient(180deg,rgba(7,5,4,.1) 0%,rgba(7,5,4,.5) 45%,rgba(7,5,4,.92) 100%);overflow-y:auto}
+.wrap{max-width:680px;display:flex;flex-direction:column;gap:14px;margin-top:auto}
+.kicker{font-size:18px;letter-spacing:.26em;color:var(--ash);text-transform:uppercase;margin:0}
+.t-title{font-family:var(--f-brand);font-weight:400;font-size:clamp(40px,10.5vw,104px);line-height:.88;margin:0;color:var(--cheese);
+  text-shadow:0 4px 0 var(--cheese-lo),0 8px 0 rgba(0,0,0,.6),0 0 30px rgba(0,0,0,.9);text-wrap:balance;letter-spacing:.01em}
+.t-title em{font-style:normal;color:var(--sauce);text-shadow:0 4px 0 #6d140b,0 8px 0 rgba(0,0,0,.6),0 0 30px rgba(0,0,0,.9)}
+.t-sub{font-family:var(--f-type);font-size:21px;color:var(--grease);margin:0;opacity:.85}
+.lede{font-size:22px;line-height:1.22;max-width:40ch;margin:0}
+.warn{font-size:18px;line-height:1.2;color:var(--ash);max-width:50ch;border-left:2px solid var(--sauce);padding-left:10px;margin:0}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.btn{font-size:24px;letter-spacing:.12em;text-transform:uppercase;background:rgba(14,10,8,.7);border:1px solid rgba(239,226,196,.45);padding:8px 18px 6px;cursor:pointer}
+.btn.primary{border-color:var(--cheese);color:var(--cheese);background:rgba(240,185,58,.1)}
+.btn:hover{background:var(--grease);color:var(--void)}
+.btn:focus-visible,.choice:focus-visible,.tb:focus-visible,#pauseBtn:focus-visible{outline:2px solid var(--cheese);outline-offset:2px}
+.btn:disabled{opacity:.4;cursor:default}
+.panel{background:rgba(10,8,6,.82);border:1px solid rgba(239,226,196,.18);padding:12px 14px}
+.ctl{display:grid;grid-template-columns:auto 1fr;gap:2px 16px;font-size:20px;line-height:1.15;margin:0;max-width:540px}
+.ctl dt{color:var(--cheese);white-space:nowrap}
+.ctl dd{margin:0}
+.slider{display:flex;align-items:center;gap:12px;font-size:20px}
+.slider input{accent-color:var(--cheese);width:180px}
+#loadErr{color:var(--sauce-hi);font-size:20px;max-width:46ch;margin:0}
+.objbox{display:flex;flex-direction:column;gap:6px;border-left:2px solid var(--cheese);padding:2px 0 4px 14px;max-width:560px}
+.objbox .lab{font-size:16px;letter-spacing:.26em;color:var(--ash);text-transform:uppercase;margin:0}
+.pobj{font-family:var(--f-type);font-size:clamp(24px,5.6vw,36px);line-height:1.1;margin:0;text-wrap:balance}
+.phint{font-family:var(--f-type);font-size:18px;line-height:1.25;color:var(--ash);margin:4px 0 0;max-width:560px}
+.big-red{font-family:var(--f-brand);font-size:clamp(36px,9vw,84px);line-height:.95;color:var(--sauce);margin:0;text-shadow:0 4px 0 #4a0d06}
+.sumlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:22px;line-height:1.15}
+.sumlist li{display:grid;grid-template-columns:8em 1fr;gap:10px}
+.sumlist b{font-weight:400;color:var(--ash);letter-spacing:.14em;text-transform:uppercase;font-size:17px;padding-top:3px}
+
+/* ---------- HUD ---------- */
+#hud{position:fixed;inset:0;z-index:20;pointer-events:none}
+#tl{position:absolute;top:calc(var(--st) + 12px);left:var(--gl);right:calc(var(--gr) + 120px);display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+#obj{max-width:440px;text-shadow:0 1px 0 #000,0 0 6px #000}
+#obj .lab{font-size:15px;letter-spacing:.24em;color:var(--ash);text-transform:uppercase}
+#objText{font-size:21px;line-height:1.08}
+#obj.flash #objText{animation:objflash 1.8s ease-out}
+@keyframes objflash{0%{color:var(--cheese)}100%{color:var(--grease)}}
+#carry{font-size:17px;letter-spacing:.12em;text-transform:uppercase;text-shadow:0 0 4px #000,0 1px 0 #000;color:var(--ash)}
+#carry b{font-weight:400;color:var(--grease)}
+#timer{position:absolute;top:calc(var(--st) + 10px);left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px}
+#timer .clock{font-family:var(--f-ui);font-size:40px;line-height:1;color:var(--led);background:#120403;border:2px solid #3a0d08;padding:2px 10px 0;letter-spacing:.08em;
+  text-shadow:0 0 8px rgba(255,59,34,.75)}
+#timer.low .clock{animation:blink 1s steps(1) infinite}
+#timer .tlab{font-size:14px;letter-spacing:.24em;color:var(--ash);text-transform:uppercase;text-shadow:0 0 4px #000}
+#strikes{display:flex;gap:4px}
+#strikes i{display:block;width:12px;height:16px;border:1px solid rgba(239,226,196,.5);background:transparent}
+#strikes i.on{background:var(--sauce);border-color:var(--sauce-hi)}
+#pauseBtn{pointer-events:auto;position:absolute;top:calc(var(--st) + 10px);right:var(--gr);width:44px;height:40px;font-size:20px;
+  background:rgba(10,8,6,.5);border:1px solid rgba(239,226,196,.35);cursor:pointer;letter-spacing:.1em}
+#sub{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--sb) + 26vh);width:min(90vw,720px);text-align:center;font-size:23px;line-height:1.15;
+  text-shadow:0 0 4px #000,0 2px 0 #000,0 0 10px #000}
+#sub .who{color:var(--cheese);letter-spacing:.12em;text-transform:uppercase;font-size:18px;margin-right:.4em}
+#prompt{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--sb) + 16vh);display:flex;gap:10px;align-items:center;font-size:22px;white-space:nowrap;text-shadow:0 0 4px #000,0 2px 0 #000}
+.key{border:1px solid var(--grease);padding:0 7px;font-size:19px;background:rgba(0,0,0,.55);text-shadow:none}
+#lockHint{position:absolute;left:50%;top:64%;transform:translateX(-50%);font-size:20px;color:var(--ash);text-shadow:0 0 4px #000;letter-spacing:.1em}
+#reticle{position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px 0 0 -2px;background:rgba(239,226,196,.55);border-radius:50%}
+#reticle.hot{width:10px;height:10px;margin:-5px 0 0 -5px;background:transparent;border:2px solid var(--cheese)}
+#remember{position:absolute;top:calc(var(--st) + 64px);right:var(--gr);font-family:var(--f-type);font-size:19px;color:var(--grease);
+  background:rgba(10,8,6,.78);border-left:3px solid var(--cheese);padding:8px 12px;max-width:min(70vw,360px);opacity:0;transition:opacity .6s}
+#remember.on{opacity:1}
+
+/* Toni's phone: typing dots, then his message, styled like a text thread */
+#phone{position:absolute;right:var(--gr);bottom:calc(var(--sb) + 34vh);display:flex;flex-direction:column;align-items:flex-end;gap:4px;max-width:min(78vw,420px)}
+#phone .from{font-family:var(--f-sys);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:rgba(239,226,196,.65);text-shadow:0 1px 2px #000}
+#phone .bub{font-family:var(--f-sys);font-size:19px;line-height:1.25;background:var(--bubble);color:#f2f2f2;padding:9px 14px;border-radius:18px 18px 4px 18px;
+  box-shadow:0 2px 0 rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.5)}
+#phone.pa .bub{background:#3b2a12;border:1px solid #8a6020;border-radius:6px}
+#phone .dots{display:inline-flex;gap:5px;padding:4px 2px}
+#phone .dots i{width:8px;height:8px;border-radius:50%;background:#bbb;animation:dot 1.1s infinite}
+#phone .dots i:nth-child(2){animation-delay:.18s}#phone .dots i:nth-child(3){animation-delay:.36s}
+@keyframes dot{0%,60%,100%{opacity:.25;transform:none}30%{opacity:1;transform:translateY(-3px)}}
+
+/* ---------- touch ---------- */
+#touch{position:fixed;inset:0;z-index:15;touch-action:none}
+#joyBase{position:absolute;width:118px;height:118px;margin:-59px 0 0 -59px;border-radius:50%;border:1px solid rgba(239,226,196,.3);background:rgba(16,12,10,.22);pointer-events:none}
+#joyBase.idle{opacity:.45}
+#joyKnob{position:absolute;left:50%;top:50%;width:50px;height:50px;margin:-25px 0 0 -25px;border-radius:50%;background:rgba(239,226,196,.3)}
+.tbtns{position:absolute;right:var(--gr);bottom:calc(var(--sb) + 18px);display:flex;flex-direction:column;gap:12px;align-items:flex-end}
+.tb{width:64px;height:64px;border-radius:50%;font-size:17px;letter-spacing:.06em;background:rgba(14,10,8,.5);border:1px solid rgba(239,226,196,.38);touch-action:none;padding:0}
+.tb.big{width:84px;height:84px;font-size:21px}
+.tb.ready{border-color:var(--cheese);background:rgba(240,185,58,.22);color:var(--cheese)}
+#hideMask{position:fixed;inset:0;z-index:12;pointer-events:none}
+#hideMask.slats{background:repeating-linear-gradient(180deg,rgba(4,3,2,.97) 0 18px,rgba(4,3,2,.25) 18px 26px)}
+#hideMask.stall{background:linear-gradient(90deg,rgba(4,3,2,.96) 0 44%,rgba(4,3,2,.2) 44% 56%,rgba(4,3,2,.96) 56%)}
+#hideMask.balls{background:radial-gradient(ellipse 50% 30% at 50% 40%,transparent 30%,rgba(4,3,2,.85) 70%)}
+#blur{position:fixed;inset:0;z-index:13;pointer-events:none;backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px)}
+
+/* ---------- dialogue ---------- */
+#dlg{position:fixed;inset:0;z-index:30;display:flex;align-items:flex-end;pointer-events:none;
+  padding:0 var(--gr) calc(var(--sb) + 20px) var(--gl);background:linear-gradient(180deg,transparent 55%,rgba(4,3,2,.78))}
+.dpanel{width:100%;max-width:780px;margin-inline:auto;pointer-events:auto;cursor:pointer}
+#dlgWho{font-size:18px;letter-spacing:.22em;text-transform:uppercase;color:var(--cheese);margin-bottom:3px}
+#dlgText{font-size:25px;line-height:1.18;min-height:2.36em;max-width:62ch;text-shadow:0 2px 0 #000,0 0 8px #000}
+#dlgChoices{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+@media (max-width:560px){#dlgChoices{grid-template-columns:1fr}}
+.choice{font-size:22px;line-height:1.1;text-align:left;background:rgba(14,10,8,.82);border:1px solid rgba(239,226,196,.24);padding:8px 12px 6px;cursor:pointer;display:flex;gap:12px;align-items:baseline}
+.choice .k{color:var(--ash);font-size:18px;min-width:1ch}
+.choice:hover{border-color:var(--cheese);background:rgba(60,42,14,.9)}
+#dlgBar{height:4px;background:rgba(239,226,196,.15);margin-top:10px}
+#dlgBar b{display:block;height:100%;width:100%;background:var(--cheese);transform-origin:left}
+#dlgMore{font-size:16px;letter-spacing:.22em;color:var(--ash);margin-top:8px;text-transform:uppercase;animation:blink 1.2s steps(1) infinite}
+.blink{animation:blink 1.1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* ---------- notes, tickets, recipe cards ---------- */
+#note{position:fixed;inset:0;z-index:35;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:16px;
+  padding:calc(var(--st) + 20px) var(--gr) calc(var(--sb) + 20px) var(--gl);background:rgba(4,3,2,.82);overflow-y:auto}
+#note>:first-child{margin-top:auto}#note>:last-child{margin-bottom:auto}
+.paper{width:100%;max-width:440px;box-sizing:border-box;background:var(--ticket);color:var(--ink);padding:22px 24px 26px;transform:rotate(-1.2deg);
+  box-shadow:0 14px 34px rgba(0,0,0,.65);font-family:var(--f-type);font-size:17px;line-height:1.45}
+.paper p{margin:0 0 .6em}
+.paper.ticket{max-width:340px;font-family:"Courier New",Courier,monospace;font-size:17px;line-height:1.3;transform:rotate(1deg);
+  -webkit-mask:linear-gradient(#000,#000) top/100% calc(100% - 10px) no-repeat,conic-gradient(from 135deg at 50% 0,#000 90deg,transparent 0) bottom/14px 10px repeat-x;
+  mask:linear-gradient(#000,#000) top/100% calc(100% - 10px) no-repeat,conic-gradient(from 135deg at 50% 0,#000 90deg,transparent 0) bottom/14px 10px repeat-x}
+.paper.ticket .tk{text-align:center;letter-spacing:.2em;border-bottom:1px dashed #6b5e45;padding-bottom:6px;margin-bottom:8px}
+.paper.ticket .big{font-size:26px;font-weight:700;letter-spacing:.04em}
+.paper.ticket .hand{font-family:var(--f-hand);font-size:30px;line-height:1;color:#b1261a;transform:rotate(-4deg);margin-top:8px}
+.paper.card{background:#fff8e6;border-top:10px solid var(--sauce);font-family:var(--f-sys);font-size:16px}
+.paper.card h3{font-family:var(--f-brand);font-weight:400;color:var(--sauce);font-size:22px;margin:0 0 6px;letter-spacing:.02em}
+.paper.card ol{margin:0;padding-left:1.3em}
+.paper.card .star{background:#ffe08a;padding:0 4px}
+.paper.hand{font-family:var(--f-hand);font-size:28px;line-height:1.08}
+.paper.form{font-family:"Courier New",Courier,monospace;font-size:15px;line-height:1.35}
+.paper.form .scrawl{font-family:var(--f-hand);font-size:28px;color:#1d3fa0;transform:rotate(-3deg);display:block;margin-top:6px}
+.paper.sketch{background:#f7f3ea;padding:14px}
+.paper.sketch canvas{display:block;width:100%;height:auto;image-rendering:auto}
+.paper.band{background:#c62d1d;color:#fff;font-family:var(--f-sys);text-align:center;border-radius:40px;max-width:380px;padding:18px 24px}
+.paper.band b{display:block;font-size:24px;letter-spacing:.06em}
+#noteTitle{font-family:var(--f-ui);font-size:16px;letter-spacing:.18em;text-transform:uppercase;color:#6d6149;margin-bottom:10px}
+.paper.band #noteTitle{color:rgba(255,255,255,.75)}
+
+/* ---------- the cook station ---------- */
+#cook{position:fixed;inset:0;z-index:36;display:flex;align-items:center;justify-content:center;padding:calc(var(--st) + 10px) var(--gr) calc(var(--sb) + 10px) var(--gl);background:rgba(4,3,2,.9)}
+.cookbox{display:grid;grid-template-columns:minmax(0,1fr) 230px;grid-template-areas:"cv side";gap:14px;width:100%;max-width:960px;align-items:center}
+@media (max-aspect-ratio:1/1){.cookbox{grid-template-columns:1fr;grid-template-areas:"cv" "side";max-width:520px}}
+#cookCv{grid-area:cv;justify-self:center;width:min(100%,calc(100vh - 40px));aspect-ratio:1/1;image-rendering:pixelated;touch-action:none;background:#2a1d14;border:1px solid rgba(239,226,196,.2)}
+.cookside{grid-area:side;display:flex;flex-direction:column;gap:10px}
+.cookstep{font-size:16px;letter-spacing:.22em;color:var(--ash);text-transform:uppercase;margin:0}
+.cookhow{font-family:var(--f-type);font-size:19px;line-height:1.25;margin:0}
+.cookmeter{height:10px;background:rgba(239,226,196,.14)}
+.cookmeter b{display:block;height:100%;width:0;background:var(--basil)}
+#cookTools{display:flex;flex-wrap:wrap;gap:6px}
+#cookTools .btn{font-size:18px;padding:6px 10px 4px}
+#cookTools .btn.sel{background:var(--cheese);color:var(--void)}
+
+/* ---------- keypad / VHS ---------- */
+#vhs{position:fixed;inset:0;z-index:46;background:#000;display:flex;align-items:center;justify-content:center;cursor:pointer}
+#vhsCv{width:100%;height:100%;object-fit:contain;image-rendering:pixelated}
+#vhsSkip{position:absolute;right:var(--gr);bottom:calc(var(--sb) + 12px);font-size:15px;letter-spacing:.14em;color:rgba(239,226,196,.5);margin:0;text-transform:uppercase}
+#fade{position:fixed;inset:0;z-index:50;background:#000;opacity:0;pointer-events:none;transition:opacity 1s linear}
+#card{position:fixed;inset:0;z-index:51;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;pointer-events:none;opacity:0;transition:opacity .8s}
+#card.on{opacity:1}
+#card .k{font-size:18px;letter-spacing:.4em;color:var(--ash);text-transform:uppercase;margin:0}
+#card .t{font-family:var(--f-brand);font-size:clamp(34px,8vw,72px);color:var(--cheese);margin:0;text-align:center;line-height:1;text-shadow:0 4px 0 var(--cheese-lo)}
+@media (max-height:560px){.t-title{font-size:clamp(34px,11vh,80px)}.wrap{gap:9px}}
+@media (max-width:520px){#sub{font-size:21px;bottom:calc(var(--sb) + 40vh)}#prompt{bottom:calc(var(--sb) + 33vh);font-size:20px}#dlgText{font-size:22px}.choice{font-size:20px}#phone{bottom:calc(var(--sb) + 48vh)}}
+@media (prefers-reduced-motion: reduce){.blink,#dlgMore,#phone .dots i{animation:none}#fade{transition-duration:.2s}}
+</style>
+
+<canvas id="view" aria-label="Game view"></canvas>
+<div id="blur"></div>
+
+<div id="touch" hidden>
+  <div id="joyBase" class="idle"><div id="joyKnob"></div></div>
+  <div class="tbtns">
+    <button id="bDuck" class="tb" type="button">DUCK</button>
+    <button id="bUse" class="tb big" type="button">USE</button>
+  </div>
+</div>
+<div id="hideMask" hidden></div>
+
+<div id="hud" hidden>
+  <div id="reticle"></div>
+  <div id="tl">
+    <div id="obj" hidden><div class="lab">Objective</div><div id="objText"></div></div>
+    <div id="carry" hidden></div>
+  </div>
+  <div id="timer" hidden><div class="clock" id="clock">06:00</div><div class="tlab" id="timerLab">Pizza 1 · Alex</div><div id="strikes"><i></i><i></i><i></i></div></div>
+  <button id="pauseBtn" type="button" aria-label="Pause">II</button>
+  <div id="remember" aria-live="polite"></div>
+  <div id="phone" hidden aria-live="polite"></div>
+  <div id="sub" hidden></div>
+  <div id="prompt" hidden><span id="pKey" class="key">E</span><span id="pText"></span></div>
+  <div id="lockHint" hidden>Click to look around</div>
+</div>
+
+<div id="dlg" hidden><div class="dpanel"><div id="dlgWho"></div><div id="dlgText"></div><div id="dlgChoices"></div><div id="dlgBar" hidden><b></b></div><div id="dlgMore" hidden>Continue</div></div></div>
+
+<div id="note" hidden>
+  <div class="paper" id="paper"><div id="noteTitle"></div><div id="noteBody"></div></div>
+  <button class="btn" id="noteClose" type="button">Put it down</button>
+</div>
+
+<div id="cook" hidden>
+  <div class="cookbox">
+    <canvas id="cookCv" width="240" height="240" aria-label="The prep table, seen from above"></canvas>
+    <div class="cookside">
+      <p class="cookstep" id="cookStep">Step 1 of 5 · Dough</p>
+      <p class="cookhow" id="cookHow"></p>
+      <div class="cookmeter"><b id="cookMeter"></b></div>
+      <div id="cookTools"></div>
+      <div class="row"><button class="btn primary" id="cookNext" type="button">Next</button><button class="btn" id="cookBack" type="button">Step back</button></div>
+    </div>
+  </div>
+</div>
+
+<div id="vhs" hidden><canvas id="vhsCv" width="320" height="240" aria-label="A training tape playing"></canvas><p id="vhsSkip">Tap to skip</p></div>
+
+<section id="title" class="screen" aria-label="Title screen">
+  <div class="wrap">
+    <p class="kicker">Pepper Toni's Family Pizzeria</p>
+    <h1 class="t-title">PIZZA PLACE <em>MASSACRE</em></h1>
+    <p class="t-sub">Where family comes first.</p>
+    <p class="warn">Contains violence, gore, and loud sudden sounds. Headphones recommended. Toni talks through your device's text-to-speech voice.</p>
+    <p id="loadErr" hidden>The 3D engine didn't load. Check your connection and reload the page.</p>
+    <div class="row">
+      <button class="btn primary" id="contBtn" type="button" hidden>Continue</button>
+      <button class="btn" id="startBtn" type="button">New game</button>
+      <button class="btn" id="ctlBtn" type="button" aria-expanded="false">Controls</button>
+    </div>
+    <div id="ctlPanel" class="panel" hidden></div>
+    <p class="kicker blink" id="sndHint">Tap anywhere for sound</p>
+  </div>
+</section>
+
+<section id="pause" class="screen" hidden aria-label="Paused">
+  <div class="wrap">
+    <p class="kicker">Paused</p>
+    <div class="objbox">
+      <p class="lab">Objective</p>
+      <p class="pobj" id="pObj"></p>
+      <p class="phint" id="pHint"></p>
+    </div>
+    <div class="row">
+      <button class="btn primary" id="resumeBtn" type="button">Resume</button>
+      <button class="btn" id="pCtlBtn" type="button" aria-expanded="false">Controls</button>
+      <button class="btn" id="restartBtn" type="button">Last checkpoint</button>
+      <button class="btn" id="quitBtn" type="button">Title</button>
+    </div>
+    <div class="panel" id="pauseCtl" hidden></div>
+    <label class="slider" for="sens">Look speed <input id="sens" type="range" min="0.4" max="2.2" step="0.1"></label>
+    <label class="slider" for="vol">Toni's voice <input id="vol" type="range" min="0" max="1" step="0.05"></label>
+  </div>
+</section>
+
+<section id="dead" class="screen" hidden aria-label="You died">
+  <div class="wrap">
+    <h2 class="big-red" id="deadHead">ORDER UP.</h2>
+    <p class="lede" id="deadLine"></p>
+    <div class="row"><button class="btn primary" id="retryBtn" type="button">Last checkpoint</button><button class="btn" id="deadQuit" type="button">Title</button></div>
+  </div>
+</section>
+
+<section id="end" class="screen" hidden aria-label="End of the build">
+  <div class="wrap">
+    <p class="kicker" id="endKick">Pizza 1 of 12</p>
+    <h2 class="t-title" id="endTitle" style="font-size:clamp(36px,8vw,80px)">Enjoy your meal.</h2>
+    <ul class="sumlist" id="sumList"></ul>
+    <p class="phint" id="endNote"></p>
+    <div class="row"><button class="btn primary" id="againBtn" type="button">Play again</button><button class="btn" id="endQuit" type="button">Title</button></div>
+  </div>
+</section>
+
+<div id="card" aria-hidden="true"><p class="k" id="cardK"></p><p class="t" id="cardT"></p></div>
+<div id="fade"></div>
