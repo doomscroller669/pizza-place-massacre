@@ -33,16 +33,20 @@ After editing anything in `src/`, run `python3 tools/assemble.py` and commit the
 
 ## Voices
 
-Everyone but Toni has recorded lines. `tools/voices.py` finds every `line('who', …)`, `thinkL(…)`, `thinkM(…)` and `SAY_*` choice list in `src/js/`, renders each with that character's Kokoro voice (a local neural text-to-speech model), and writes `src/js/05-vodata.js`. It only renders lines it hasn't rendered before (cached in `.vo_cache/`, which isn't committed). The casting is the `CAST` table at the top of the script.
+Everyone but Toni has recorded lines. `tools/voices.py` finds every `line('who', …)`, `thinkL(…)`, `thinkM(…)` and `SAY_*` choice list in `src/js/`, and records each one with Chatterbox (Resemble AI's open-source voice model), which has an emotion dial per line. Each character's timbre comes from a short reference clip made with Kokoro, so the cast keeps the same voices. Every take is checked by a speech recognizer (faster-whisper): if it can't hear the written words, the line is recorded again with a new seed, up to four takes. The result goes into `src/js/05-vodata.js`.
+
+- The casting is `CAST` at the top of the script; the acting direction for each line (how intense, how slow, shaky or shouting) is `DIRECT`.
+- It only records lines whose text or direction changed (cached in `.vo_cache/`, which isn't committed).
 
 ```
-pip install kokoro-onnx soundfile        # plus ffmpeg on the PATH
-# model files: kokoro-v1.0.onnx and voices-v1.0.bin from github.com/thewh1teagle/kokoro-onnx/releases (model-files-v1.0)
-python3 tools/voices.py /path/to/models
+pip install chatterbox-tts kokoro-onnx soundfile faster-whisper   # plus ffmpeg on the PATH
+# Kokoro's model files: kokoro-v1.0.onnx and voices-v1.0.bin from github.com/thewh1teagle/kokoro-onnx/releases (model-files-v1.0)
+# Chatterbox and the recognizer download their weights from huggingface.co on first use
+python3 tools/voices.py /path/to/kokoro-models
 python3 tools/assemble.py
 ```
 
-Toni is never recorded: he talks through the device's own text-to-speech, so the flat phone voice stays his alone.
+On a two-core machine a line takes about 30–40 seconds. Toni is never recorded: he talks through the device's own text-to-speech, so the flat phone voice stays his alone.
 
 ## Fonts
 

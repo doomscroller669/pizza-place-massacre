@@ -2,311 +2,559 @@
  {
   "key": "b15db62d",
   "who": "lucia",
-  "text": "Dad... what do we do?"
+  "text": "Dad... what do we do?",
+  "exaggeration": 0.75,
+  "cfg": 0.4,
+  "fx": null,
+  "take": "b15db62d-2d6ec312.mp3"
  },
  {
   "key": "738dfa56",
   "who": "dad",
-  "text": "We stay calm. We do what he says. I’m getting you two out of here, mija."
+  "text": "We stay calm. We do what he says. I’m getting you two out of here, mija.",
+  "exaggeration": 0.6,
+  "cfg": 0.45,
+  "fx": "shaky",
+  "take": "738dfa56-853af3f3.mp3"
  },
  {
   "key": "72814a62",
   "who": "dad",
-  "text": "Lucia? ...Lucia!"
+  "text": "Lucia? ...Lucia!",
+  "exaggeration": 1.15,
+  "cfg": 0.3,
+  "fx": null,
+  "take": "72814a62-b48e5b49.mp3"
  },
  {
   "key": "96ef3529",
   "who": "alex",
-  "text": "Dad? Where are we?"
+  "text": "Dad? Where are we?",
+  "exaggeration": 1.0,
+  "cfg": 0.35,
+  "fx": "shaky",
+  "take": "96ef3529-c1e4a9ec.mp3"
  },
  {
   "key": "94b23273",
   "who": "grandpa",
-  "text": "What the hell is this?"
+  "text": "What the hell is this?",
+  "exaggeration": 1.0,
+  "cfg": 0.35,
+  "fx": null,
+  "take": "94b23273-fa567d74.mp3"
  },
  {
   "key": "9e6379bd",
   "who": "uncle",
-  "text": "Hey! HEY! Who’s out there?"
+  "text": "Hey! HEY! Who’s out there?",
+  "exaggeration": 1.5,
+  "cfg": 0.3,
+  "fx": "shout",
+  "take": "9e6379bd-ff54f145.mp3"
  },
  {
   "key": "577c6841",
   "who": "ruben",
-  "text": "This is a party room. Why are we in a party room?"
+  "text": "This is a party room. Why are we in a party room?",
+  "exaggeration": 1.1,
+  "cfg": 0.35,
+  "fx": null,
+  "take": "577c6841-5ee0a4d9.mp3"
  },
  {
   "key": "40f24f7c",
   "who": "dad",
-  "text": "That’s it. We’re leaving—"
+  "text": "That’s it. We’re leaving—",
+  "exaggeration": 1.2,
+  "cfg": 0.35,
+  "fx": "shout",
+  "take": "40f24f7c-c9f71824.mp3"
  },
  {
   "key": "70faa4e2",
   "who": "lucia",
-  "text": "There’s a pizza box in the middle of the table. With wires."
+  "text": "There’s a pizza box in the middle of the table. With wires.",
+  "exaggeration": 0.65,
+  "cfg": 0.4,
+  "fx": null,
+  "take": "70faa4e2-5237622b.mp3"
  },
  {
   "key": "23663206",
   "who": "uncle",
-  "text": "Twelve pizzas? Is this a joke?"
+  "text": "Twelve pizzas? Is this a joke?",
+  "exaggeration": 1.0,
+  "cfg": 0.35,
+  "fx": null,
+  "take": "23663206-930e894f.mp3"
  },
  {
   "key": "16539ac5",
   "who": "ruben",
-  "text": "That’s… that’s the mascot. From the sign."
+  "text": "That’s… that’s the mascot. From the sign.",
+  "exaggeration": 0.9,
+  "cfg": 0.35,
+  "fx": "shaky",
+  "take": "16539ac5-0fff94e1.mp3"
  },
  {
   "key": "0909fa38",
   "who": "grandpa",
-  "text": "It’s that delivery boy. The one who showed up late."
+  "text": "It’s that delivery boy. The one who showed up late.",
+  "exaggeration": 0.8,
+  "cfg": 0.4,
+  "fx": null,
+  "take": "0909fa38-c48a8f07.mp3"
  },
  {
   "key": "92dd9e1a",
   "who": "grandpa",
-  "text": "This is about that damn rating, isn’t it? Lucia. What did you write?"
+  "text": "This is about that damn rating, isn’t it? Lucia. What did you write?",
+  "exaggeration": 1.05,
+  "cfg": 0.35,
+  "fx": null,
+  "take": "92dd9e1a-6475eebd.mp3"
  },
  {
   "key": "38bf731c",
   "who": "grandpa",
-  "text": "And you listened? Since when do you listen to me?"
+  "text": "And you listened? Since when do you listen to me?",
+  "exaggeration": 0.85,
+  "cfg": 0.4,
+  "fx": null,
+  "take": "38bf731c-9e7a10ce.mp3"
  },
  {
   "key": "c4e0bdf7",
   "who": "dad",
-  "text": "Enough. Both of you."
+  "text": "Enough. Both of you.",
+  "exaggeration": 0.9,
+  "cfg": 0.4,
+  "fx": null,
+  "take": "c4e0bdf7-9148e060.mp3"
  },
  {
   "key": "1d8be92d",
   "who": "uncle",
-  "text": "Just a review. Tell that to the psycho in the cheese suit."
+  "text": "Just a review. Tell that to the psycho in the cheese suit.",
+  "exaggeration": 0.75,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "1d8be92d-0dd13b03.mp3"
  },
  {
   "key": "62a00dbb",
   "who": "dad",
-  "text": "Mija, no. This isn’t on you. Look at me. It isn’t."
+  "text": "Mija, no. This isn’t on you. Look at me. It isn’t.",
+  "exaggeration": 0.85,
+  "cfg": 0.35,
+  "fx": "shaky",
+  "take": "62a00dbb-95505653.mp3"
  },
  {
   "key": "78431376",
   "who": "grandpa",
-  "text": "Nothing? Typical."
+  "text": "Nothing? Typical.",
+  "exaggeration": 0.65,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "78431376-042f6085.mp3"
  },
  {
   "key": "098ef796",
   "who": "dad",
-  "text": "Alex. Look at me. Whatever they bring you, you check it first. No seeds. You hear me?"
+  "text": "Alex. Look at me. Whatever they bring you, you check it first. No seeds. You hear me?",
+  "exaggeration": 0.9,
+  "cfg": 0.35,
+  "fx": null,
+  "take": "098ef796-539605d8.mp3"
  },
  {
   "key": "c6a27679",
   "who": "alex",
-  "text": "I know, Dad. I’m not a baby."
+  "text": "I know, Dad. I’m not a baby.",
+  "exaggeration": 0.85,
+  "cfg": 0.4,
+  "fx": "shaky",
+  "take": "c6a27679-76666d92.mp3"
  },
  {
   "key": "f8bf7988",
   "who": "ruben",
-  "text": "Rule one: never split up. Rule two… I don’t know rule two."
+  "text": "Rule one: never split up. Rule two… I don’t know rule two.",
+  "exaggeration": 0.95,
+  "cfg": 0.4,
+  "fx": "shaky",
+  "take": "f8bf7988-bb11830c.mp3"
  },
  {
   "key": "c8a535f4",
   "who": "uncle",
-  "text": "What about her? She doesn’t get one?"
+  "text": "What about her? She doesn’t get one?",
+  "exaggeration": 0.9,
+  "cfg": 0.4,
+  "fx": null,
+  "take": "c8a535f4-164814c9.mp3"
  },
  {
   "key": "d69b1127",
   "who": "lucia",
-  "text": "...One star."
+  "text": "...One star.",
+  "exaggeration": 0.55,
+  "cfg": 0.35,
+  "fx": null,
+  "take": "d69b1127-e54ccc08.mp3"
  },
  {
   "key": "ee7e3934",
   "who": "alex",
-  "text": "Lucia?"
+  "text": "Lucia?",
+  "exaggeration": 1.0,
+  "cfg": 0.35,
+  "fx": "shaky",
+  "take": "ee7e3934-c1e4a9ec.mp3"
  },
  {
   "key": "a6eaefd7",
   "who": "alex",
-  "text": "There’s seeds… Dad, there’s seeds on the crust—"
+  "text": "There’s seeds… Dad, there’s seeds on the crust—",
+  "exaggeration": 1.4,
+  "cfg": 0.3,
+  "fx": "shaky",
+  "take": "a6eaefd7-025e8d63.mp3"
  },
  {
   "key": "69c665d9",
   "who": "alex",
-  "text": "…No seeds. It’s just pepperoni."
+  "text": "…No seeds. It’s just pepperoni.",
+  "exaggeration": 0.75,
+  "cfg": 0.4,
+  "fx": "shaky",
+  "take": "69c665d9-68cbae8b.mp3"
  },
  {
   "key": "11147a58",
   "who": "dad",
-  "text": "Okay! Okay. Just… eat around them, mijo. Eat around them."
+  "text": "Okay! Okay. Just… eat around them, mijo. Eat around them.",
+  "exaggeration": 1.3,
+  "cfg": 0.3,
+  "fx": "shaky",
+  "take": "11147a58-174ce273.mp3"
  },
  {
   "key": "bd8759a4",
   "who": "dad",
-  "text": "Lucia, don’t. Don’t give him a reason."
+  "text": "Lucia, don’t. Don’t give him a reason.",
+  "exaggeration": 0.85,
+  "cfg": 0.4,
+  "fx": null,
+  "take": "bd8759a4-f01e4da6.mp3"
  },
  {
   "key": "919406ea",
   "who": "dad",
-  "text": "Okay. Okay, mijo. You’re okay."
+  "text": "Okay. Okay, mijo. You’re okay.",
+  "exaggeration": 0.95,
+  "cfg": 0.35,
+  "fx": "shaky",
+  "take": "919406ea-c49d4692.mp3"
  },
  {
   "key": "bad62292",
   "who": "dad",
-  "text": "ALEX! His pen—his pen’s in his jacket! LET ME—"
+  "text": "ALEX! His pen—his pen’s in his jacket! LET ME—",
+  "exaggeration": 1.9,
+  "cfg": 0.25,
+  "fx": "shout",
+  "take": "bad62292-fc196aa8.mp3"
  },
  {
   "key": "8a1acac9",
   "who": "lucia",
-  "text": "Sesame. He can’t even be near it."
+  "text": "Sesame. He can’t even be near it.",
+  "exaggeration": 0.55,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "8a1acac9-eacfee0d.mp3"
  },
  {
   "key": "b3ea4490",
   "who": "lucia",
-  "text": "A pizza box with wires running under every chair. It counts pizzas, not seconds."
+  "text": "A pizza box with wires running under every chair. It counts pizzas, not seconds.",
+  "exaggeration": 0.5,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "b3ea4490-dedf7496.mp3"
  },
  {
   "key": "219a4966",
   "who": "lucia",
-  "text": "\"Ramirez party of 6!! :)\" He made us a banner."
+  "text": "\"Ramirez party of 6!! :)\" He made us a banner.",
+  "exaggeration": 0.55,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "219a4966-eacfee0d.mp3"
  },
  {
   "key": "202e90c5",
   "who": "manny",
-  "text": "Don’t look. Don’t look at them."
+  "text": "Don’t look. Don’t look at them.",
+  "exaggeration": 0.85,
+  "cfg": 0.35,
+  "fx": "shaky",
+  "take": "202e90c5-cc7bf783.mp3"
  },
  {
   "key": "402d96f9",
   "who": "manny",
-  "text": "They were alive at ten o’clock. I watched him do it through that window."
+  "text": "They were alive at ten o’clock. I watched him do it through that window.",
+  "exaggeration": 0.85,
+  "cfg": 0.35,
+  "fx": "shaky",
+  "take": "402d96f9-cc7bf783.mp3"
  },
  {
   "key": "bb36c2da",
   "who": "manny",
-  "text": "\"Toni’s Famous Seeds.\" It’s sesame. We put it on everything."
+  "text": "\"Toni’s Famous Seeds.\" It’s sesame. We put it on everything.",
+  "exaggeration": 0.5,
+  "cfg": 0.5,
+  "fx": null,
+  "take": "bb36c2da-7e4031e5.mp3"
  },
  {
   "key": "caeb49b5",
   "who": "manny",
-  "text": "I need dough, sauce and mozzarella first."
+  "text": "I need dough, sauce and mozzarella first.",
+  "exaggeration": 0.5,
+  "cfg": 0.5,
+  "fx": null,
+  "take": "caeb49b5-7e4031e5.mp3"
  },
  {
   "key": "71c00951",
   "who": "manny",
-  "text": "Cut it first. Eight slices."
+  "text": "Cut it first. Eight slices.",
+  "exaggeration": 0.5,
+  "cfg": 0.5,
+  "fx": null,
+  "take": "71c00951-7e4031e5.mp3"
  },
  {
   "key": "4adf5569",
   "who": "manny",
-  "text": "Nothing to serve yet."
+  "text": "Nothing to serve yet.",
+  "exaggeration": 0.5,
+  "cfg": 0.5,
+  "fx": null,
+  "take": "4adf5569-7e4031e5.mp3"
  },
  {
   "key": "7799a52b",
   "who": "manny",
-  "text": "\"World’s Best Boss.\" Smashed into three pieces."
+  "text": "\"World’s Best Boss.\" Smashed into three pieces.",
+  "exaggeration": 0.5,
+  "cfg": 0.5,
+  "fx": null,
+  "take": "7799a52b-7e4031e5.mp3"
  },
  {
   "key": "9975ae9d",
   "who": "manny",
-  "text": "The boss’s lie detector. He bought it to catch whoever was skimming the register."
+  "text": "The boss’s lie detector. He bought it to catch whoever was skimming the register.",
+  "exaggeration": 0.5,
+  "cfg": 0.5,
+  "fx": null,
+  "take": "9975ae9d-7e4031e5.mp3"
  },
  {
   "key": "f5c78376",
   "who": "manny",
-  "text": "Padlocked. Someone wrote DRIVER on the tape."
+  "text": "Padlocked. Someone wrote DRIVER on the tape.",
+  "exaggeration": 0.5,
+  "cfg": 0.5,
+  "fx": null,
+  "take": "f5c78376-7e4031e5.mp3"
  },
  {
   "key": "c8b275e3",
   "who": "manny",
-  "text": "A pizza with eight slices. Eight digits. I don’t know any of them."
+  "text": "A pizza with eight slices. Eight digits. I don’t know any of them.",
+  "exaggeration": 0.5,
+  "cfg": 0.5,
+  "fx": null,
+  "take": "c8b275e3-7e4031e5.mp3"
  },
  {
   "key": "19528e5b",
   "who": "manny",
-  "text": "Locked. And the grate’s down outside. His car’s still in the lot."
+  "text": "Locked. And the grate’s down outside. His car’s still in the lot.",
+  "exaggeration": 0.5,
+  "cfg": 0.5,
+  "fx": null,
+  "take": "19528e5b-7e4031e5.mp3"
  },
  {
   "key": "d42ae32e",
   "who": "manny",
-  "text": "He’s in there with them."
+  "text": "He’s in there with them.",
+  "exaggeration": 0.5,
+  "cfg": 0.5,
+  "fx": null,
+  "take": "d42ae32e-7e4031e5.mp3"
  },
  {
   "key": "acee01c3",
   "who": "manny",
-  "text": "A family at the party table. A little girl—no, a teenager. Balloons. God."
+  "text": "A family at the party table. A little girl—no, a teenager. Balloons. God.",
+  "exaggeration": 0.75,
+  "cfg": 0.4,
+  "fx": null,
+  "take": "acee01c3-b4e9d739.mp3"
  },
  {
   "key": "4a230733",
   "who": "manny",
-  "text": "NIGHT CALLER. \"Lock every door before he calls.\" No tokens."
+  "text": "NIGHT CALLER. \"Lock every door before he calls.\" No tokens.",
+  "exaggeration": 0.5,
+  "cfg": 0.5,
+  "fx": null,
+  "take": "4a230733-7e4031e5.mp3"
  },
  {
   "key": "db5061ca",
   "who": "manny",
-  "text": "Two dollars a try. Nobody’s ever won anything out of it."
+  "text": "Two dollars a try. Nobody’s ever won anything out of it.",
+  "exaggeration": 0.5,
+  "cfg": 0.5,
+  "fx": null,
+  "take": "db5061ca-7e4031e5.mp3"
  },
  {
   "key": "2fdad862",
   "who": "manny",
-  "text": "The spare Toni head. The eyes are felt pepperoni. I always hated wearing it."
+  "text": "The spare Toni head. The eyes are felt pepperoni. I always hated wearing it.",
+  "exaggeration": 0.5,
+  "cfg": 0.5,
+  "fx": null,
+  "take": "2fdad862-7e4031e5.mp3"
  },
  {
   "key": "06e66424",
   "who": "manny",
-  "text": "A Kiddie Pie. Like the menu. Okay."
+  "text": "A Kiddie Pie. Like the menu. Okay.",
+  "exaggeration": 0.5,
+  "cfg": 0.5,
+  "fx": null,
+  "take": "06e66424-7e4031e5.mp3"
  },
  {
   "key": "e8fec1e8",
   "who": "manny",
-  "text": "He forgives me. Okay. Okay."
+  "text": "He forgives me. Okay. Okay.",
+  "exaggeration": 0.85,
+  "cfg": 0.35,
+  "fx": "shaky",
+  "take": "e8fec1e8-cc7bf783.mp3"
  },
  {
   "key": "5f0b12be",
   "who": "manny",
-  "text": "He’s coming for it."
+  "text": "He’s coming for it.",
+  "exaggeration": 0.7,
+  "cfg": 0.4,
+  "fx": null,
+  "take": "5f0b12be-a7dd0156.mp3"
  },
  {
   "key": "a3add6dc",
   "who": "lucia",
-  "text": "...Where..."
+  "text": "...Where...",
+  "exaggeration": 0.6,
+  "cfg": 0.3,
+  "fx": null,
+  "take": "a3add6dc-289582c7.mp3"
  },
  {
   "key": "3c535f63",
   "who": "manny",
-  "text": "Still in the walk-in. I can’t feel my fingers."
+  "text": "Still in the walk-in. I can’t feel my fingers.",
+  "exaggeration": 0.65,
+  "cfg": 0.4,
+  "fx": "cold",
+  "take": "3c535f63-e1602cd1.mp3"
  },
  {
   "key": "54b2e27a",
   "who": "manny",
-  "text": "Okay. Okay. Just do what he says."
+  "text": "Okay. Okay. Just do what he says.",
+  "exaggeration": 0.8,
+  "cfg": 0.35,
+  "fx": "shaky",
+  "take": "54b2e27a-17719c92.mp3"
  },
  {
   "key": "8229e9dd",
   "who": "lucia",
-  "text": "You told me to give him one star."
+  "text": "You told me to give him one star.",
+  "exaggeration": 0.9,
+  "cfg": 0.4,
+  "fx": null,
+  "take": "8229e9dd-a5983609.mp3"
  },
  {
   "key": "920291ee",
   "who": "lucia",
-  "text": "It was just a review."
+  "text": "It was just a review.",
+  "exaggeration": 0.65,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "920291ee-0060f520.mp3"
  },
  {
   "key": "d53c14b1",
   "who": "lucia",
-  "text": "I’m sorry. This is my fault."
+  "text": "I’m sorry. This is my fault.",
+  "exaggeration": 1.0,
+  "cfg": 0.35,
+  "fx": "shaky",
+  "take": "d53c14b1-035300d8.mp3"
  },
  {
   "key": "fa32c60a",
   "who": "lucia",
-  "text": "It’s okay. Just eat."
+  "text": "It’s okay. Just eat.",
+  "exaggeration": 0.7,
+  "cfg": 0.4,
+  "fx": "shaky",
+  "take": "fa32c60a-501358bc.mp3"
  },
  {
   "key": "be9b8cd6",
   "who": "lucia",
-  "text": "Look at it first."
+  "text": "Look at it first.",
+  "exaggeration": 0.75,
+  "cfg": 0.4,
+  "fx": null,
+  "take": "be9b8cd6-2d6ec312.mp3"
  },
  {
   "key": "3db433ec",
   "who": "lucia",
-  "text": "You don’t have to do this."
+  "text": "You don’t have to do this.",
+  "exaggeration": 0.95,
+  "cfg": 0.35,
+  "fx": "shaky",
+  "take": "3db433ec-f8e17079.mp3"
  },
  {
   "key": "a0f54e1c",
   "who": "announcer",
-  "text": "Pepper Toni's! Where family comes first!"
+  "text": "Pepper Toni's! Where family comes first!",
+  "exaggeration": 1.1,
+  "cfg": 0.4,
+  "fx": null,
+  "take": "a0f54e1c-9bc2f35c.mp3"
  }
 ]
