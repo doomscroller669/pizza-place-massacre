@@ -47,7 +47,7 @@ function psxPatch(sh){
 const psx=m=>{m.onBeforeCompile=psxPatch;return m;};
 const basic=o=>psx(new THREE.MeshBasicMaterial(o));
 
-let LOW_H=270,lowW=360;
+let LOW_H=400,lowW=860;
 const rt=new THREE.WebGLRenderTarget(360,270,{minFilter:THREE.NearestFilter,magFilter:THREE.NearestFilter,format:THREE.RGBAFormat,depthBuffer:true});
 const postU={tDiffuse:{value:rt.texture},uRes:{value:new THREE.Vector2(360,270)},uTime:{value:0},uFlash:{value:0},uDanger:{value:0},uWake:{value:0},uRed:{value:0}};
 const postMat=new THREE.ShaderMaterial({uniforms:postU,depthTest:false,depthWrite:false,
@@ -60,7 +60,7 @@ float b4(vec2 a){ return b2(0.5*a)*0.25+b2(a); }
 void main(){
   vec2 uv=vUv;
   uv.x+=sin(uv.y*9.0+uTime*1.3)*0.012*uWake; uv.y+=sin(uv.x*7.0-uTime*0.9)*0.009*uWake;
-  float ca=0.0009+uDanger*0.004+uWake*0.006;
+  float ca=0.0003+uDanger*0.004+uWake*0.006;
   vec3 c;
   c.r=texture2D(tDiffuse,uv+vec2(ca,0.0)).r;
   c.g=texture2D(tDiffuse,uv).g;
@@ -68,13 +68,13 @@ void main(){
   if(uWake>0.001){ vec3 c2=texture2D(tDiffuse,uv+vec2(0.012,0.004)*uWake).rgb; c=mix(c,(c+c2)*0.5,uWake); }
   vec2 px=floor(uv*uRes);
   float n=fract(sin(dot(px+floor(uTime*20.0)*vec2(3.1,7.7),vec2(12.9898,78.233)))*43758.5453);
-  c+=(n-0.5)*0.03;
-  vec2 d=vUv-0.5; float vig=1.0-dot(d,d)*(1.1+uWake*1.6); c*=clamp(vig,0.0,1.0);
+  c+=(n-0.5)*0.014;
+  vec2 d=vUv-0.5; float vig=1.0-dot(d,d)*(0.75+uWake*1.6); c*=clamp(vig,0.0,1.0);
   c=mix(c,vec3(0.45,0.03,0.0),uDanger*0.42*smoothstep(0.16,0.62,length(d)));
   c=mix(c,vec3(dot(c,vec3(0.3,0.59,0.11)))*vec3(1.3,0.35,0.3),uRed);
   c+=vec3(uFlash*0.95,uFlash*0.85,uFlash*0.7);
-  c+=(b4(px)-0.5)/40.0;
-  c=floor(clamp(c,0.0,1.0)*31.0+0.5)/31.0;
+  c+=(b4(px)-0.5)/72.0;
+  c=floor(clamp(c,0.0,1.0)*47.0+0.5)/47.0;
   gl_FragColor=vec4(c,1.0);
 }`});
 const postScene=new THREE.Scene();
@@ -91,12 +91,13 @@ const held=new THREE.Group();camera.add(held);
 
 function resize(){
   const w=Math.max(1,innerWidth),h=Math.max(1,innerHeight);
-  LOW_H=h<560?240:270;
-  lowW=Math.max(180,Math.round(LOW_H*w/h));
+  // crisper than The Abandoned: close to one game pixel per screen point on a phone, capped for speed
+  LOW_H=Math.round(clamp(h,320,440));
+  lowW=Math.max(240,Math.round(LOW_H*w/h));
   renderer.setSize(lowW,LOW_H,false);
   rt.setSize(lowW,LOW_H);
   postU.uRes.value.set(lowW,LOW_H);
-  snapU.value.set(lowW/3,LOW_H/3);
+  snapU.value.set(lowW/2,LOW_H/2);
   camera.aspect=w/h;camera.fov=w<h?84:68;camera.updateProjectionMatrix();
 }
 addEventListener('resize',resize);

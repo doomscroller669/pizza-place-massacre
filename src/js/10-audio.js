@@ -14,12 +14,13 @@ function initAudio(){
   busAmb=AC.createGain();busAmb.gain.value=0.8;busAmb.connect(comp);
   busMus=AC.createGain();busMus.gain.value=0.5;busMus.connect(comp);busMus.connect(verb);
   noiseBuf=mkNoise(2,false);brownBuf=mkNoise(4,true);
+  setTimeout(()=>voWarm(),200);
   // beds
-  amb.hum=bed(()=>{const g=AC.createGain();[120,240,360,600].forEach((f,i)=>{const o=AC.createOscillator();o.type=i?'sine':'sawtooth';o.frequency.value=f;const og=AC.createGain();og.gain.value=[0.05,0.03,0.02,0.012][i];o.connect(og);og.connect(g);o.start();});
-    const n=AC.createBufferSource();n.buffer=noiseBuf;n.loop=true;const bp=AC.createBiquadFilter();bp.type='bandpass';bp.frequency.value=5200;bp.Q.value=3;const ng=AC.createGain();ng.gain.value=0.012;n.connect(bp);bp.connect(ng);ng.connect(g);n.start();return g;});
+  // a soft electrical hum, felt more than heard (no saw, no high whine)
+  amb.hum=bed(()=>{const g=AC.createGain();[[60,0.05],[120,0.025],[180,0.008]].forEach(([f,a])=>{const o=AC.createOscillator();o.type='sine';o.frequency.value=f;const og=AC.createGain();og.gain.value=a;o.connect(og);og.connect(g);o.start();});return g;});
   amb.room=bed(()=>{const n=AC.createBufferSource();n.buffer=brownBuf;n.loop=true;const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=320;const g=AC.createGain();n.connect(lp);lp.connect(g);n.start();return g;});
-  amb.freezer=bed(()=>{const g=AC.createGain();const o=AC.createOscillator();o.type='sawtooth';o.frequency.value=58;const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=180;o.connect(lp);lp.connect(g);o.start();
-    const n=AC.createBufferSource();n.buffer=noiseBuf;n.loop=true;const bp=AC.createBiquadFilter();bp.type='bandpass';bp.frequency.value=900;bp.Q.value=0.6;const ng=AC.createGain();ng.gain.value=0.35;n.connect(bp);bp.connect(ng);ng.connect(g);n.start();return g;});
+  amb.freezer=bed(()=>{const g=AC.createGain();const n=AC.createBufferSource();n.buffer=brownBuf;n.loop=true;const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=520;const ng=AC.createGain();ng.gain.value=0.9;n.connect(lp);lp.connect(ng);ng.connect(g);n.start();
+    const o=AC.createOscillator();o.type='sine';o.frequency.value=50;const og=AC.createGain();og.gain.value=0.05;o.connect(og);og.connect(g);o.start();return g;});
   amb.oven=bed(()=>{const g=AC.createGain();const n=AC.createBufferSource();n.buffer=brownBuf;n.loop=true;const bp=AC.createBiquadFilter();bp.type='bandpass';bp.frequency.value=260;bp.Q.value=0.8;n.connect(bp);bp.connect(g);n.start();
     const o=AC.createOscillator();o.type='triangle';o.frequency.value=43;const og=AC.createGain();og.gain.value=0.25;o.connect(og);og.connect(g);o.start();return g;});
   amb.arcade=bed(()=>{const g=AC.createGain();const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2400;lp.connect(g);arcadeLoop(lp);return g;});
@@ -92,18 +93,59 @@ function murmur(who,text,pos){if(!AC||!VOX[who])return;const v=VOX[who];const n=
     const g=AC.createGain();g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(0.11,t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+d);
     o.connect(f1);o.connect(f2);f1.connect(g);f2.connect(g);g.connect(dest);o.start(t);o.stop(t+d+0.05);t+=d+0.025+Math.random()*0.04;if(Math.random()<0.15)t+=0.12;}}
 
-/* ---------- music: the Pepper Toni's jingle on a worn-out cassette ---------- */
+/* ---------- music: "Pepper Toni's", the theme song ----------
+   A 90s pizza-chain jingle on a worn tape: drawbar organ lead, oom-pah bass, off-beat chord stabs, a little drum kit,
+   glockenspiel on the chorus, then the announcer's tag. Every few loops the tape drags and the pitch sags.
+   Notes are written per bar as eight eighth-note slots: a note name, '-' to hold, '.' for a rest. */
+const THEME={bpm:128,
+  chords:['C','Am','F','G', 'C','Am','F','G','C','Am','F','G', 'F','G','Em','Am','F','G','C','C', 'C','C','F','G'],
+  mel:[
+    '........','........','........','....G4.A4B4',
+    'C5-E5-G5-E5-','A5-G5E5-C5--','F5-A5-C6-A5-','G5---D5-E5F5',
+    'E5-G5-C6-G5-','A5G5E5-C5-E5-','F5-E5-D5-C5-','D5---G4---',
+    'C6--A5C6-A5-','B5--G5B5-G5-','G5-E5-G5-B5-','C6---A5---',
+    'A5-A5-C6-A5-','G5-G5-B5-D6-','C6---G5-E5-','C5------.',
+    '........','........','........','........'],
+  glock:[12,19]};
+const CHORD={C:[48,52,55],Am:[45,48,52],F:[41,45,48],G:[43,47,50],Em:[40,43,47]};
+const midi=n=>{const m=/^([A-G])(#?)(\d)$/.exec(n);return ({C:0,D:2,E:4,F:5,G:7,A:9,B:11})[m[1]]+(m[2]?1:0)+(+m[3]+1)*12;};
+const mhz=m=>440*Math.pow(2,(m-69)/12);
+function parseBar(str){const out=[];let i=0;const toks=[];while(i<str.length){if(str[i]==='.'||str[i]==='-'){toks.push(str[i]);i++;}else{const m=/^[A-G]#?\d/.exec(str.slice(i));toks.push(m[0]);i+=m[0].length;}}
+  for(let k=0;k<toks.length;k++){const t=toks[k];if(t!=='.'&&t!=='-'){let len=1;while(toks[k+len]==='-')len++;out.push([k,t,len]);}}return out;}
 let musicOn=null;
-const JINGLE=[[67,1],[72,1],[76,1],[79,2],[76,1],[79,1],[81,2],[79,2],[0,1],[76,1],[74,1],[72,1],[74,2],[67,2],[72,4]];
-function startJingle(slow){if(!AC)return;stopMusic();const st={alive:true};musicOn=st;const bpm=slow?84:118,beat=60/bpm/2;
-  const wow=AC.createOscillator();wow.frequency.value=0.6;const wg=AC.createGain();wg.gain.value=slow?14:6;wow.connect(wg);wow.start();
-  const out=AC.createGain();out.gain.value=0.5;const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=slow?1600:2600;out.connect(lp);lp.connect(busMus);
-  let t=now()+0.1;const loop=()=>{if(!st.alive)return;let tt=t;JINGLE.forEach(([n,d])=>{if(n){const f=440*Math.pow(2,(n-69)/12)*(slow?0.94:1);
-      const o=AC.createOscillator();o.type='square';o.frequency.value=f;wg.connect(o.detune);const g=AC.createGain();g.gain.setValueAtTime(0.0001,tt);g.gain.linearRampToValueAtTime(0.12,tt+0.01);g.gain.exponentialRampToValueAtTime(0.0001,tt+d*beat*0.95);o.connect(g);g.connect(out);o.start(tt);o.stop(tt+d*beat+0.05);
-      const b=AC.createOscillator();b.type='triangle';b.frequency.value=f/4;const bg=AC.createGain();bg.gain.setValueAtTime(0.0001,tt);bg.gain.linearRampToValueAtTime(0.18,tt+0.01);bg.gain.exponentialRampToValueAtTime(0.0001,tt+d*beat*0.8);b.connect(bg);bg.connect(out);b.start(tt);b.stop(tt+d*beat+0.05);}
-    tt+=d*beat;});t=tt+beat*4;st.timer=setTimeout(loop,Math.max(50,(t-AC.currentTime-1)*1000));};
-  loop();st.stop=()=>{st.alive=false;clearTimeout(st.timer);out.gain.setTargetAtTime(0,AC.currentTime,0.3);setTimeout(()=>{try{out.disconnect();wow.stop();}catch(e){}},1500);};}
+function startTheme(o={}){if(!AC)return;stopMusic();const st={alive:true,loop:0,o};musicOn=st;const spb=60/(THEME.bpm*(o.fast?1.08:1)),e8=spb/2,bar=spb*4;
+  const out=AC.createGain();out.gain.value=o.quiet?0.32:0.55;const tone=AC.createBiquadFilter();tone.type='lowpass';tone.frequency.value=o.muffled?1300:5200;out.connect(tone);tone.connect(busMus);
+  // the tape: one detune source feeds every oscillator, so wow, flutter and the sag move the whole band together
+  const tape=AC.createConstantSource();tape.offset.value=0;tape.start();const wow=AC.createOscillator();wow.frequency.value=0.55;const wg=AC.createGain();wg.gain.value=o.warped?16:5;wow.connect(wg);wg.connect(tape.offset);wow.start();
+  const osc=(type,f,t,dur,peak,a=0.008,dest=out,rel)=>{const v=AC.createOscillator();v.type=type;v.frequency.value=f;tape.connect(v.detune);const g=AC.createGain();g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(peak,t+a);
+    g.gain.setTargetAtTime(0.0001,t+dur,rel||0.05);v.connect(g);g.connect(dest);v.start(t);v.stop(t+dur+(rel||0.05)*6);};
+  const organ=(m,t,dur,amp)=>{const f=mhz(m);osc('sine',f,t,dur,amp*0.55);osc('sine',f*2,t,dur,amp*0.28);osc('sine',f*3,t,dur,amp*0.12);osc('square',f,t,dur,amp*0.05);};
+  const glock=(m,t,amp)=>{const f=mhz(m+12);osc('sine',f,t,0.02,amp,0.002,out,0.25);osc('sine',f*2.76,t,0.01,amp*0.3,0.002,out,0.12);};
+  const kick=t=>{const v=AC.createOscillator();v.frequency.setValueAtTime(140,t);v.frequency.exponentialRampToValueAtTime(42,t+0.12);const g=AC.createGain();g.gain.setValueAtTime(0.55,t);g.gain.exponentialRampToValueAtTime(0.0001,t+0.25);v.connect(g);g.connect(out);v.start(t);v.stop(t+0.3);};
+  const snare=t=>{sNoise(out,t,0.13,'bandpass',1900,0.9,0.32,0.002);osc('triangle',190,t,0.04,0.12,0.002);};
+  const hat=(t,a)=>sNoise(out,t,0.035,'highpass',7000,0.7,a,0.001);
+  const crash=t=>sNoise(out,t,1.4,'highpass',5000,0.5,0.16,0.003);
+  const schedBar=(b,t0)=>{const ch=CHORD[THEME.chords[b]];const tag=b>=20;
+    // bass: oom-pah, root then fifth
+    if(!tag||b===20){for(let q=0;q<4;q++){const m=(q%2?ch[2]:ch[0])-12;osc('triangle',mhz(m),t0+q*spb,spb*0.55,0.42,0.005);osc('square',mhz(m),t0+q*spb,spb*0.3,0.05,0.005);}}
+    // chord stabs on the off-beats, a held chord under the tag
+    if(b<4||(b>=4&&b<20)){for(let q=0;q<4;q++)ch.forEach(m=>osc('square',mhz(m+12),t0+q*spb+e8,e8*0.6,0.03,0.004));}
+    if(tag&&b<23)ch.forEach(m=>organ(m+12,t0,bar*0.98,0.08));
+    // drums
+    if(!tag||b===20){for(let q=0;q<4;q++){if(q%2===0)kick(t0+q*spb);else snare(t0+q*spb);hat(t0+q*spb,0.05);hat(t0+q*spb+e8,0.08);}}
+    if(b===3||b===11||b===19){for(let k=0;k<4;k++)snare(t0+2*spb+k*e8*0.5+spb);}
+    if(b===4||b===12||b===20)crash(t0);
+    // melody
+    for(const [k,n,len] of parseBar(THEME.mel[b])){const t=t0+k*e8;organ(midi(n),t,len*e8*0.92,0.22);if(b>=THEME.glock[0]&&b<=THEME.glock[1])glock(midi(n),t,0.09);}
+    // the announcer's tag
+    if(b===20&&!o.noTag){const key=voKey('announcer',"Pepper Toni's! Where family comes first!");voDecode(key).then(buf=>{if(!buf||!st.alive)return;const s=AC.createBufferSource();s.buffer=buf;const g=AC.createGain();g.gain.value=0.9;s.connect(g);g.connect(busMus);s.start(Math.max(AC.currentTime,t0+spb*0.5));});}
+    // the tape drags at the end of every third loop
+    if(b===23&&st.loop%3===2){tape.offset.cancelScheduledValues(t0);tape.offset.setValueAtTime(0,t0);tape.offset.linearRampToValueAtTime(-260,t0+bar);tape.offset.linearRampToValueAtTime(0,t0+bar+0.4);}};
+  let b=0,t=now()+0.15;const tick=()=>{if(!st.alive)return;while(t<AC.currentTime+0.6){schedBar(b,t);t+=bar;b++;if(b>=THEME.chords.length){b=0;st.loop++;t+=bar*0.5;}}st.timer=setTimeout(tick,120);};tick();
+  st.stop=()=>{st.alive=false;clearTimeout(st.timer);out.gain.setTargetAtTime(0,AC.currentTime,0.25);setTimeout(()=>{try{out.disconnect();tape.stop();wow.stop();}catch(e){}},1600);};}
+function startJingle(slow){startTheme(slow?{warped:true,quiet:true,noTag:true}:{});}
 function stopMusic(){if(musicOn&&musicOn.stop)musicOn.stop();musicOn=null;}
+
 /* the arcade cabinets' attract modes, heard through the wall */
 function arcadeLoop(dest){const step=()=>{if(!AC)return;const t=now();const base=[262,330,392,523][(Math.random()*4)|0];
   for(let i=0;i<6;i++){if(Math.random()<0.7)sTone(dest,t+i*0.11,0.08,Math.random()<0.5?'square':'triangle',base*[1,1.5,2,1.25][(Math.random()*4)|0],0,0.05);}

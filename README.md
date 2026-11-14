@@ -30,3 +30,20 @@ Milestone 1: the table and pizza 1.
 - On Android, `MainActivity` hands Toni's lines to the phone's TextToSpeech engine through `window.AndroidTTS` (with pan and volume, so his voice comes from where he is). In a browser the game uses `speechSynthesis`.
 
 After editing anything in `src/`, run `python3 tools/assemble.py` and commit the regenerated files.
+
+## Voices
+
+Everyone but Toni has recorded lines. `tools/voices.py` finds every `line('who', …)`, `thinkL(…)`, `thinkM(…)` and `SAY_*` choice list in `src/js/`, renders each with that character's Kokoro voice (a local neural text-to-speech model), and writes `src/js/05-vodata.js`. It only renders lines it hasn't rendered before (cached in `.vo_cache/`, which isn't committed). The casting is the `CAST` table at the top of the script.
+
+```
+pip install kokoro-onnx soundfile        # plus ffmpeg on the PATH
+# model files: kokoro-v1.0.onnx and voices-v1.0.bin from github.com/thewh1teagle/kokoro-onnx/releases (model-files-v1.0)
+python3 tools/voices.py /path/to/models
+python3 tools/assemble.py
+```
+
+Toni is never recorded: he talks through the device's own text-to-speech, so the flat phone voice stays his alone.
+
+## Fonts
+
+The page bundles its fonts (`src/fonts.css`, subset to Latin) so the app looks right offline: Bungee, Bungee Shade, Courier Prime, Reenie Beanie and VT323 under the SIL Open Font License 1.1; Yellowtail and Special Elite under the Apache License 2.0. Sources: github.com/google/fonts.

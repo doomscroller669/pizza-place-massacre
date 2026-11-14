@@ -9,7 +9,7 @@ buildBomb();buildBalloons();buildSpareHead();
 for(const id of FAMILY){seat(CHARS[id],id);CHARS[id].pose='sit';}
 toniHide();setupInteractions();resize();placeIdleJoy();
 // a debug handle for testing; harmless in play
-window.__ppmDebug={G,P,PT,CHARS,TONI,PIZZA,OVEN,DOORS,COOK,startNew,sceneManny,sceneEat,serve,ROOMS,toniSay,INTERACT,SOLIDS,NAV:()=>NAV,startHunt,HIDES,enterHide,stamp,PIE,pathTo,renderer};
+window.__ppmDebug={G,P,PT,CHARS,TONI,PIZZA,OVEN,DOORS,COOK,startNew,sceneManny,sceneEat,serve,ROOMS,toniSay,INTERACT,SOLIDS,NAV:()=>NAV,startHunt,HIDES,enterHide,stamp,PIE,pathTo,renderer,voPlay,AC:()=>AC,master:()=>master,die,endBuild};
 
 /* the title screen: a slow drift through the dark dining room */
 const TCAM={t:0};
@@ -48,7 +48,11 @@ if(LS.get('save',null))$('contBtn').hidden=false;
 $('startBtn').addEventListener('click',()=>{initAudio();stopMusic();startNew();});
 $('contBtn').addEventListener('click',()=>{initAudio();stopMusic();$('title').hidden=true;loadCheckpoint();});
 $('sndHint').textContent=touchMode?'Tap anywhere for sound':'Click anywhere for sound';
-const wakeTitle=()=>{if(G.mode!=='title')return;const first=!AC;initAudio();if(first||!musicOn)startJingle(true);$('sndHint').style.visibility='hidden';};
+const wakeTitle=()=>{if(G.mode!=='title')return;initAudio();if(AC&&AC.state==='suspended')AC.resume();if(!musicOn)startTheme();$('sndHint').style.visibility='hidden';};
+/* the logo on the menu and on the review card */
+{const c=canvas(160,160),g=c.getContext('2d');brandMark(g,80,92,3.1);const url=c.toDataURL();$('titleMascot').src=url;$('rvIcon').src=url;}
+/* try to start the theme right away (the Android app allows it); otherwise the first tap does */
+try{initAudio();if(AC){startTheme();if(AC.state==='running')$('sndHint').style.visibility='hidden';}}catch(e){}
 $('title').addEventListener('pointerdown',wakeTitle);addEventListener('keydown',wakeTitle);
 setMode('title');
 requestAnimationFrame(t=>{last=t;frame(t);});

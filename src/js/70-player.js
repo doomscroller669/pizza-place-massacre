@@ -60,7 +60,8 @@ function isHidden(){if(P.hidden)return true;if(P.inPit&&P.crouch)return true;ret
 /* ---------- HUD bits ---------- */
 let subT=0;
 function sub(text,dur=3,who){const el=$('sub');el.innerHTML=(who?`<span class="who">${escapeHTML(who)}</span>`:'')+escapeHTML(text);el.hidden=false;clearTimeout(subT);subT=setTimeout(()=>{el.hidden=true;},dur*1000);}
-function think(text,dur){sub(text,dur||Math.max(2.4,text.length*0.06),G.who==='manny'?'Manny':'Lucia');}
+async function think(text,dur,who){who=who||G.who;const vd=await voPlay(who,text,null);sub(text,vd?vd+0.8:(dur||Math.max(2.6,text.length*0.065)),who==='manny'?'Manny':'Lucia');}
+const thinkL=(t,d)=>think(t,d,'lucia'),thinkM=(t,d)=>think(t,d,'manny');
 let objHint='';
 function setObj(t,hint){const o=$('obj');o.hidden=!t;if(!t)return;if($('objText').textContent!==t){$('objText').textContent=t;o.classList.remove('flash');void o.offsetWidth;o.classList.add('flash');}objHint=hint||'';}
 function setCarry(){const c=$('carry');const items=PIZZA.carry();c.hidden=!items.length;c.innerHTML='Carrying · <b>'+items.join(', ')+'</b>';}
@@ -70,12 +71,17 @@ async function titleCard(k,t,hold=2.2){$('cardK').textContent=k;$('cardT').textC
 
 /* ---------- dialogue: Telltale-style lines and timed choices ---------- */
 let DS=null;
-function line(who,text,o={}){return new Promise(res=>{const ch=CHARS[who];const name=o.name||(ch?ch.s.name:who==='lucia'?'Lucia':who==='manny'?'Manny':who);
+function line(who,text,o={}){return new Promise(async res=>{const ch=CHARS[who];const name=o.name||(ch?ch.s.name:who==='lucia'?'Lucia':who==='manny'?'Manny':who);
   $('dlg').hidden=false;$('dlgWho').textContent=name;$('dlgText').textContent=text;$('dlgChoices').innerHTML='';$('dlgBar').hidden=true;$('dlgMore').hidden=false;
-  const dur=o.dur||clamp(1.3+text.length*0.052,1.8,6.5);if(ch){say(ch,dur*0.8);if(o.expr)setExpr(ch,o.expr);}
-  murmur(who,text,ch&&ch.root.visible&&who!=='lucia'&&who!=='manny'?{x:ch.x,y:1.2,z:ch.z}:null);
-  const run=G.run;let done=false;const fin=()=>{if(done)return;done=true;DS=null;$('dlg').hidden=true;res();};
-  DS={skip:()=>{if(Date.now()-t0>250)fin();}};const t0=Date.now();gwait(dur).then(()=>{if(alive(run))fin();});});}
+  if(ch&&o.expr)setExpr(ch,o.expr);
+  const pos=ch&&ch.root.visible&&who!=='lucia'&&who!=='manny'?{x:ch.x,y:1.3,z:ch.z}:null;
+  const run=G.run;let done=false;const t0=Date.now();
+  const fin=()=>{if(done)return;done=true;if(o.dur)voStop(0.12);DS=null;$('dlg').hidden=true;res();};
+  DS={skip:()=>{if(Date.now()-t0>250){voStop();fin();}}};
+  const vd=await voPlay(who,text,pos);if(!alive(run)||done)return;
+  let dur;if(vd)dur=o.dur?Math.min(o.dur,vd+0.1):vd+0.55;else{dur=o.dur||clamp(1.6+text.length*0.065,2.2,8);murmur(who,text,pos);}
+  if(ch)say(ch,vd?Math.min(vd,dur):dur*0.8);
+  gwait(dur).then(()=>{if(alive(run))fin();});});}
 function choose(opts,o={}){return new Promise(res=>{$('dlg').hidden=false;$('dlgWho').textContent=o.who||'';$('dlgText').textContent=o.prompt||'';$('dlgMore').hidden=true;
   const box=$('dlgChoices');box.innerHTML='';let done=false;const run=G.run;
   const fin=i=>{if(done)return;done=true;DS=null;$('dlg').hidden=true;box.innerHTML='';SFX.ui();res(i);};

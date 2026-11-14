@@ -38,7 +38,7 @@ function repaintPie(){if(!PIZZA.cur)return;const g=pieCv.getContext('2d');g.clea
 const PIE={hand:pieMesh(),world:pieMesh(),table:pieMesh()};
 PIE.hand.position.set(0.0,-0.3,-0.52);PIE.hand.rotation.x=0.62;PIE.hand.visible=false;held.add(PIE.hand);
 PIE.world.visible=false;scene.add(PIE.world);PIE.table.visible=false;scene.add(PIE.table);
-function lightPie(m,x,y,z){const c=tintAt(x,y,z,1.5);m.userData.mats.forEach(mm=>mm.color.copy(c));}
+function lightPie(m,x,y,z){const c=tintAt(x,y,z,1.1);m.userData.mats.forEach(mm=>mm.color.copy(c));}
 
 /* ---------- the prep minigame ---------- */
 const COOK={step:0,tool:null,down:false,last:null,res:null,
