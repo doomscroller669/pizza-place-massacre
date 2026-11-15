@@ -73,13 +73,15 @@ function crBuild(){if(CR.built)return;CR.built=true;
     // the cavity, lit from inside by the fire
     const cav=tex(64,32,(g,w,h)=>{g.fillStyle='#2a0e06';g.fillRect(0,0,w,h);for(let y=0;y<h;y+=4)for(let x=(y/4)%2*4;x<w;x+=8){g.fillStyle=`rgba(${120+((x*7+y*3)%60)},${40+((x+y)%20)},12,.55)`;g.fillRect(x,y,7,3);}
       const gr=g.createLinearGradient(0,h,0,0);gr.addColorStop(0,'rgba(255,150,40,.55)');gr.addColorStop(1,'rgba(255,80,10,.05)');g.fillStyle=gr;g.fillRect(0,0,w,h);},false);
-    const cv=new THREE.Mesh(new THREE.BoxGeometry(0.86,0.26,0.8),basic({map:cav,side:THREE.BackSide}));cv.position.set(0,0.13,-0.2);O.add(cv);
-    const deck=new THREE.Mesh(new THREE.PlaneGeometry(0.86,0.8).rotateX(-Math.PI/2),basic({map:tex(32,32,(g,w,h)=>{g.fillStyle='#5a3a26';g.fillRect(0,0,w,h);speck(g,w,h,120,['rgba(20,8,4,.5)','rgba(255,170,90,.18)'],1,mulberry(2));},false)}));deck.position.set(0,0.001,-0.2);O.add(deck);
+    // the cavity: four inside walls (no front, so the mouth stays open), set in a few millimetres from the oven body so they never fight it
+    {const cm=basic({map:cav,side:THREE.DoubleSide});const wall=(w,h,x,y,z,ry,rx)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h,6,3),cm);m.position.set(x,y,z);m.rotation.set(rx||0,ry||0,0);O.add(m);};
+      wall(0.85,0.25,0,0.13,-0.594);wall(0.79,0.25,-0.424,0.13,-0.2,Math.PI/2);wall(0.79,0.25,0.424,0.13,-0.2,-Math.PI/2);wall(0.85,0.79,0,0.254,-0.2,0,Math.PI/2);}
+    const deck=new THREE.Mesh(new THREE.PlaneGeometry(0.85,0.79).rotateX(-Math.PI/2),basic({map:tex(32,32,(g,w,h)=>{g.fillStyle='#5a3a26';g.fillRect(0,0,w,h);speck(g,w,h,120,['rgba(20,8,4,.5)','rgba(255,170,90,.18)'],1,mulberry(2));},false)}));deck.position.set(0,0.004,-0.2);O.add(deck);
     // the fire along the back wall
     CR.flames=[];for(let i=0;i<7;i++){const f=new THREE.Mesh(new THREE.PlaneGeometry(0.18,0.2),new THREE.MeshBasicMaterial({map:GLOW_TEX,color:i%2?0xff7a1a:0xffb040,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false}));
       f.position.set(-0.36+i*0.12,0.08,-0.57);O.add(f);CR.flames.push(f);}
-    const spill=new THREE.Mesh(new THREE.PlaneGeometry(1.2,0.9).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({map:GLOW_TEX,color:0xff6a10,transparent:true,opacity:0.5,blending:THREE.AdditiveBlending,depthWrite:false}));spill.position.set(0,-0.0,0.6);O.add(spill);CR.spill=spill;
-    const shelf=new THREE.Mesh(new THREE.PlaneGeometry(1.6,1.2).rotateX(-Math.PI/2),basic({map:ct}));shelf.position.set(0,-0.002,0.7);O.add(shelf);
+    const spill=new THREE.Mesh(new THREE.PlaneGeometry(1.2,0.9).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({map:GLOW_TEX,color:0xff6a10,transparent:true,opacity:0.5,blending:THREE.AdditiveBlending,depthWrite:false}));spill.position.set(0,0.003,0.66);O.add(spill);CR.spill=spill;
+    const shelf=new THREE.Mesh(new THREE.PlaneGeometry(1.6,1.2).rotateX(-Math.PI/2),basic({map:ct}));shelf.position.set(0,-0.001,0.81);O.add(shelf);
     // the logo plate
     const plate=tex(128,48,(g,w,h)=>{g.fillStyle='#1c1a18';g.fillRect(0,0,w,h);g.strokeStyle='#8a8f96';g.lineWidth=2;g.strokeRect(2,2,w-4,h-4);brandMark(g,24,25,0.82);
       g.fillStyle='#e8d9b4';g.font='15px '+FONT_BRAND;g.textBaseline='middle';g.fillText('PEPPER',46,17);g.fillText('TONI’S',46,33);},false);

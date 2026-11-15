@@ -11,14 +11,14 @@ buildBomb();buildBalloons();buildSpareHead();
 for(const id of FAMILY){seat(CHARS[id],id);CHARS[id].pose='sit';}
 toniHide();setupInteractions();setupPrologue();resize();placeIdleJoy();
 // a debug handle for testing; harmless in play
-window.__ppmDebug={toniShow,toniTool,toniFace,CR,sceneCredits,scoreBase,scoreCue,stopMusic,SCORE,G,P,PT,CHARS,TONI,PIZZA,OVEN,DOORS,COOK,startNew,sceneManny,sceneEat,serve,ROOMS,toniSay,INTERACT,SOLIDS,NAV:()=>NAV,startHunt,HIDES,enterHide,stamp,PIE,pathTo,renderer,voPlay,toniPlay,hasVO,playTape,AC:()=>AC,master:()=>master,die,endBuild,sceneCold,sceneHouse,sceneRating,sceneRoom,sceneCharge,sceneChargeRetry,sceneEscape,sceneOut,sceneTable,enterHide,leaveHide,coldDevon,coldBree,coldManager,setPower,HPT,HAI,FZ,glassPaint,lpRate,resetWorld,checkpoint,LS,castVisible};
+window.__ppmDebug={toniShow,toniTool,toniFace,roomAt,OPENINGS,SBUF,CR,sceneCredits,scoreBase,scoreCue,stopMusic,SCORE,amb,setAmb,G,P,PT,CHARS,TONI,PIZZA,OVEN,DOORS,COOK,startNew,sceneManny,sceneEat,serve,ROOMS,toniSay,INTERACT,SOLIDS,NAV:()=>NAV,startHunt,HIDES,enterHide,stamp,PIE,pathTo,renderer,voPlay,toniPlay,hasVO,playTape,AC:()=>AC,master:()=>master,buses:()=>({busFx,busAmb,busMus,comp}),die,endBuild,sceneCold,sceneHouse,sceneRating,sceneRoom,sceneCharge,sceneChargeRetry,sceneEscape,sceneOut,sceneTable,enterHide,leaveHide,coldDevon,coldBree,coldManager,setPower,HPT,HAI,FZ,glassPaint,lpRate,resetWorld,checkpoint,LS,castVisible};
 
 /* the title screen: a slow drift through the dark dining room */
 const TCAM={t:0};
 function titleCam(dt){TCAM.t+=dt;const t=TCAM.t*0.05;camera.position.set(19+Math.sin(t)*3,1.45+Math.sin(t*1.7)*0.08,23.5+Math.cos(t*0.8)*1.2);
   camera.lookAt(29+Math.sin(t*0.6)*3,1.35,13);}
 /* which beds play, from where the camera is */
-function ambience(){if(!AC)return;if(CR.on){for(const k in amb)setAmb(k,0,0.4);return;}const g=groupAt(camera.position.x,camera.position.z);
+function ambience(){if(!AC||window.__noAmb)return;if(CR.on){for(const k in amb)setAmb(k,0,0.4);return;}const g=groupAt(camera.position.x,camera.position.z);
   const humRooms={kitchen:0.4,dining:0.22,hall:0.3,office:0.18,employee:0.32,party:0.2,closet:0.15,vest:0.2,mens:0.35,womens:0.35,store:0.2};
   setAmb('hum',(humRooms[g]||0.05)*(G.mode==='title'?0.4:1),0.8);setAmb('room',0.22,1);
   const fz=g==='freezer'?0.6:Math.max(0,0.25-Math.hypot(camera.position.x-11,camera.position.z-3)*0.03);setAmb('freezer',fz,0.6);

@@ -24,9 +24,9 @@ function toniChain(channel,pos,vol){const hp=AC.createBiquadFilter();hp.type='hi
   const pk=AC.createBiquadFilter();pk.type='peaking';pk.frequency.value=channel==='tape'?1200:1900;pk.Q.value=0.9;pk.gain.value=channel==='tape'?3:5;
   const sh=AC.createWaveShaper();const n=1024,c=new Float32Array(n),k=channel==='pa'?3.2:2.2;for(let i=0;i<n;i++){const x=i/(n-1)*2-1;c[i]=Math.tanh(k*x)/k;}sh.curve=c;
   // the shaper has unity gain at low level (it only crunches the peaks); these gains put Toni level with the family, a touch under
-  const g=AC.createGain();g.gain.value=vol*(channel==='pa'?1.15:channel==='tape'?1.0:1.1);hp.connect(pk);pk.connect(sh);sh.connect(lp);lp.connect(g);
-  let out=g;if(channel==='phone'&&pos){const p=mkPanner(pos.x,1.45,pos.z,2.4);p.rolloffFactor=0.9;g.connect(p);out=p;}
-  out.connect(comp);const v=AC.createGain();v.gain.value=channel==='pa'?0.42:channel==='tape'?0.08:0.2;out.connect(v);v.connect(verb);return hp;}
+  const g=AC.createGain();g.gain.value=vol*(channel==='pa'?0.8:channel==='tape'?0.72:1.0);hp.connect(pk);pk.connect(sh);sh.connect(lp);lp.connect(g);
+  // from his phone: through a panner (which already feeds the mix); over the PA or the tape: straight in
+  let out=g;if(channel==='phone'&&pos){const p=mkPanner(pos.x,1.45,pos.z,2.4);p.rolloffFactor=0.9;g.connect(p);out=p;}else out.connect(comp);const v=AC.createGain();v.gain.value=channel==='pa'?0.42:channel==='tape'?0.08:0.2;out.connect(v);v.connect(verb);return hp;}
 async function toniPlay(text,pos,channel,vol=1){if(!AC||!hasVO('toni',text))return 0;const b=await voDecode(voKey('toni',text));if(!b)return 0;toniHush();
   const s=AC.createBufferSource();s.buffer=b;s.connect(toniChain(channel,pos,vol*voiceVol));s.start(now());TONI_VO.src=s;s.onended=()=>{if(TONI_VO.src===s)TONI_VO.src=null;};return b.duration;}
 function toniHush(){const s=TONI_VO.src;TONI_VO.src=null;if(s){try{s.stop();}catch(e){}}}

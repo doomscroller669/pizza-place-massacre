@@ -8,33 +8,36 @@ function initAudio(){
   try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){AC=null;return;}
   master=AC.createGain();master.gain.value=0.9;
   comp=AC.createDynamicsCompressor();comp.threshold.value=-16;comp.ratio.value=4;
-  comp.connect(master);master.connect(AC.destination);
+  // a last limiter, so a scream on top of a slam on top of the score never clips the phone's speaker
+  const lim=AC.createDynamicsCompressor();lim.threshold.value=-4;lim.knee.value=0;lim.ratio.value=20;lim.attack.value=0.002;lim.release.value=0.18;
+  comp.connect(master);master.connect(lim);lim.connect(AC.destination);
   verb=AC.createConvolver();verb.buffer=impulse(1.6,2.6);const vg=AC.createGain();vg.gain.value=0.28;verb.connect(vg);vg.connect(comp);
   busFx=AC.createGain();busFx.gain.value=1;busFx.connect(comp);busFx.connect(verb);
   busAmb=AC.createGain();busAmb.gain.value=0.8;busAmb.connect(comp);
   busMus=AC.createGain();busMus.gain.value=0.5;busMus.connect(comp);busMus.connect(verb);
   noiseBuf=mkNoise(2,false);brownBuf=mkNoise(4,true);
-  setTimeout(()=>voWarm(),200);
+  setTimeout(()=>voWarm(),200);setTimeout(()=>sfxWarm(),60);
   // beds
   // a soft electrical hum, felt more than heard (no saw, no high whine)
-  amb.hum=bed(()=>{const g=AC.createGain();[[60,0.05],[120,0.025],[180,0.008]].forEach(([f,a])=>{const o=AC.createOscillator();o.type='sine';o.frequency.value=f;const og=AC.createGain();og.gain.value=a;o.connect(og);og.connect(g);o.start();});return g;});
-  amb.room=bed(()=>{const n=AC.createBufferSource();n.buffer=brownBuf;n.loop=true;const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=320;const g=AC.createGain();n.connect(lp);lp.connect(g);n.start();return g;});
+  amb.hum=bed(()=>{const g=AC.createGain();[[60,0.05],[120,0.025],[180,0.008]].forEach(([f,a])=>{const o=AC.createOscillator();o.type='sine';o.frequency.value=f;const og=AC.createGain();og.gain.value=a;o.connect(og);og.connect(g);o.start();});return g;},0.4);
+  amb.room=bed(()=>{const n=AC.createBufferSource();n.buffer=brownBuf;n.loop=true;const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=320;const g=AC.createGain();n.connect(lp);lp.connect(g);n.start();return g;},0.25);
   amb.freezer=bed(()=>{const g=AC.createGain();const n=AC.createBufferSource();n.buffer=brownBuf;n.loop=true;const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=520;const ng=AC.createGain();ng.gain.value=0.9;n.connect(lp);lp.connect(ng);ng.connect(g);n.start();
-    const o=AC.createOscillator();o.type='sine';o.frequency.value=50;const og=AC.createGain();og.gain.value=0.05;o.connect(og);og.connect(g);o.start();return g;});
+    const o=AC.createOscillator();o.type='sine';o.frequency.value=50;const og=AC.createGain();og.gain.value=0.05;o.connect(og);og.connect(g);o.start();return g;},0.18);
   amb.oven=bed(()=>{const g=AC.createGain();const n=AC.createBufferSource();n.buffer=brownBuf;n.loop=true;const bp=AC.createBiquadFilter();bp.type='bandpass';bp.frequency.value=260;bp.Q.value=0.8;n.connect(bp);bp.connect(g);n.start();
     const o=AC.createOscillator();o.type='triangle';o.frequency.value=43;const og=AC.createGain();og.gain.value=0.25;o.connect(og);og.connect(g);o.start();return g;});
   amb.arcade=bed(()=>{const g=AC.createGain();const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2400;lp.connect(g);arcadeLoop(lp);return g;});
   // rain on the roof and the windows of the Ramirez house, and the house's quiet
   amb.rain=bed(()=>{const g=AC.createGain();const n=AC.createBufferSource();n.buffer=noiseBuf;n.loop=true;const bp=AC.createBiquadFilter();bp.type='bandpass';bp.frequency.value=1400;bp.Q.value=0.4;const ng=AC.createGain();ng.gain.value=0.18;n.connect(bp);bp.connect(ng);ng.connect(g);n.start();
     const r=AC.createBufferSource();r.buffer=brownBuf;r.loop=true;const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=300;const rg=AC.createGain();rg.gain.value=0.7;r.connect(lp);lp.connect(rg);rg.connect(g);r.start();
-    const drip=()=>{if(!AC)return;const t=now();sTone(g,t,0.05,'sine',900+Math.random()*1400,500,0.04);setTimeout(drip,120+Math.random()*500);};drip();return g;});
+    const drip=()=>{if(!AC)return;const t=now();sTone(g,t,0.05,'sine',900+Math.random()*1400,500,0.04);setTimeout(drip,120+Math.random()*500);};drip();return g;},0.55);
   amb.house=bed(()=>{const g=AC.createGain();const o=AC.createOscillator();o.type='sine';o.frequency.value=55;const og=AC.createGain();og.gain.value=0.05;o.connect(og);og.connect(g);o.start();
     const tick=()=>{if(!AC)return;const t=now();sTone(g,t,0.03,'square',2400,0,0.02);sNoise(g,t,0.02,'bandpass',3000,4,0.05);setTimeout(tick,1000);};tick();return g;});
   amb.hunt=bed(()=>{const g=AC.createGain();const o=AC.createOscillator();o.type='sawtooth';o.frequency.value=36.7;const o2=AC.createOscillator();o2.type='sawtooth';o2.frequency.value=37.3;
-    const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=140;o.connect(lp);o2.connect(lp);const lfo=AC.createOscillator();lfo.frequency.value=1.6;const lg=AC.createGain();lg.gain.value=0.5;lfo.connect(lg);
-    const vca=AC.createGain();vca.gain.value=0.5;lg.connect(vca.gain);lp.connect(vca);vca.connect(g);o.start();o2.start();lfo.start();return g;});
+    const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=95;o.connect(lp);o2.connect(lp);const lfo=AC.createOscillator();lfo.frequency.value=1.6;const lg=AC.createGain();lg.gain.value=0.5;lfo.connect(lg);
+    const vca=AC.createGain();vca.gain.value=0.5;lg.connect(vca.gain);lp.connect(vca);vca.connect(g);o.start();o2.start();lfo.start();return g;},0.12);
 }
-function bed(make){const g=make();const out=AC.createGain();out.gain.value=0;g.connect(out);out.connect(busAmb);return out;}
+/* trim: each bed's own level, so the room tone, the freezer and the hunt sit well under the score and the effects */
+function bed(make,trim=1){const g=make();const t=AC.createGain();t.gain.value=trim;const out=AC.createGain();out.gain.value=0;g.connect(t);t.connect(out);out.connect(busAmb);return out;}
 function setAmb(name,v,tc=0.6){if(AC&&amb[name])amb[name].gain.setTargetAtTime(v,AC.currentTime,tc);}
 function impulse(sec,decay){const len=Math.floor(AC.sampleRate*sec);const b=AC.createBuffer(2,len,AC.sampleRate);for(let ch=0;ch<2;ch++){const d=b.getChannelData(ch);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,decay);}return b;}
 function mkNoise(sec,brown){const len=Math.floor(AC.sampleRate*sec);const b=AC.createBuffer(1,len,AC.sampleRate);const d=b.getChannelData(0);let last=0;for(let i=0;i<len;i++){const w=Math.random()*2-1;if(brown){last=(last+0.02*w)/1.02;d[i]=last*3.5;}else d[i]=w;}return b;}
@@ -169,6 +172,42 @@ function startTheme(o={}){if(!AC)return;stopMusic();const st={alive:true,loop:0,
 function startJingle(slow){startTheme(slow?{warped:true,quiet:true,noTag:true}:{});}
 function stopMusic(){if(musicOn&&musicOn.stop)musicOn.stop();musicOn=null;}
 
+/* ---------- recorded sound effects ----------
+   Screams, gasps, bodies, bone, glass and gore are real recordings (07-sfxdata.js, cut by tools/sfx.py from Freesound
+   clips, credited in README.md). Each has a few takes; smp() plays one at random, never the same take twice running,
+   with a touch of pitch variation. Until they're decoded (a moment after the audio starts) the old synth sounds stand in. */
+const SBUF={};let sfxReady=false;
+function b64buf(b64){const bin=atob(b64);const u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u.buffer;}
+async function sfxWarm(){if(sfxReady||!AC||typeof SFX_DATA==='undefined')return;sfxReady=true;
+  for(const k in SFX_DATA){const L=[];for(const b of SFX_DATA[k]){const buf=await new Promise(res=>{try{const p=AC.decodeAudioData(b64buf(b),res,()=>res(null));if(p&&p.catch)p.catch(()=>res(null));}catch(e){res(null);}});if(buf)L.push(buf);}SBUF[k]=L;}}
+function smp(dest,t,name,vol=1,rate=1,delay=0){const L=SBUF[name];if(!AC||!L||!L.length)return false;let i=(Math.random()*L.length)|0;if(L.length>1&&i===L.last)i=(i+1)%L.length;L.last=i;
+  const s=AC.createBufferSource();s.buffer=L[i];s.playbackRate.value=rate*(0.95+Math.random()*0.1);const g=AC.createGain();g.gain.value=vol;s.connect(g);g.connect(dest);s.start(Math.max(t+delay,AC.currentTime));return s;}
+/* a sound from the other side of the walk-in door: duller, as if through the steel and the glass */
+function thru(dest,cut=2600){const f=AC.createBiquadFilter();f.type='lowpass';f.frequency.value=cut;f.Q.value=0.6;f.connect(dest);return f;}
+Object.assign(SFX,{
+  // a body hitting the floor or a table, a weapon hitting a head
+  thud(p,t){if(!smp(p,t,'bodyHit',0.9)){sTone(p,t,0.3,'sine',72,32,0.9,0.002);sNoise(p,t,0.12,'lowpass',700,1,0.7,0.002);}else sTone(p,t,0.25,'sine',62,34,0.35,0.002);},
+  fall(p,t){if(!smp(p,t,'bodyFall',1))SFX.thud(p,t);},
+  headHit(p,t,hard){smp(p,t,'headHit',1);smp(p,t,'bodyHit',0.55,0.85);if(hard)smp(p,t,'bone',0.8,1,0.02);sTone(p,t,0.22,'sine',70,36,0.4,0.002);},
+  // Manny's knuckles on the window
+  knock(p,t){if(!smp(p,t,'knock',1))sTone(p,t,0.12,'sine',160,90,0.6,0.002);},
+  // a face driven into the glass: the thump through the door, the window cracking
+  faceSlam(p,t,k=0){smp(p,t,'glassHit',1);smp(p,t,'slamHit',0.75,0.8);smp(p,t,'glassCrack',0.6+k*0.2,1,0.015);if(k>=2)smp(p,t,'bone',0.7,1,0.03);},
+  crack(p,t){if(!smp(p,t,'glassCrack',0.9))for(let i=0;i<5;i++)sNoise(p,t+i*0.018,0.03,'highpass',4200,1,0.5,0.001);},
+  // the extinguisher against her head, against the glass
+  clang(p,t,hard){smp(p,t,'metalHit',0.9);smp(p,t,'headHit',0.9,0.9);smp(p,t,'glassHit',0.7);if(hard)smp(p,t,'bone',0.9,1,0.02);},
+  // the rocker going in
+  chop(p,t){if(!smp(p,t,'chop',1)){sNoise(p,t,0.16,'bandpass',900,2,0.8,0.002,300);return;}smp(p,t,'squelch',1,0.9,0.01);if(Math.random()<0.5)smp(p,t,'bone',0.7,1,0.03);smp(p,t,'splat',0.6,1,0.06);sTone(p,t,0.2,'sine',80,38,0.4,0.002);},
+  gore(p,t){smp(p,t,'squelch',1);smp(p,t,'splat',0.7,1,0.05);},
+  slam(p,t){if(!smp(p,t,'doorSlam',1)){sNoise(p,t,0.4,'lowpass',500,1,1.0,0.002,200);sTone(p,t,0.4,'sine',60,30,0.9,0.002);}},
+  crash(p,t){smp(p,t,'bodyFall',1);smp(p,t,'glassBreak',0.8,1,0.08);},
+  shatter(p,t){smp(p,t,'glassBreak',1);},
+  // voices with no words: screams, gasps
+  scream(p,t,kind='F',vol=1){return smp(p,t,'scream'+kind,vol*0.75);},
+  yell(p,t,vol=1){return smp(p,t,'yellM',vol*0.75);},
+  gasp(p,t,a=0.6,who='F'){if(!smp(p,t,'gasp'+who,Math.min(1.2,a*1.6)))sNoise(p,t,0.4,'bandpass',1100,1.6,a,0.03,2600);},
+});
+
 /* ---------- the score: 80s horror synth for the scary parts ----------
    Detuned saw pads, a filtered bass ostinato, bell tones and toms, all synthesized. Four cues:
    'dread'  slow: a pad that never resolves, a ticking low pulse, two bells a half step apart
@@ -178,10 +217,10 @@ function stopMusic(){if(musicOn&&musicOn.stop)musicOn.stop();musicOn=null;}
    A scene sets the base cue with scoreBase(); a chase takes over while he's after you, and death or a reset stops it. */
 const SCORE={cur:null,base:null,chaseT:0};
 const CUES={
-  dread:{bpm:56,bars:4,gain:0.85},
-  stalk:{bpm:100,bars:4,gain:0.8},
-  chase:{bpm:148,bars:4,gain:0.75},
-  theme:{bpm:96,bars:20,loopTo:4,gain:1.3},
+  dread:{bpm:56,bars:4,gain:1.25},
+  stalk:{bpm:100,bars:4,gain:1.15},
+  chase:{bpm:148,bars:4,gain:1.05},
+  theme:{bpm:96,bars:20,loopTo:4,gain:1.85},
 };
 function scoreVoices(out){
   const osc=(type,f,t,dur,peak,a=0.01,rel=0.08,dest=out,det=0)=>{const v=AC.createOscillator();v.type=type;v.frequency.value=f;v.detune.value=det;const g=AC.createGain();g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(peak,t+a);

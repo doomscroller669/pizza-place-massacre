@@ -268,7 +268,7 @@ async function sceneEat(){const run=G.run;G.who='lucia';const res=G.result;const
     if(res.kind==='allergy'){A.pose='choke';A.shake=1;setExpr(A,'choke');at3(A.x,1.2,A.z,(p,t)=>SFX.choke(p,t),2);await gwait(0.9);if(!alive(run))return;
       D.pose='stand';setExpr(D,'scream');BOMB.fast=3;line('dad','ALEX! His pen! His pen’s in his jacket! Let me get it, PLEASE—',{expr:'scream'});await gwait(1.1);if(!alive(run))return;
       TONI.armed=true;T.aiming=true;T.yaw=Math.atan2(D.x-T.x,D.z-T.z);await gwait(1.2);if(!alive(run))return;D.pose='sitScared';setExpr(D,'fear');await gwait(1.6);if(!alive(run))return;
-      A.shake=0;A.pose='slumpDead';setExpr(A,'dead');at3(A.x,1,A.z,(p,t)=>SFX.gasp(p,t,0.3),2);await gwait(1.6);if(!alive(run))return;}
+      A.shake=0;A.pose='slumpDead';setExpr(A,'dead');at3(A.x,1,A.z,(p,t)=>SFX.gasp(p,t,0.3,'M'),2);await gwait(1.6);if(!alive(run))return;}
     else{TONI.armed=true;T.aiming=true;T.yaw=Math.atan2(A.x-T.x,A.z-T.z);await gwait(1.3);if(!alive(run))return;$('fade').style.transitionDuration='0s';$('fade').style.opacity='1';
       at3(T.x,1.4,T.z,(p,t)=>SFX.shot(p,t),3);A.pose='slumpDead';setExpr(A,'dead');await gwait(1.8);if(!alive(run))return;await fadeTo(0,0.6);if(!alive(run))return;}
     T.aiming=false;G.flags.alex='dead';setExpr(D,'sad');D.shake=0.6;await gwait(1.2);if(!alive(run))return;

@@ -58,6 +58,26 @@ python3 tools/assemble.py
 
 On a two-core machine a line takes about 30–40 seconds.
 
+## Sound effects
+
+The screams, gasps, body hits and falls, bone, glass, knocks, the door slam and the gore are real recordings: Freesound clips from the FSD50K dataset (Fonseca et al., 2022, via its Hugging Face mirror), released by their uploaders under CC0 or CC BY 3.0. `tools/sfx.py` cuts them (`CUTS` lists every take: clip, start, end, level), encodes them at 32 kHz mono and writes `src/js/07-sfxdata.js`; `tools/sfx.json` is the full list with links. Everything else (the score, the ambience, footsteps, the oven, the UI) is synthesized in the browser.
+
+```
+python3 tools/sfx.py --fetch      # downloads the source clips into .sfx_cache/ (not committed), then rebuilds
+python3 tools/assemble.py
+```
+
+Credits for the CC BY 3.0 clips (creativecommons.org/licenses/by/3.0):
+
+- “screaming_male_painIII.mp3” by GabrielaUPF, https://freesound.org/people/GabrielaUPF/sounds/220293/
+- “Scream 01” by adriancalzon, https://freesound.org/people/adriancalzon/sounds/219858/
+- “neck_crack.wav” by Halleck, https://freesound.org/people/Halleck/sounds/21914/
+- “Bone Break 2a” by XRTdumper, https://freesound.org/people/XRTdumper/sounds/362970/
+- “Chipping Large Ice Block 2.wav” by kev_durr, https://freesound.org/people/kev_durr/sounds/426204/
+- “Flesh Bite.wav” by jgriffie919, https://freesound.org/people/jgriffie919/sounds/400174/
+
+The rest are CC0 (no credit required): Freesound sounds 94773, 133282, 169628, 208696, 208893, 210536, 219660, 241592, 245410, 269484, 316579, 318077, 318078, 369109, 376308, 384213, 389804, 391362, 405705, 406197, 411034, 413645, 414213, 414848, 416890.
+
 ## Faces
 
 The cast has photo faces in the Puppet Combo style: a low-poly blocky head with a photo projected onto its front, and faceted bodies with no outlines. The people in the photos are not real. `tools/faces.py` generates each one with Realistic Vision 5.1 (a photoreal Stable Diffusion 1.5 model, CreativeML OpenRAIL-M) plus the LCM LoRA, so a face takes about a minute and a half on a CPU. Each character gets a neutral portrait and fear, angry and sad versions made from it, so they stay the same person. Each image is lined up on the eyes (OpenCV's YuNet detector), the backdrop is cut out (rembg) and replaced with the head's own hair and skin, and the result is saved in `tools/faces/`. `tools/faces_pack.py` packs them into `src/js/06-facedata.js` at 128×128 with the eye and mouth positions. The game draws blinks and the moving jaw onto the photo from those positions.

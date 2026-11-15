@@ -161,5 +161,7 @@ const toTitle=()=>{location.reload();};
 $('quitBtn').addEventListener('click',toTitle);$('deadQuit').addEventListener('click',toTitle);$('endQuit').addEventListener('click',toTitle);
 $('againBtn').addEventListener('click',()=>{LS.del('save');location.reload();});
 function die(head,lineTxt){if(G.mode==='dead')return;G.run++;scoreBase(null,true);hushToni();bubble('off');setMode('dead');P.hidden=null;$('hideMask').hidden=true;$('dlg').hidden=true;DS=null;
-  setAmb('hunt',0,0.3);postU.uFlash.value=0.9;SFX.sting();$('deadHead').textContent=head||'ORDER UP.';$('deadLine').textContent=lineTxt||'';
+  setAmb('hunt',0,0.3);postU.uFlash.value=0.9;SFX.sting();
+  // a scream, cut short, then the body
+  if(AC&&!/^FIRED/.test(head||'')){const s=SFX.scream(busFx,now(),G.who==='lucia'?'Girl':'M',0.9);if(s)try{s.stop(now()+0.75);}catch(e){}SFX.fall(busFx,now()+0.7);}$('deadHead').textContent=head||'ORDER UP.';$('deadLine').textContent=lineTxt||'';
   setTimeout(()=>{$('dead').hidden=false;setTimeout(()=>$('retryBtn').focus({preventScroll:true}),30);},900);}

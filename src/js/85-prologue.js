@@ -32,7 +32,7 @@ function stepSpray(dt){if(!SPRAY.on)return;if(SPRAY.run!==G.run){SPRAY.on=false;
   while(SPRAY.acc>=1){SPRAY.acc-=1;const sp=3.4+R()*1.2;puff(_sb.x,_sb.y,_sb.z,d.x*sp+(R()-0.5)*0.5,d.y*sp+(R()-0.5)*0.4,d.z*sp+(R()-0.5)*0.5,1.6+R()*1.4,0.25);}}
 function stepPuffs(dt){stepSpray(dt);for(let i=PUFF.length-1;i>=0;i--){const p=PUFF[i];p.t+=dt;const k=p.t/p.life,dr=Math.exp(-dt*2.6);p.vx*=dr;p.vy=p.vy*dr+dt*0.12;p.vz*=dr;
   // nothing goes through the walk-in door
-  const pz=p.m.position.z+p.vz*dt;if(G.where==='pizzeria'&&p.m.position.z>=6.06&&pz<6.06&&Math.abs(p.m.position.x-11)<0.8){p.vz=Math.abs(p.vz)*0.15;p.vx+=(R()-0.5)*1.2;p.vy+=(R()-0.3)*0.6;}
+  const pz=p.m.position.z+p.vz*dt;if(G.where==='pizzeria'&&p.m.position.z>=6.06&&pz<6.06&&p.m.position.x>8&&p.m.position.x<14){p.vz=Math.abs(p.vz)*0.15;p.vx+=(R()-0.5)*1.2;p.vy+=(R()-0.3)*0.6;}
   p.m.position.x+=p.vx*dt;p.m.position.y+=p.vy*dt;p.m.position.z+=p.vz*dt;p.m.scale.setScalar(p.s0+k*2.6);p.m.material.opacity=Math.min(0.85,p.t*4)*(1-k);
   p.m.lookAt(camera.position);if(k>=1){scene.remove(p.m);p.m.geometry.dispose();p.m.material.dispose();PUFF.splice(i,1);}}}
 function stepPrologue(dt){
@@ -139,15 +139,16 @@ async function coldDevon(){const run=G.run;const T=CHARS.toni,D=CHARS.devon;
   for(let i=0;i<3;i++){SFX.knock(busFx,now());shake(0.012,0.15);await gwait(0.22);}if(!alive(run))return;
   thinkM('Earbuds. He can’t hear me. He never hears anything.',3);
   scoreBase('stalk');toniTool('pin');toniShow(8.6,8.1,Math.PI/2);await toniWalk(11.15,8.7,1.6);if(!alive(run))return;toniFace(D.x,D.z);await gwait(0.5);if(!alive(run))return;
-  T.poseOv='swingUp';await gwait(0.45);if(!alive(run))return;T.poseOv='swingDown';await gwait(0.08);at3(D.x,1.6,D.z,(p,t)=>SFX.thud(p,t),1.6);shake(0.01,0.2);
-  decal(12.0,1.35,9.87,0.6,0.5,'n',3);D.pose='crumple';setExpr(D,'pain');D.shake=0.5;await gwait(0.5);if(!alive(run))return;
-  T.poseOv='swingUp';await gwait(0.4);if(!alive(run))return;T.poseOv='swingDown';await gwait(0.08);at3(D.x,1,D.z,(p,t)=>SFX.thud(p,t),1.6);shake(0.012,0.2);
-  D.shake=0;setExpr(D,'dead');D.pose='limp';await tween(0.4,k=>{D.root.rotation.z=k*1.45;D.y=k*0.14;});if(!alive(run))return;decal(10.9,0.013,8.9,1.2,0.9,'up',4);
+  T.poseOv='swingUp';await gwait(0.45);if(!alive(run))return;T.poseOv='swingDown';await gwait(0.08);at3(D.x,1.6,D.z,(p,t)=>{const f=thru(p,3000);SFX.headHit(f,t);smp(f,t,'gaspM',0.9,1,0.07);},1.8);shake(0.01,0.2);
+  decal(12.0,1.35,9.87,0.6,0.5,'n',3);D.pose='crumple';setExpr(D,'pain');D.shake=0.5;await tween(0.3,k=>{D.z=lerp(8.75,8.35,easeOut(k));D.yaw=lerp(0,-0.5,k);});if(!alive(run))return;await gwait(0.2);if(!alive(run))return;
+  T.poseOv='swingUp';await gwait(0.4);if(!alive(run))return;T.poseOv='swingDown';await gwait(0.08);at3(D.x,1,D.z,(p,t)=>{const f=thru(p,3000);SFX.headHit(f,t,true);SFX.gore(f,t+0.04);},1.8);shake(0.012,0.2);
+  D.shake=0;setExpr(D,'dead');D.pose='limp';await tween(0.4,k=>{D.root.rotation.z=k*1.45;D.y=k*0.14;});if(!alive(run))return;at3(D.x,0.3,D.z,(p,t)=>SFX.fall(thru(p,2600),t),1.6);decal(10.9,0.013,8.9,1.2,0.9,'up',4);
   await gwait(0.4);T.poseOv=null;await line('manny','No. No, no, no, no—',{expr:'fear'});if(!alive(run))return;
   toniWalk(8.6,8.1,1.4).then(()=>{if(alive(run)&&G.flags.coldStage===1){toniHide();}});await gwait(1.6);}
 async function coldBree(){const run=G.run;const T=CHARS.toni,B=CHARS.bree;
   B.where='kitchen';setExpr(B,'fear');place(B,14.9,7.2,-Math.PI/2);B.pose='stand';await gwait(0.3);if(!alive(run))return;
-  line('bree','Devon? DEVON! Oh my God—',{expr:'scream'});await npcMove(B,11.0,6.45,3.3);if(!alive(run))return;B.yaw=Math.PI;B.pose='bang';B.look=[11,1.6,5.5];
+  line('bree','Devon? DEVON! Oh my God—',{expr:'scream'});at3(B.x,1.6,B.z,(p,t)=>SFX.scream(thru(p,3400),t,'F',1),2.5);await npcMove(B,12.0,7.05,3.3);if(!alive(run))return;await npcMove(B,11.0,6.62,3.0);if(!alive(run))return;B.yaw=Math.PI;B.pose='bang';B.look=[11,1.6,5.5];
+  at3(11,1.3,6.05,(p,t)=>{for(let i=0;i<4;i++)smp(p,t+i*0.24,'glassHit',0.55,1.1);},1.6);
   await nudge(11.0,1.45,6.3,0.4);if(!alive(run))return;
   at3(11.4,1.1,6.1,(p,t)=>SFX.rattle(p,t));await line('bree','Manny?! Why won’t it open? Why won’t it OPEN?',{expr:'scream'});if(!alive(run))return;
   await line('manny','The pin! There’s a pin in the latch, pull it out!',{expr:'fear'});if(!alive(run))return;
@@ -155,11 +156,11 @@ async function coldBree(){const run=G.run;const T=CHARS.toni,B=CHARS.bree;
   at3(11.4,1.1,6.1,(p,t)=>SFX.rattle(p,t));await line('bree','I can’t find it, I can’t—',{expr:'scream'});if(!alive(run))return;
   await waitUntil(()=>TONI.state==='idle');if(!alive(run))return;toniFace(B.x,B.z);await gwait(0.3);if(!alive(run))return;
   // he sprays her, and the window goes white
-  T.poseOv='spray';setExpr(B,'scream');await gwait(0.25);if(!alive(run))return;at3(10.6,1.4,6.8,(p,t)=>SFX.hiss(p,t,1.8),2);sprayOn(true);B.shake=1;
+  T.poseOv='spray';setExpr(B,'scream');await gwait(0.25);if(!alive(run))return;at3(10.6,1.4,6.8,(p,t)=>SFX.hiss(p,t,1.8),2);let scr=null;at3(B.x,1.6,B.z,(p,t)=>{scr=SFX.scream(thru(p,2800),t,'F',1);},2.5);sprayOn(true);B.shake=1;
   await tween(1.4,k=>{FZ.powder=k*0.96;if(((k*20)|0)%3===0)glassPaint();});sprayOn(false);if(!alive(run))return;glassPaint();
-  T.poseOv=null;await tween(0.35,k=>{T.x=lerp(10.35,10.68,k);T.z=lerp(7.3,6.98,k);});if(!alive(run))return;toniFace(B.x,B.z);
-  for(let i=0;i<2;i++){T.poseOv='swingUp';await gwait(0.35);if(!alive(run))return;T.poseOv='swingDown';await gwait(0.06);at3(11,1.5,6.4,(p,t)=>SFX.clang(p,t),1.6);shake(0.02,0.25);if(i===0){glassHand(66,30,0);B.shake=0;}}
-  if(!alive(run))return;B.where='none';T.poseOv=null;toniTool(null);
+  T.poseOv=null;await tween(0.35,k=>{T.x=lerp(10.35,10.55,k);T.z=lerp(7.3,7.2,k);});if(!alive(run))return;toniFace(B.x,B.z);
+  for(let i=0;i<2;i++){T.poseOv='swingUp';await gwait(0.35);if(!alive(run))return;T.poseOv='swingDown';await gwait(0.06);at3(11,1.5,6.4,(p,t)=>{const f=thru(p,3200);SFX.clang(f,t,i===1);if(i===0){if(scr)try{scr.stop(t);}catch(e){}smp(f,t,'screamFshort',0.9,1,0.04);}},1.8);shake(0.02,0.25);if(i===0){glassHand(66,30,0);B.shake=0;}}
+  if(!alive(run))return;B.where='none';T.poseOv=null;toniTool(null);at3(11,0.3,6.6,(p,t)=>SFX.fall(thru(p,2600),t+0.15),1.6);
   // the powder settles off the glass; her hand slides down it
   const hand=(g,k)=>{const r=mulberry(77),y=lerp(30,72,k);g.lineCap='round';
     for(let i=0;i<4;i++){const x0=60.5+i*3.6+(i===0?-1:0),top=28-(i===1||i===2?3:0)+r()*2;let yy=top;g.strokeStyle='rgba(118,8,6,.8)';
@@ -181,24 +182,24 @@ async function coldManager(){const run=G.run;const T=CHARS.toni,M=CHARS.manager;
   mv.then(()=>{if(alive(run)){toniFace(M.x,M.z);M.yaw=Math.atan2(T.x-M.x,T.z-M.z);}});
   await line('manager','Okay. Okay, buddy. Easy. Is this about the write-up? The drawing? Nobody’s mad about the drawing—',{expr:'fear'});if(!alive(run))return;
   T.poseOv='type';await toniSay('Time for your performance review.');if(!alive(run))return;T.poseOv=null;
-  line('manager','Wait— WAIT—',{expr:'scream'});
+  line('manager','Wait— WAIT—',{expr:'scream'});at3(M.x,1.6,M.z,(p,t)=>SFX.yell(thru(p,3200),t,1),2);
   // he spins him around and puts his face into the glass
   await tween(0.25,k=>{T.x=lerp(10.0,11.1,k);T.z=lerp(7.7,7.2,k);});if(!alive(run))return;T.yaw=Math.PI;M.yaw=Math.PI;M.look=null;M.pose='pinned';T.poseOv='grab';toniTool(null);
   await nudge(11.05,1.5,6.2,0.25);if(!alive(run))return;
   for(let i=0;i<3;i++){await tween(0.13,k=>{M.z=lerp(6.75,6.38,k);T.z=lerp(7.2,6.92,k);});if(!alive(run))return;
-    at3(11,1.5,6.05,(p,t)=>{SFX.knock(p,t);SFX.crack(p,t);},1.4);shake(0.03,0.2);setExpr(M,i===2?'pain':'scream');glassCrack(58+i*5,46-i*3,6+i*3,11+i);glassBlood(60,46,10+i*7,14+i*10,21+i);
+    at3(11,1.5,6.05,(p,t)=>{SFX.faceSlam(p,t,i);if(i<2)smp(thru(p,3400),t,i?'yellM':'screamM',0.85,1,0.06);},1.6);shake(0.03,0.2);setExpr(M,i===2?'pain':'scream');glassCrack(58+i*5,46-i*3,6+i*3,11+i);glassBlood(60,46,10+i*7,14+i*10,21+i);
     if(i<2){await tween(0.32,k=>{M.z=lerp(6.38,6.75,k);T.z=lerp(6.92,7.2,k);});if(!alive(run))return;}}
   // he slides down the glass
   glassAdd(()=>{});await tween(1.1,k=>{M.y=-k*0.55;FZ.layers[FZ.layers.length-1]=(g)=>{g.strokeStyle='rgba(110,8,6,.8)';g.lineCap='round';g.lineWidth=9;g.beginPath();g.moveTo(60,48);g.lineTo(lerp(60,57,k),lerp(48,100,k));g.stroke();};glassPaint();});if(!alive(run))return;
   // then he's dragged down below the window, and the rocker comes down. And again.
-  await tween(0.3,k=>{M.z=lerp(6.38,6.9,k);M.y=-0.55-k*0.5;T.z=lerp(6.92,7.15,k);});if(!alive(run))return;M.where='none';toniTool('rocker');T.poseOv='chopUp';await gwait(0.3);if(!alive(run))return;
-  for(let i=0;i<4;i++){T.poseOv='chopUp';await gwait(0.32);if(!alive(run))return;T.poseOv='chopDown';await gwait(0.05);at3(11,0.5,6.8,(p,t)=>SFX.chop(p,t),1.4);shake(0.018,0.2);postU.uRed.value=0.12;
+  await tween(0.3,k=>{M.z=lerp(6.38,6.9,k);M.y=-0.55-k*0.5;T.z=lerp(6.92,7.3,k);});if(!alive(run))return;M.where='none';T.poseOv='chopUp';await gwait(0.18);if(!alive(run))return;toniTool('rocker');await gwait(0.12);if(!alive(run))return;
+  for(let i=0;i<4;i++){T.poseOv='chopUp';await gwait(0.32);if(!alive(run))return;T.poseOv='chopDown';await gwait(0.05);at3(11,0.5,6.8,(p,t)=>SFX.chop(thru(p,3000),t),1.6);shake(0.018,0.2);postU.uRed.value=0.12;
     glassBlood(40+R()*48,70+R()*24,22,24,40+i);await gwait(0.12);postU.uRed.value=0;}
   if(!alive(run))return;await gwait(1.1);if(!alive(run))return;
   // he stands, cleans the glass for Manny, and shows him the phone
-  T.poseOv=null;toniTool('rag');{const z0=T.z;await tween(0.4,k=>{T.z=lerp(z0,6.78,k);});}if(!alive(run))return;await nudge(11.0,1.6,6.2,0.4);if(!alive(run))return;
+  T.poseOv=null;toniTool('rag');{const z0=T.z;await tween(0.4,k=>{T.z=lerp(z0,6.82,k);});}if(!alive(run))return;await nudge(11.0,1.6,6.2,0.4);if(!alive(run))return;
   T.poseOv='wipe';at3(11,1.5,6.1,(p,t)=>SFX.drag(p,t,1.2),1.4);await gwait(0.9);if(!alive(run))return;glassWipe();await gwait(0.5);if(!alive(run))return;
-  toniTool(null);await tween(0.2,k=>{T.z=lerp(6.78,6.82,k);});if(!alive(run))return;T.poseOv='phoneUp';await gwait(0.4);if(!alive(run))return;
+  toniTool(null);await tween(0.2,k=>{T.z=lerp(6.82,6.84,k);});if(!alive(run))return;T.poseOv='phoneUp';await gwait(0.4);if(!alive(run))return;
   await toniSay('Keep the ovens on. Got a party coming.',{at:[11.0,6.3]});if(!alive(run))return;T.poseOv=null;
   scoreBase('dread');await toniWalk(14.9,7.6,1.5);if(!alive(run))return;toniHide();at3(18,1,30,(p,t)=>SFX.slam(p,t),3);await gwait(1.2);if(!alive(run))return;at3(18,0.5,40,(p,t)=>SFX.engine(p,t),6);
   // Manny slides down the door
@@ -311,7 +312,7 @@ async function sceneRating(){const run=G.run;const D=CHARS.dad,GP=CHARS.grandpa,
   RB.pose='sitScared';setExpr(RB,'fear');await line('ruben','Guys? Guys, this isn’t funny—',{expr:'fear'});if(!alive(run))return;RB.pose='slumpBack';setExpr(RB,'out');await gwait(0.6);if(!alive(run))return;
   D.pose='standUp';setExpr(D,'fear');D.look=[P.x,1.2,P.z];await nudge(D.x,1.3,D.z,0.5);if(!alive(run))return;
   await line('dad','Something’s in the… Lucia. Lucia, call…',{expr:'fear'});if(!alive(run))return;
-  setExpr(D,'out');await tween(0.6,k=>{D.root.rotation.z=-k*1.4;D.y=k*0.0;D.x=lerp(169.6,169.2,k);});if(!alive(run))return;D.pose='limp';at3(D.x,0.3,D.z,(p,t)=>SFX.thud(p,t),1.2);shake(0.015,0.25);
+  setExpr(D,'out');await tween(0.6,k=>{D.root.rotation.z=-k*1.4;D.y=k*0.0;D.x=lerp(169.6,169.2,k);});if(!alive(run))return;D.pose='limp';at3(D.x,0.3,D.z,(p,t)=>SFX.fall(p,t),1.4);shake(0.015,0.25);
   await line('lucia','Dad? DAD!',{name:'Lucia'});if(!alive(run))return;
   await sceneRoom(true);}
 
@@ -416,7 +417,7 @@ async function sceneOut(){const run=G.run;scoreBase(null);G.flags.escaping=false
   await gwait(1.0);if(!alive(run))return;
   toniShow(186.1,3.6,Math.PI/2);TONI.state='idle';T.tilt=0.25;
   await toniSay('Your order is on its way.');if(!alive(run))return;
-  await nudge(186.1,1.75,3.6,0.35);if(!alive(run))return;SFX.sting();shake(0.03,0.3);await gwait(0.6);if(!alive(run))return;
+  await nudge(186.1,1.75,3.6,0.35);if(!alive(run))return;SFX.sting();SFX.gasp(busFx,now(),0.9,'F');shake(0.03,0.3);await gwait(0.6);if(!alive(run))return;
   $('fade').style.transitionDuration='0s';$('fade').style.opacity='1';at3(P.x,1.2,P.z,(p,t)=>SFX.thud(p,t));setAmb('rain',0,0.2);await gwait(2.4);if(!alive(run))return;
   // and wake up at Pepper Toni's
   T.tilt=0;toniHide();setPower(true);G.where='pizzeria';G.flags.canHide=false;sceneTable();}

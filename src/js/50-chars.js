@@ -305,7 +305,7 @@ function buildChar(id){const s=CAST[id];const ch={id,s,mats:[],j:{},pose:'stand'
   const top=s.toni?clothTex('stocking'):s.jacket?clothTex('suit'):clothTex('knit'),legs=s.toni?clothTex('stocking'):id==='alex'||id==='ruben'?clothTex('denim'):clothTex('suit');
   // the blob shadow, under the hips so it follows him in every pose
   const shadow=new THREE.Mesh(new THREE.PlaneGeometry(0.78*b,0.7*b).rotateX(-Math.PI/2),SHADOW_MAT);shadow.position.y=0.012;ch.root.add(shadow);ch.shadow=shadow;
-  const J=n=>{const g=new THREE.Group();ch.j[n]=g;return g;};
+  const J=n=>{const g=new THREE.Group();g.name=n;ch.j[n]=g;return g;};
   const hips=J('hips');hips.position.y=0.94*S;ch.root.add(hips);
   const spine=J('spine');hips.add(spine);
   const skinTex=PUPPET?skinCanvas(id,skin):null;
@@ -460,7 +460,7 @@ const POSES={
   bang:{shL:-1.45,shR:-1.45,elL:-0.95,elR:-0.95,armOut:0.42,neck:-0.05},
   phoneEar:{shR:-1.15,elR:-2.4,armIn:0.2,shL:-0.3,elL:-0.4},
   plead:{shL:-1.3,shR:-1.3,elL:-1.7,elR:-1.7,armOut:0.25,spine:-0.08},
-  pinned:{spine:0.35,neck:-0.15,shL:-1.0,shR:-1.0,elL:-0.6,elR:-0.6,armOut:0.3},
+  pinned:{spine:0.35,neck:-0.15,shL:-0.15,shR:-0.15,elL:-0.35,elR:-0.35,armOut:0.32},
   swingUp:{shL:-2.9,elL:-0.6,shR:-0.6,elR:-0.9,spine:-0.12},
   swingDown:{shL:-0.5,elL:-0.15,shR:-0.6,elR:-0.9,spine:0.35,neck:0.2},
   spray:{shL:-0.45,elL:-0.35,shR:-1.4,elR:-0.2,armIn:0.12,spine:0.06},
