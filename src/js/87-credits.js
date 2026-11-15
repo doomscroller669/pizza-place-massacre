@@ -11,7 +11,7 @@ const CREDITS=[
   [11.0,5.6,'a game developed with','CLAUDE',''],
   [20.4,4.6,'original assets by','Danger Biscuit Games',''],
   [26.0,5.8,'music and sound by','Danger Biscuit Games',''],
-  [35.4,4.4,'written by','J.H. Salmeron',''],
+  [35.4,4.4,'story by','J.H. Salmeron',''],
 ];
 const CR={on:false,built:false,t:0,end:54.5,skip:false,ending:false,fired:{},credit:-1,parts:[],cheese:[],peps:[],drips:[],sauceU:0,dirty:true,cutK:[0,0,0,0],sep:0,bleed:0,bake:0,pepsPainted:false};
 const PZR=0.2,PZH=0.018,TTR=0.3,CUT0=Math.PI/8,OVX=3,CUTL=PZR+0.04;
