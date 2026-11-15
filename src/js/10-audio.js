@@ -9,7 +9,7 @@ function initAudio(){
   master=AC.createGain();master.gain.value=0.9;
   comp=AC.createDynamicsCompressor();comp.threshold.value=-16;comp.ratio.value=4;
   // a last limiter, so a scream on top of a slam on top of the score never clips the phone's speaker
-  const lim=AC.createDynamicsCompressor();lim.threshold.value=-4;lim.knee.value=0;lim.ratio.value=20;lim.attack.value=0.002;lim.release.value=0.18;
+  const lim=AC.createDynamicsCompressor();lim.threshold.value=-2;lim.knee.value=4;lim.ratio.value=10;lim.attack.value=0.004;lim.release.value=0.25;
   comp.connect(master);master.connect(lim);lim.connect(AC.destination);
   verb=AC.createConvolver();verb.buffer=impulse(1.6,2.6);const vg=AC.createGain();vg.gain.value=0.28;verb.connect(vg);vg.connect(comp);
   busFx=AC.createGain();busFx.gain.value=1;busFx.connect(comp);busFx.connect(verb);
@@ -38,7 +38,8 @@ function initAudio(){
 }
 /* trim: each bed's own level, so the room tone, the freezer and the hunt sit well under the score and the effects */
 function bed(make,trim=1){const g=make();const t=AC.createGain();t.gain.value=trim;const out=AC.createGain();out.gain.value=0;g.connect(t);t.connect(out);out.connect(busAmb);return out;}
-function setAmb(name,v,tc=0.6){if(AC&&amb[name])amb[name].gain.setTargetAtTime(v,AC.currentTime,tc);}
+/* only touch a bed's level when it actually changes (ambience() asks every frame; piling up automation is wasted work on the audio thread) */
+function setAmb(name,v,tc=0.6){const b=amb[name];if(!AC||!b||b._v===v)return;b._v=v;b.gain.setTargetAtTime(v,AC.currentTime,tc);}
 function impulse(sec,decay){const len=Math.floor(AC.sampleRate*sec);const b=AC.createBuffer(2,len,AC.sampleRate);for(let ch=0;ch<2;ch++){const d=b.getChannelData(ch);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,decay);}return b;}
 function mkNoise(sec,brown){const len=Math.floor(AC.sampleRate*sec);const b=AC.createBuffer(1,len,AC.sampleRate);const d=b.getChannelData(0);let last=0;for(let i=0;i<len;i++){const w=Math.random()*2-1;if(brown){last=(last+0.02*w)/1.02;d[i]=last*3.5;}else d[i]=w;}return b;}
 const now=()=>AC?AC.currentTime+0.02:0;
@@ -181,7 +182,8 @@ function b64buf(b64){const bin=atob(b64);const u=new Uint8Array(bin.length);for(
 async function sfxWarm(){if(sfxReady||!AC||typeof SFX_DATA==='undefined')return;sfxReady=true;
   for(const k in SFX_DATA){const L=[];for(const b of SFX_DATA[k]){const buf=await new Promise(res=>{try{const p=AC.decodeAudioData(b64buf(b),res,()=>res(null));if(p&&p.catch)p.catch(()=>res(null));}catch(e){res(null);}});if(buf)L.push(buf);}SBUF[k]=L;}}
 function smp(dest,t,name,vol=1,rate=1,delay=0){const L=SBUF[name];if(!AC||!L||!L.length)return false;let i=(Math.random()*L.length)|0;if(L.length>1&&i===L.last)i=(i+1)%L.length;L.last=i;
-  const s=AC.createBufferSource();s.buffer=L[i];s.playbackRate.value=rate*(0.95+Math.random()*0.1);const g=AC.createGain();g.gain.value=vol;s.connect(g);g.connect(dest);s.start(Math.max(t+delay,AC.currentTime));return s;}
+  const s=AC.createBufferSource();s.buffer=L[i];s.playbackRate.value=rate*(0.95+Math.random()*0.1);const g=AC.createGain();g.gain.value=vol;s.connect(g);g.connect(dest);s.start(Math.max(t+delay,AC.currentTime));
+  return {src:s,stop(at,fade=0.05){at=Math.max(at,AC.currentTime);holdParam(g.gain,at);g.gain.setTargetAtTime(0,at,fade/3);try{s.stop(at+fade*2);}catch(e){}}};}
 /* a sound from the other side of the walk-in door: duller, as if through the steel and the glass */
 function thru(dest,cut=2600){const f=AC.createBiquadFilter();f.type='lowpass';f.frequency.value=cut;f.Q.value=0.6;f.connect(dest);return f;}
 Object.assign(SFX,{
@@ -192,7 +194,7 @@ Object.assign(SFX,{
   // Manny's knuckles on the window
   knock(p,t){if(!smp(p,t,'knock',1))sTone(p,t,0.12,'sine',160,90,0.6,0.002);},
   // a face driven into the glass: the thump through the door, the window cracking
-  faceSlam(p,t,k=0){smp(p,t,'glassHit',1);smp(p,t,'slamHit',0.75,0.8);smp(p,t,'glassCrack',0.6+k*0.2,1,0.015);if(k>=2)smp(p,t,'bone',0.7,1,0.03);},
+  faceSlam(p,t,k=0){smp(p,t,'glassHit',0.85);smp(p,t,'slamHit',0.6,0.8);smp(p,t,'glassCrack',0.6+k*0.2,1,0.015);if(k>=2)smp(p,t,'bone',0.7,1,0.03);},
   crack(p,t){if(!smp(p,t,'glassCrack',0.9))for(let i=0;i<5;i++)sNoise(p,t+i*0.018,0.03,'highpass',4200,1,0.5,0.001);},
   // the extinguisher against her head, against the glass
   clang(p,t,hard){smp(p,t,'metalHit',0.9);smp(p,t,'headHit',0.9,0.9);smp(p,t,'glassHit',0.7);if(hard)smp(p,t,'bone',0.9,1,0.02);},
@@ -203,8 +205,8 @@ Object.assign(SFX,{
   crash(p,t){smp(p,t,'bodyFall',1);smp(p,t,'glassBreak',0.8,1,0.08);},
   shatter(p,t){smp(p,t,'glassBreak',1);},
   // voices with no words: screams, gasps
-  scream(p,t,kind='F',vol=1){return smp(p,t,'scream'+kind,vol*0.75);},
-  yell(p,t,vol=1){return smp(p,t,'yellM',vol*0.75);},
+  scream(p,t,kind='F',vol=1){return smp(p,t,'scream'+kind,vol*0.62);},
+  yell(p,t,vol=1){return smp(p,t,'yellM',vol*0.62);},
   gasp(p,t,a=0.6,who='F'){if(!smp(p,t,'gasp'+who,Math.min(1.2,a*1.6)))sNoise(p,t,0.4,'bandpass',1100,1.6,a,0.03,2600);},
 });
 
@@ -223,16 +225,27 @@ const CUES={
   theme:{bpm:96,bars:20,loopTo:4,gain:1.85},
 };
 function scoreVoices(out){
+  const live=[];
   const osc=(type,f,t,dur,peak,a=0.01,rel=0.08,dest=out,det=0)=>{const v=AC.createOscillator();v.type=type;v.frequency.value=f;v.detune.value=det;const g=AC.createGain();g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(peak,t+a);
-    g.gain.setTargetAtTime(0.0001,t+Math.max(a,dur),rel);v.connect(g);g.connect(dest);v.start(t);v.stop(t+Math.max(a,dur)+rel*7);return v;};
+    g.gain.setTargetAtTime(0.0001,t+Math.max(a,dur),rel);v.connect(g);g.connect(dest);v.start(t);v.stop(t+Math.max(a,dur)+rel*5);return v;};
+  // one bass synth for the whole cue (a saw and a square an octave down, one filter, one amp), played note by note:
+  // far lighter on a phone's audio thread than a new oscillator and filter for every sixteenth
+  let BV=null,PV=null;
+  const mkBass=()=>{const f=AC.createBiquadFilter();f.type='lowpass';f.Q.value=6;f.frequency.value=160;const g=AC.createGain();g.gain.value=0;
+    const a=AC.createOscillator();a.type='sawtooth';const b=AC.createOscillator();b.type='square';const bg=AC.createGain();bg.gain.value=0.5;
+    a.connect(f);b.connect(bg);bg.connect(f);f.connect(g);g.connect(out);a.start();b.start();live.push(a,b);return {a,b,f,g};};
+  // one pad: three notes, two detuned saws each, one slow filter, one amp; the chord changes glide
+  const mkPad=()=>{const f=AC.createBiquadFilter();f.type='lowpass';f.Q.value=1.2;f.frequency.value=600;const g=AC.createGain();g.gain.value=0;f.connect(g);g.connect(out);
+    const vs=[];for(let i=0;i<3;i++)for(const d of [-9,9]){const o=AC.createOscillator();o.type='sawtooth';o.detune.value=d;o.frequency.value=220;const og=AC.createGain();og.gain.value=0.5;o.connect(og);og.connect(f);o.start();live.push(o);vs.push(o);}
+    return {f,g,vs};};
   return {
-    osc,
-    // two detuned saws per note through one slow lowpass: the pad
-    pad(notes,t,dur,amp,cut=900){const f=AC.createBiquadFilter();f.type='lowpass';f.Q.value=1.2;f.frequency.setValueAtTime(cut*0.6,t);f.frequency.linearRampToValueAtTime(cut,t+dur*0.6);f.connect(out);
-      for(const m of notes){osc('sawtooth',mhz(m),t,dur,amp,Math.min(1.4,dur*0.4),0.7,f,-9);osc('sawtooth',mhz(m),t,dur,amp,Math.min(1.4,dur*0.4),0.7,f,9);}},
-    // the ostinato: saw plus a sub, a filter that snaps shut
-    bass(m,t,dur,amp,open=1100){const f=AC.createBiquadFilter();f.type='lowpass';f.Q.value=6;f.frequency.setValueAtTime(open,t);f.frequency.exponentialRampToValueAtTime(140,t+Math.max(0.06,dur*0.9));f.connect(out);
-      osc('sawtooth',mhz(m),t,dur*0.9,amp,0.004,0.03,f);osc('square',mhz(m-12),t,dur*0.9,amp*0.5,0.004,0.03,f);},
+    osc,live,
+    pad(notes,t,dur,amp,cut=900){if(!PV)PV=mkPad();PV.vs.forEach((o,i)=>o.frequency.setTargetAtTime(mhz(notes[(i>>1)%notes.length]),t,0.04));
+      PV.f.frequency.setTargetAtTime(cut*0.6,t,0.05);PV.f.frequency.setTargetAtTime(cut,t+0.2,dur*0.25);
+      PV.g.gain.setTargetAtTime(amp*2,t,Math.min(0.5,dur*0.12));PV.g.gain.setTargetAtTime(amp*1.2,t+dur*0.8,dur*0.08);},
+    bass(m,t,dur,amp,open=1100){if(!BV)BV=mkBass();const fr=mhz(m);BV.a.frequency.setValueAtTime(fr,t);BV.b.frequency.setValueAtTime(fr/2,t);
+      BV.f.frequency.setTargetAtTime(open,t,0.002);BV.f.frequency.setTargetAtTime(140,t+0.006,Math.max(0.015,dur*0.3));
+      BV.g.gain.setTargetAtTime(amp,t,0.003);BV.g.gain.setTargetAtTime(0,t+dur*0.75,0.012);},
     // a bell, like a detuned electric piano struck hard
     bell(m,t,amp,len=2.4){const f=mhz(m);osc('sine',f,t,0.01,amp,0.003,len/3);osc('sine',f*2.008,t,0.01,amp*0.35,0.003,len/5);osc('sine',f*3.97,t,0.01,amp*0.12,0.003,len/9);},
     lead(m,t,dur,amp){const f=AC.createBiquadFilter();f.type='lowpass';f.frequency.value=2600;f.connect(out);const v=osc('square',mhz(m),t,dur,amp,0.02,0.15,f);const lfo=AC.createOscillator();lfo.frequency.value=5.5;const lg=AC.createGain();lg.gain.value=18;lfo.connect(lg);lg.connect(v.detune);lfo.start(t);lfo.stop(t+dur+1);
@@ -241,6 +254,8 @@ function scoreVoices(out){
     kick(t,amp=0.6){const v=AC.createOscillator();v.frequency.setValueAtTime(150,t);v.frequency.exponentialRampToValueAtTime(40,t+0.12);const g=AC.createGain();g.gain.setValueAtTime(amp,t);g.gain.exponentialRampToValueAtTime(0.0001,t+0.28);v.connect(g);g.connect(out);v.start(t);v.stop(t+0.3);},
     snare(t,amp=0.3){sNoise(out,t,0.16,'bandpass',1700,0.8,amp,0.002);osc('triangle',180,t,0.05,amp*0.4,0.002,0.03);},
     hat(t,amp=0.05){sNoise(out,t,0.03,'highpass',7500,0.7,amp,0.001);},
+    // stop the persistent synths once the cue has faded
+    end(at){for(const o of live){try{o.stop(at);}catch(e){}}},
     tick(t,amp=0.08){sNoise(out,t,0.02,'bandpass',3200,6,amp,0.001);},
     swell(t,dur,amp=0.12){const s=AC.createBufferSource();s.buffer=noiseBuf;s.loop=true;const f=AC.createBiquadFilter();f.type='bandpass';f.Q.value=2;f.frequency.setValueAtTime(300,t);f.frequency.exponentialRampToValueAtTime(5000,t+dur);
       const g=AC.createGain();g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(amp,t+dur);g.gain.linearRampToValueAtTime(0.0001,t+dur+0.05);s.connect(f);f.connect(g);g.connect(out);s.start(t);s.stop(t+dur+0.1);},
@@ -256,8 +271,8 @@ function scoreBar(name,V,b,t0,spb){const e8=spb/2,s16=spb/4;
     V.pad(b%4<2?[57,60,64]:[53,57,60],t0,spb*4,0.022,800);V.tom(t0,95,0.45);V.tom(t0+spb*2,95,0.3);for(let i=0;i<8;i++)V.hat(t0+i*e8,i%2?0.035:0.02);
     if(b%4===0){[[76,0],[77,1],[76,2],[72,3]].forEach(([m,q])=>V.bell(m,t0+q*spb,0.07,1.6));}if(b%4===2)V.bell(71,t0,0.06,3);return;}
   if(name==='chase'){const ost=[45,45,57,45,45,45,48,45,45,45,57,45,51,50,48,47];ost.forEach((m,i)=>V.bass(b%4===3&&i>=12?m+2:m,t0+i*s16,s16*0.9,0.15,1600));
-    for(let q=0;q<4;q++){V.kick(t0+q*spb,0.5);if(q%2)V.snare(t0+q*spb,0.26);for(let k=0;k<4;k++)V.hat(t0+q*spb+k*s16,k%2?0.04:0.025);}
-    for(let q=0;q<4;q++)[69,72,76].forEach(m=>V.osc('square',mhz(m),t0+q*spb+e8,e8*0.35,0.018,0.003,0.03));
+    for(let q=0;q<4;q++){V.kick(t0+q*spb,0.5);if(q%2)V.snare(t0+q*spb,0.26);V.hat(t0+q*spb,0.025);V.hat(t0+q*spb+e8,0.04);}
+    for(const q of [1,3])[69,72,76].forEach(m=>V.osc('square',mhz(m),t0+q*spb+e8,e8*0.35,0.022,0.003,0.03));
     if(b%2===0)V.lead(b%4===0?88:89,t0,spb*1.8,0.035);if(b%4===0)sNoise(V.out,t0,1.2,'highpass',5000,0.5,0.1,0.003);return;}
   if(name==='theme'){// C minor: Cm, Ab, Fm, G; the jingle's tune, turned minor, enters at bar 4
     const CH=[[48,51,55],[44,48,51],[41,44,48],[43,47,50]],ch=CH[b%4];const root=[36,32,29,31][b%4];
@@ -265,15 +280,17 @@ function scoreBar(name,V,b,t0,spb){const e8=spb/2,s16=spb/4;
     for(let i=0;i<8;i++){V.bass(i%2?root+12:root,t0+i*e8,e8*0.8,0.13*loud,b>=12?1500:900);}
     V.pad(ch.map(m=>m+12),t0,spb*4,b<2?0.016:0.028,b>=12?1300:800);
     if(b>=12){V.tom(t0,90,0.45);V.tom(t0+spb*2,90,0.35);V.kick(t0,0.45);for(let i=0;i<8;i++)V.hat(t0+i*e8,0.03);if(b%4===3)for(let k=0;k<4;k++)V.tom(t0+spb*3+k*s16,150-k*15,0.3);}
-    if(b>=16){const AR=[[72,75,79,84],[68,72,75,80],[65,68,72,77],[67,71,74,79]][b%4];for(let i=0;i<16;i++)V.osc('square',mhz(AR[i%4]),t0+i*s16,s16*0.6,0.014,0.002,0.02);}
+    if(b>=16){const AR=[[72,75,79,84],[68,72,75,80],[65,68,72,77],[67,71,74,79]][b%4];for(let i=0;i<8;i++)V.osc('square',mhz(AR[i%4]),t0+i*e8,e8*0.5,0.016,0.002,0.03);}
     const MEL=['C5-D#5-G5-D#5-','G#5-G5D#5-C5--','F5-G#5-C6-G#5-','G5---D5-D#5F5','D#5-G5-C6-G5-','G#5G5D#5-C5-D#5-','F5-D#5-D5-C5-','D5---G4---'];
     if(b>=4){const mb=MEL[(b-4)%8],up=b>=16?12:0;for(const [k,n,len] of parseBar(mb))V.bell(midi(n)+up,t0+k*e8,b>=12?0.11:0.09,Math.max(1.2,len*e8*2));}
     if(b===3)V.swell(t0+spb*2,spb*2,0.08);if(b===12||b===16)sNoise(V.out,t0,1.6,'highpass',4500,0.5,0.12,0.003);}}
 function scoreCue(name){if(!AC)return;if(SCORE.cur&&SCORE.cur.name===name)return;scoreStop(1.4);const C=CUES[name];if(!C)return;
   const out=AC.createGain();out.gain.value=0;out.gain.setTargetAtTime(C.gain,AC.currentTime,0.6);out.connect(busMus);const V=scoreVoices(out);V.out=out;
   const st={name,alive:true,out};SCORE.cur=st;const spb=60/C.bpm,bar=spb*4;let b=0,t=now()+0.1;
-  const tick=()=>{if(!st.alive)return;while(t<AC.currentTime+0.7){scoreBar(name,V,b,t,spb);t+=bar;b++;if(b>=C.bars)b=C.loopTo||0;}st.timer=setTimeout(tick,150);};tick();
-  st.stop=(fade)=>{st.alive=false;clearTimeout(st.timer);out.gain.cancelScheduledValues(AC.currentTime);out.gain.setTargetAtTime(0,AC.currentTime,fade/3);setTimeout(()=>{try{out.disconnect();}catch(e){}},fade*1000+3000);};}
+  const tick=()=>{if(!st.alive)return;while(t<AC.currentTime+1.4){scoreBar(name,V,b,t,spb);t+=bar;b++;if(b>=C.bars)b=C.loopTo||0;}st.timer=setTimeout(tick,250);};tick();
+  st.stop=(fade)=>{st.alive=false;clearTimeout(st.timer);const t0=AC.currentTime;holdParam(out.gain,t0);out.gain.setTargetAtTime(0,t0,Math.max(0.03,fade/3));V.end(Math.max(t,t0)+fade+0.5);setTimeout(()=>{try{out.disconnect();}catch(e){}},(Math.max(t,t0)-t0+fade)*1000+3000);};}
+/* freeze a param where it is right now, so a fade can start from there without a jump (a jump is a pop) */
+function holdParam(p,t){if(p.cancelAndHoldAtTime)p.cancelAndHoldAtTime(t);else{const v=p.value;p.cancelScheduledValues(t);p.setValueAtTime(v,t);}}
 function scoreStop(fade=1.4){if(SCORE.cur){SCORE.cur.stop(fade);SCORE.cur=null;}}
 function scoreBase(name,now){SCORE.base=name||null;if(now&&AC){if(name)scoreCue(name);else scoreStop(0.15);}}
 /* one hit for the end of the title: a boom under everything */

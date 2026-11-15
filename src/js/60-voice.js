@@ -26,10 +26,10 @@ function toniChain(channel,pos,vol){const hp=AC.createBiquadFilter();hp.type='hi
   // the shaper has unity gain at low level (it only crunches the peaks); these gains put Toni level with the family, a touch under
   const g=AC.createGain();g.gain.value=vol*(channel==='pa'?0.8:channel==='tape'?0.72:1.0);hp.connect(pk);pk.connect(sh);sh.connect(lp);lp.connect(g);
   // from his phone: through a panner (which already feeds the mix); over the PA or the tape: straight in
-  let out=g;if(channel==='phone'&&pos){const p=mkPanner(pos.x,1.45,pos.z,2.4);p.rolloffFactor=0.9;g.connect(p);out=p;}else out.connect(comp);const v=AC.createGain();v.gain.value=channel==='pa'?0.42:channel==='tape'?0.08:0.2;out.connect(v);v.connect(verb);return hp;}
+  hp._g=g;let out=g;if(channel==='phone'&&pos){const p=mkPanner(pos.x,1.45,pos.z,2.4);p.rolloffFactor=0.9;g.connect(p);out=p;}else out.connect(comp);const v=AC.createGain();v.gain.value=channel==='pa'?0.42:channel==='tape'?0.08:0.2;out.connect(v);v.connect(verb);return hp;}
 async function toniPlay(text,pos,channel,vol=1){if(!AC||!hasVO('toni',text))return 0;const b=await voDecode(voKey('toni',text));if(!b)return 0;toniHush();
-  const s=AC.createBufferSource();s.buffer=b;s.connect(toniChain(channel,pos,vol*voiceVol));s.start(now());TONI_VO.src=s;s.onended=()=>{if(TONI_VO.src===s)TONI_VO.src=null;};return b.duration;}
-function toniHush(){const s=TONI_VO.src;TONI_VO.src=null;if(s){try{s.stop();}catch(e){}}}
+  const s=AC.createBufferSource();s.buffer=b;const ch=toniChain(channel,pos,vol*voiceVol);s.connect(ch);s._g=ch._g;s.start(now());TONI_VO.src=s;s.onended=()=>{if(TONI_VO.src===s)TONI_VO.src=null;};return b.duration;}
+function toniHush(){const s=TONI_VO.src;TONI_VO.src=null;if(s){const t=AC.currentTime;try{if(s._g){holdParam(s._g.gain,t);s._g.gain.setTargetAtTime(0,t,0.012);}s.stop(t+0.06);}catch(e){}}}
 function speakNow(text,pos,channel){const spoken=spokenOf(text);const sp=channel==='pa'?{vol:1,pan:0}:voiceSpace(pos);const vol=sp.vol*voiceVol;
   const est=0.6+spoken.length*0.068;
   return new Promise(async res=>{let done=false;const fin=()=>{if(done)return;done=true;res();};

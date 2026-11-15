@@ -582,7 +582,7 @@ function initAudio(){
   master=AC.createGain();master.gain.value=0.9;
   comp=AC.createDynamicsCompressor();comp.threshold.value=-16;comp.ratio.value=4;
   // a last limiter, so a scream on top of a slam on top of the score never clips the phone's speaker
-  const lim=AC.createDynamicsCompressor();lim.threshold.value=-4;lim.knee.value=0;lim.ratio.value=20;lim.attack.value=0.002;lim.release.value=0.18;
+  const lim=AC.createDynamicsCompressor();lim.threshold.value=-2;lim.knee.value=4;lim.ratio.value=10;lim.attack.value=0.004;lim.release.value=0.25;
   comp.connect(master);master.connect(lim);lim.connect(AC.destination);
   verb=AC.createConvolver();verb.buffer=impulse(1.6,2.6);const vg=AC.createGain();vg.gain.value=0.28;verb.connect(vg);vg.connect(comp);
   busFx=AC.createGain();busFx.gain.value=1;busFx.connect(comp);busFx.connect(verb);
@@ -611,7 +611,8 @@ function initAudio(){
 }
 /* trim: each bed's own level, so the room tone, the freezer and the hunt sit well under the score and the effects */
 function bed(make,trim=1){const g=make();const t=AC.createGain();t.gain.value=trim;const out=AC.createGain();out.gain.value=0;g.connect(t);t.connect(out);out.connect(busAmb);return out;}
-function setAmb(name,v,tc=0.6){if(AC&&amb[name])amb[name].gain.setTargetAtTime(v,AC.currentTime,tc);}
+/* only touch a bed's level when it actually changes (ambience() asks every frame; piling up automation is wasted work on the audio thread) */
+function setAmb(name,v,tc=0.6){const b=amb[name];if(!AC||!b||b._v===v)return;b._v=v;b.gain.setTargetAtTime(v,AC.currentTime,tc);}
 function impulse(sec,decay){const len=Math.floor(AC.sampleRate*sec);const b=AC.createBuffer(2,len,AC.sampleRate);for(let ch=0;ch<2;ch++){const d=b.getChannelData(ch);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,decay);}return b;}
 function mkNoise(sec,brown){const len=Math.floor(AC.sampleRate*sec);const b=AC.createBuffer(1,len,AC.sampleRate);const d=b.getChannelData(0);let last=0;for(let i=0;i<len;i++){const w=Math.random()*2-1;if(brown){last=(last+0.02*w)/1.02;d[i]=last*3.5;}else d[i]=w;}return b;}
 const now=()=>AC?AC.currentTime+0.02:0;
@@ -754,7 +755,8 @@ function b64buf(b64){const bin=atob(b64);const u=new Uint8Array(bin.length);for(
 async function sfxWarm(){if(sfxReady||!AC||typeof SFX_DATA==='undefined')return;sfxReady=true;
   for(const k in SFX_DATA){const L=[];for(const b of SFX_DATA[k]){const buf=await new Promise(res=>{try{const p=AC.decodeAudioData(b64buf(b),res,()=>res(null));if(p&&p.catch)p.catch(()=>res(null));}catch(e){res(null);}});if(buf)L.push(buf);}SBUF[k]=L;}}
 function smp(dest,t,name,vol=1,rate=1,delay=0){const L=SBUF[name];if(!AC||!L||!L.length)return false;let i=(Math.random()*L.length)|0;if(L.length>1&&i===L.last)i=(i+1)%L.length;L.last=i;
-  const s=AC.createBufferSource();s.buffer=L[i];s.playbackRate.value=rate*(0.95+Math.random()*0.1);const g=AC.createGain();g.gain.value=vol;s.connect(g);g.connect(dest);s.start(Math.max(t+delay,AC.currentTime));return s;}
+  const s=AC.createBufferSource();s.buffer=L[i];s.playbackRate.value=rate*(0.95+Math.random()*0.1);const g=AC.createGain();g.gain.value=vol;s.connect(g);g.connect(dest);s.start(Math.max(t+delay,AC.currentTime));
+  return {src:s,stop(at,fade=0.05){at=Math.max(at,AC.currentTime);holdParam(g.gain,at);g.gain.setTargetAtTime(0,at,fade/3);try{s.stop(at+fade*2);}catch(e){}}};}
 /* a sound from the other side of the walk-in door: duller, as if through the steel and the glass */
 function thru(dest,cut=2600){const f=AC.createBiquadFilter();f.type='lowpass';f.frequency.value=cut;f.Q.value=0.6;f.connect(dest);return f;}
 Object.assign(SFX,{
@@ -765,7 +767,7 @@ Object.assign(SFX,{
   // Manny's knuckles on the window
   knock(p,t){if(!smp(p,t,'knock',1))sTone(p,t,0.12,'sine',160,90,0.6,0.002);},
   // a face driven into the glass: the thump through the door, the window cracking
-  faceSlam(p,t,k=0){smp(p,t,'glassHit',1);smp(p,t,'slamHit',0.75,0.8);smp(p,t,'glassCrack',0.6+k*0.2,1,0.015);if(k>=2)smp(p,t,'bone',0.7,1,0.03);},
+  faceSlam(p,t,k=0){smp(p,t,'glassHit',0.85);smp(p,t,'slamHit',0.6,0.8);smp(p,t,'glassCrack',0.6+k*0.2,1,0.015);if(k>=2)smp(p,t,'bone',0.7,1,0.03);},
   crack(p,t){if(!smp(p,t,'glassCrack',0.9))for(let i=0;i<5;i++)sNoise(p,t+i*0.018,0.03,'highpass',4200,1,0.5,0.001);},
   // the extinguisher against her head, against the glass
   clang(p,t,hard){smp(p,t,'metalHit',0.9);smp(p,t,'headHit',0.9,0.9);smp(p,t,'glassHit',0.7);if(hard)smp(p,t,'bone',0.9,1,0.02);},
@@ -776,8 +778,8 @@ Object.assign(SFX,{
   crash(p,t){smp(p,t,'bodyFall',1);smp(p,t,'glassBreak',0.8,1,0.08);},
   shatter(p,t){smp(p,t,'glassBreak',1);},
   // voices with no words: screams, gasps
-  scream(p,t,kind='F',vol=1){return smp(p,t,'scream'+kind,vol*0.75);},
-  yell(p,t,vol=1){return smp(p,t,'yellM',vol*0.75);},
+  scream(p,t,kind='F',vol=1){return smp(p,t,'scream'+kind,vol*0.62);},
+  yell(p,t,vol=1){return smp(p,t,'yellM',vol*0.62);},
   gasp(p,t,a=0.6,who='F'){if(!smp(p,t,'gasp'+who,Math.min(1.2,a*1.6)))sNoise(p,t,0.4,'bandpass',1100,1.6,a,0.03,2600);},
 });
 
@@ -796,16 +798,27 @@ const CUES={
   theme:{bpm:96,bars:20,loopTo:4,gain:1.85},
 };
 function scoreVoices(out){
+  const live=[];
   const osc=(type,f,t,dur,peak,a=0.01,rel=0.08,dest=out,det=0)=>{const v=AC.createOscillator();v.type=type;v.frequency.value=f;v.detune.value=det;const g=AC.createGain();g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(peak,t+a);
-    g.gain.setTargetAtTime(0.0001,t+Math.max(a,dur),rel);v.connect(g);g.connect(dest);v.start(t);v.stop(t+Math.max(a,dur)+rel*7);return v;};
+    g.gain.setTargetAtTime(0.0001,t+Math.max(a,dur),rel);v.connect(g);g.connect(dest);v.start(t);v.stop(t+Math.max(a,dur)+rel*5);return v;};
+  // one bass synth for the whole cue (a saw and a square an octave down, one filter, one amp), played note by note:
+  // far lighter on a phone's audio thread than a new oscillator and filter for every sixteenth
+  let BV=null,PV=null;
+  const mkBass=()=>{const f=AC.createBiquadFilter();f.type='lowpass';f.Q.value=6;f.frequency.value=160;const g=AC.createGain();g.gain.value=0;
+    const a=AC.createOscillator();a.type='sawtooth';const b=AC.createOscillator();b.type='square';const bg=AC.createGain();bg.gain.value=0.5;
+    a.connect(f);b.connect(bg);bg.connect(f);f.connect(g);g.connect(out);a.start();b.start();live.push(a,b);return {a,b,f,g};};
+  // one pad: three notes, two detuned saws each, one slow filter, one amp; the chord changes glide
+  const mkPad=()=>{const f=AC.createBiquadFilter();f.type='lowpass';f.Q.value=1.2;f.frequency.value=600;const g=AC.createGain();g.gain.value=0;f.connect(g);g.connect(out);
+    const vs=[];for(let i=0;i<3;i++)for(const d of [-9,9]){const o=AC.createOscillator();o.type='sawtooth';o.detune.value=d;o.frequency.value=220;const og=AC.createGain();og.gain.value=0.5;o.connect(og);og.connect(f);o.start();live.push(o);vs.push(o);}
+    return {f,g,vs};};
   return {
-    osc,
-    // two detuned saws per note through one slow lowpass: the pad
-    pad(notes,t,dur,amp,cut=900){const f=AC.createBiquadFilter();f.type='lowpass';f.Q.value=1.2;f.frequency.setValueAtTime(cut*0.6,t);f.frequency.linearRampToValueAtTime(cut,t+dur*0.6);f.connect(out);
-      for(const m of notes){osc('sawtooth',mhz(m),t,dur,amp,Math.min(1.4,dur*0.4),0.7,f,-9);osc('sawtooth',mhz(m),t,dur,amp,Math.min(1.4,dur*0.4),0.7,f,9);}},
-    // the ostinato: saw plus a sub, a filter that snaps shut
-    bass(m,t,dur,amp,open=1100){const f=AC.createBiquadFilter();f.type='lowpass';f.Q.value=6;f.frequency.setValueAtTime(open,t);f.frequency.exponentialRampToValueAtTime(140,t+Math.max(0.06,dur*0.9));f.connect(out);
-      osc('sawtooth',mhz(m),t,dur*0.9,amp,0.004,0.03,f);osc('square',mhz(m-12),t,dur*0.9,amp*0.5,0.004,0.03,f);},
+    osc,live,
+    pad(notes,t,dur,amp,cut=900){if(!PV)PV=mkPad();PV.vs.forEach((o,i)=>o.frequency.setTargetAtTime(mhz(notes[(i>>1)%notes.length]),t,0.04));
+      PV.f.frequency.setTargetAtTime(cut*0.6,t,0.05);PV.f.frequency.setTargetAtTime(cut,t+0.2,dur*0.25);
+      PV.g.gain.setTargetAtTime(amp*2,t,Math.min(0.5,dur*0.12));PV.g.gain.setTargetAtTime(amp*1.2,t+dur*0.8,dur*0.08);},
+    bass(m,t,dur,amp,open=1100){if(!BV)BV=mkBass();const fr=mhz(m);BV.a.frequency.setValueAtTime(fr,t);BV.b.frequency.setValueAtTime(fr/2,t);
+      BV.f.frequency.setTargetAtTime(open,t,0.002);BV.f.frequency.setTargetAtTime(140,t+0.006,Math.max(0.015,dur*0.3));
+      BV.g.gain.setTargetAtTime(amp,t,0.003);BV.g.gain.setTargetAtTime(0,t+dur*0.75,0.012);},
     // a bell, like a detuned electric piano struck hard
     bell(m,t,amp,len=2.4){const f=mhz(m);osc('sine',f,t,0.01,amp,0.003,len/3);osc('sine',f*2.008,t,0.01,amp*0.35,0.003,len/5);osc('sine',f*3.97,t,0.01,amp*0.12,0.003,len/9);},
     lead(m,t,dur,amp){const f=AC.createBiquadFilter();f.type='lowpass';f.frequency.value=2600;f.connect(out);const v=osc('square',mhz(m),t,dur,amp,0.02,0.15,f);const lfo=AC.createOscillator();lfo.frequency.value=5.5;const lg=AC.createGain();lg.gain.value=18;lfo.connect(lg);lg.connect(v.detune);lfo.start(t);lfo.stop(t+dur+1);
@@ -814,6 +827,8 @@ function scoreVoices(out){
     kick(t,amp=0.6){const v=AC.createOscillator();v.frequency.setValueAtTime(150,t);v.frequency.exponentialRampToValueAtTime(40,t+0.12);const g=AC.createGain();g.gain.setValueAtTime(amp,t);g.gain.exponentialRampToValueAtTime(0.0001,t+0.28);v.connect(g);g.connect(out);v.start(t);v.stop(t+0.3);},
     snare(t,amp=0.3){sNoise(out,t,0.16,'bandpass',1700,0.8,amp,0.002);osc('triangle',180,t,0.05,amp*0.4,0.002,0.03);},
     hat(t,amp=0.05){sNoise(out,t,0.03,'highpass',7500,0.7,amp,0.001);},
+    // stop the persistent synths once the cue has faded
+    end(at){for(const o of live){try{o.stop(at);}catch(e){}}},
     tick(t,amp=0.08){sNoise(out,t,0.02,'bandpass',3200,6,amp,0.001);},
     swell(t,dur,amp=0.12){const s=AC.createBufferSource();s.buffer=noiseBuf;s.loop=true;const f=AC.createBiquadFilter();f.type='bandpass';f.Q.value=2;f.frequency.setValueAtTime(300,t);f.frequency.exponentialRampToValueAtTime(5000,t+dur);
       const g=AC.createGain();g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(amp,t+dur);g.gain.linearRampToValueAtTime(0.0001,t+dur+0.05);s.connect(f);f.connect(g);g.connect(out);s.start(t);s.stop(t+dur+0.1);},
@@ -829,8 +844,8 @@ function scoreBar(name,V,b,t0,spb){const e8=spb/2,s16=spb/4;
     V.pad(b%4<2?[57,60,64]:[53,57,60],t0,spb*4,0.022,800);V.tom(t0,95,0.45);V.tom(t0+spb*2,95,0.3);for(let i=0;i<8;i++)V.hat(t0+i*e8,i%2?0.035:0.02);
     if(b%4===0){[[76,0],[77,1],[76,2],[72,3]].forEach(([m,q])=>V.bell(m,t0+q*spb,0.07,1.6));}if(b%4===2)V.bell(71,t0,0.06,3);return;}
   if(name==='chase'){const ost=[45,45,57,45,45,45,48,45,45,45,57,45,51,50,48,47];ost.forEach((m,i)=>V.bass(b%4===3&&i>=12?m+2:m,t0+i*s16,s16*0.9,0.15,1600));
-    for(let q=0;q<4;q++){V.kick(t0+q*spb,0.5);if(q%2)V.snare(t0+q*spb,0.26);for(let k=0;k<4;k++)V.hat(t0+q*spb+k*s16,k%2?0.04:0.025);}
-    for(let q=0;q<4;q++)[69,72,76].forEach(m=>V.osc('square',mhz(m),t0+q*spb+e8,e8*0.35,0.018,0.003,0.03));
+    for(let q=0;q<4;q++){V.kick(t0+q*spb,0.5);if(q%2)V.snare(t0+q*spb,0.26);V.hat(t0+q*spb,0.025);V.hat(t0+q*spb+e8,0.04);}
+    for(const q of [1,3])[69,72,76].forEach(m=>V.osc('square',mhz(m),t0+q*spb+e8,e8*0.35,0.022,0.003,0.03));
     if(b%2===0)V.lead(b%4===0?88:89,t0,spb*1.8,0.035);if(b%4===0)sNoise(V.out,t0,1.2,'highpass',5000,0.5,0.1,0.003);return;}
   if(name==='theme'){// C minor: Cm, Ab, Fm, G; the jingle's tune, turned minor, enters at bar 4
     const CH=[[48,51,55],[44,48,51],[41,44,48],[43,47,50]],ch=CH[b%4];const root=[36,32,29,31][b%4];
@@ -838,15 +853,17 @@ function scoreBar(name,V,b,t0,spb){const e8=spb/2,s16=spb/4;
     for(let i=0;i<8;i++){V.bass(i%2?root+12:root,t0+i*e8,e8*0.8,0.13*loud,b>=12?1500:900);}
     V.pad(ch.map(m=>m+12),t0,spb*4,b<2?0.016:0.028,b>=12?1300:800);
     if(b>=12){V.tom(t0,90,0.45);V.tom(t0+spb*2,90,0.35);V.kick(t0,0.45);for(let i=0;i<8;i++)V.hat(t0+i*e8,0.03);if(b%4===3)for(let k=0;k<4;k++)V.tom(t0+spb*3+k*s16,150-k*15,0.3);}
-    if(b>=16){const AR=[[72,75,79,84],[68,72,75,80],[65,68,72,77],[67,71,74,79]][b%4];for(let i=0;i<16;i++)V.osc('square',mhz(AR[i%4]),t0+i*s16,s16*0.6,0.014,0.002,0.02);}
+    if(b>=16){const AR=[[72,75,79,84],[68,72,75,80],[65,68,72,77],[67,71,74,79]][b%4];for(let i=0;i<8;i++)V.osc('square',mhz(AR[i%4]),t0+i*e8,e8*0.5,0.016,0.002,0.03);}
     const MEL=['C5-D#5-G5-D#5-','G#5-G5D#5-C5--','F5-G#5-C6-G#5-','G5---D5-D#5F5','D#5-G5-C6-G5-','G#5G5D#5-C5-D#5-','F5-D#5-D5-C5-','D5---G4---'];
     if(b>=4){const mb=MEL[(b-4)%8],up=b>=16?12:0;for(const [k,n,len] of parseBar(mb))V.bell(midi(n)+up,t0+k*e8,b>=12?0.11:0.09,Math.max(1.2,len*e8*2));}
     if(b===3)V.swell(t0+spb*2,spb*2,0.08);if(b===12||b===16)sNoise(V.out,t0,1.6,'highpass',4500,0.5,0.12,0.003);}}
 function scoreCue(name){if(!AC)return;if(SCORE.cur&&SCORE.cur.name===name)return;scoreStop(1.4);const C=CUES[name];if(!C)return;
   const out=AC.createGain();out.gain.value=0;out.gain.setTargetAtTime(C.gain,AC.currentTime,0.6);out.connect(busMus);const V=scoreVoices(out);V.out=out;
   const st={name,alive:true,out};SCORE.cur=st;const spb=60/C.bpm,bar=spb*4;let b=0,t=now()+0.1;
-  const tick=()=>{if(!st.alive)return;while(t<AC.currentTime+0.7){scoreBar(name,V,b,t,spb);t+=bar;b++;if(b>=C.bars)b=C.loopTo||0;}st.timer=setTimeout(tick,150);};tick();
-  st.stop=(fade)=>{st.alive=false;clearTimeout(st.timer);out.gain.cancelScheduledValues(AC.currentTime);out.gain.setTargetAtTime(0,AC.currentTime,fade/3);setTimeout(()=>{try{out.disconnect();}catch(e){}},fade*1000+3000);};}
+  const tick=()=>{if(!st.alive)return;while(t<AC.currentTime+1.4){scoreBar(name,V,b,t,spb);t+=bar;b++;if(b>=C.bars)b=C.loopTo||0;}st.timer=setTimeout(tick,250);};tick();
+  st.stop=(fade)=>{st.alive=false;clearTimeout(st.timer);const t0=AC.currentTime;holdParam(out.gain,t0);out.gain.setTargetAtTime(0,t0,Math.max(0.03,fade/3));V.end(Math.max(t,t0)+fade+0.5);setTimeout(()=>{try{out.disconnect();}catch(e){}},(Math.max(t,t0)-t0+fade)*1000+3000);};}
+/* freeze a param where it is right now, so a fade can start from there without a jump (a jump is a pop) */
+function holdParam(p,t){if(p.cancelAndHoldAtTime)p.cancelAndHoldAtTime(t);else{const v=p.value;p.cancelScheduledValues(t);p.setValueAtTime(v,t);}}
 function scoreStop(fade=1.4){if(SCORE.cur){SCORE.cur.stop(fade);SCORE.cur=null;}}
 function scoreBase(name,now){SCORE.base=name||null;if(now&&AC){if(name)scoreCue(name);else scoreStop(0.15);}}
 /* one hit for the end of the title: a boom under everything */
@@ -2286,10 +2303,10 @@ function toniChain(channel,pos,vol){const hp=AC.createBiquadFilter();hp.type='hi
   // the shaper has unity gain at low level (it only crunches the peaks); these gains put Toni level with the family, a touch under
   const g=AC.createGain();g.gain.value=vol*(channel==='pa'?0.8:channel==='tape'?0.72:1.0);hp.connect(pk);pk.connect(sh);sh.connect(lp);lp.connect(g);
   // from his phone: through a panner (which already feeds the mix); over the PA or the tape: straight in
-  let out=g;if(channel==='phone'&&pos){const p=mkPanner(pos.x,1.45,pos.z,2.4);p.rolloffFactor=0.9;g.connect(p);out=p;}else out.connect(comp);const v=AC.createGain();v.gain.value=channel==='pa'?0.42:channel==='tape'?0.08:0.2;out.connect(v);v.connect(verb);return hp;}
+  hp._g=g;let out=g;if(channel==='phone'&&pos){const p=mkPanner(pos.x,1.45,pos.z,2.4);p.rolloffFactor=0.9;g.connect(p);out=p;}else out.connect(comp);const v=AC.createGain();v.gain.value=channel==='pa'?0.42:channel==='tape'?0.08:0.2;out.connect(v);v.connect(verb);return hp;}
 async function toniPlay(text,pos,channel,vol=1){if(!AC||!hasVO('toni',text))return 0;const b=await voDecode(voKey('toni',text));if(!b)return 0;toniHush();
-  const s=AC.createBufferSource();s.buffer=b;s.connect(toniChain(channel,pos,vol*voiceVol));s.start(now());TONI_VO.src=s;s.onended=()=>{if(TONI_VO.src===s)TONI_VO.src=null;};return b.duration;}
-function toniHush(){const s=TONI_VO.src;TONI_VO.src=null;if(s){try{s.stop();}catch(e){}}}
+  const s=AC.createBufferSource();s.buffer=b;const ch=toniChain(channel,pos,vol*voiceVol);s.connect(ch);s._g=ch._g;s.start(now());TONI_VO.src=s;s.onended=()=>{if(TONI_VO.src===s)TONI_VO.src=null;};return b.duration;}
+function toniHush(){const s=TONI_VO.src;TONI_VO.src=null;if(s){const t=AC.currentTime;try{if(s._g){holdParam(s._g.gain,t);s._g.gain.setTargetAtTime(0,t,0.012);}s.stop(t+0.06);}catch(e){}}}
 function speakNow(text,pos,channel){const spoken=spokenOf(text);const sp=channel==='pa'?{vol:1,pan:0}:voiceSpace(pos);const vol=sp.vol*voiceVol;
   const est=0.6+spoken.length*0.068;
   return new Promise(async res=>{let done=false;const fin=()=>{if(done)return;done=true;res();};
@@ -2817,7 +2834,7 @@ function staffSetup(){const M=CHARS.manager,B=CHARS.bree,D=CHARS.devon;
 async function sceneCold(){const run=G.run;G.who='manny';G.where='pizzeria';checkpoint('cold');$('title').hidden=true;
   setTarps(false);glassReset();staffSetup();for(const id of FAMILY)CHARS[id].where='none';
   P.seated=null;P.hidden=null;P.limitYaw=null;P.x=11.6;P.z=3.0;P.yaw=-Math.PI/2;P.pitch=-0.1;P.eyeOverride=null;
-  DOORS.freezer.target=1;DOORS.freezer.ang=1;DOORS.freezer.locked=false;MOZZ.visible=true;G.flags.gotMozz=false;G.flags.triedDoor=false;G.flags.coldLocked=false;G.flags.coldStage=0;
+  DOORS.freezer.target=1;DOORS.freezer.ang=1;DOORS.freezer.locked=false;DOORS.store.target=1;DOORS.store.ang=1;MOZZ.visible=true;G.flags.gotMozz=false;G.flags.triedDoor=false;G.flags.coldLocked=false;G.flags.coldStage=0;
   setAmb('freezer',0.55,0.5);setAmb('hum',0.18);setMode('cine');
   await titleCard('Pepper Toni’s Family Pizzeria','10:04 PM',2.6);if(!alive(run))return;await fadeTo(0,1.6);if(!alive(run))return;
   at3(11.9,1.2,8.75,(p,t)=>SFX.tinny(p,t,10),1.2);
@@ -2843,13 +2860,13 @@ async function coldDevon(){const run=G.run;const T=CHARS.toni,D=CHARS.devon;
   await line('manny','Devon! DEVON! Behind you!',{expr:'fear'});if(!alive(run))return;
   for(let i=0;i<3;i++){SFX.knock(busFx,now());shake(0.012,0.15);await gwait(0.22);}if(!alive(run))return;
   thinkM('Earbuds. He can’t hear me. He never hears anything.',3);
-  scoreBase('stalk');toniTool('pin');toniShow(8.6,8.1,Math.PI/2);await toniWalk(11.15,8.7,1.6);if(!alive(run))return;toniFace(D.x,D.z);await gwait(0.5);if(!alive(run))return;
+  scoreBase('stalk');toniTool('pin');toniShow(7.3,8.1,Math.PI/2);await toniWalk(11.15,8.7,1.6);if(!alive(run))return;toniFace(D.x,D.z);await gwait(0.5);if(!alive(run))return;
   T.poseOv='swingUp';await gwait(0.45);if(!alive(run))return;T.poseOv='swingDown';await gwait(0.08);at3(D.x,1.6,D.z,(p,t)=>{const f=thru(p,3000);SFX.headHit(f,t);smp(f,t,'gaspM',0.9,1,0.07);},1.8);shake(0.01,0.2);
   decal(12.0,1.35,9.87,0.6,0.5,'n',3);D.pose='crumple';setExpr(D,'pain');D.shake=0.5;await tween(0.3,k=>{D.z=lerp(8.75,8.35,easeOut(k));D.yaw=lerp(0,-0.5,k);});if(!alive(run))return;await gwait(0.2);if(!alive(run))return;
   T.poseOv='swingUp';await gwait(0.4);if(!alive(run))return;T.poseOv='swingDown';await gwait(0.08);at3(D.x,1,D.z,(p,t)=>{const f=thru(p,3000);SFX.headHit(f,t,true);SFX.gore(f,t+0.04);},1.8);shake(0.012,0.2);
   D.shake=0;setExpr(D,'dead');D.pose='limp';await tween(0.4,k=>{D.root.rotation.z=k*1.45;D.y=k*0.14;});if(!alive(run))return;at3(D.x,0.3,D.z,(p,t)=>SFX.fall(thru(p,2600),t),1.6);decal(10.9,0.013,8.9,1.2,0.9,'up',4);
   await gwait(0.4);T.poseOv=null;await line('manny','No. No, no, no, no—',{expr:'fear'});if(!alive(run))return;
-  toniWalk(8.6,8.1,1.4).then(()=>{if(alive(run)&&G.flags.coldStage===1){toniHide();}});await gwait(1.6);}
+  toniWalk(7.3,8.1,1.4).then(()=>{if(alive(run)&&G.flags.coldStage===1){toniHide();}});await gwait(1.6);}
 async function coldBree(){const run=G.run;const T=CHARS.toni,B=CHARS.bree;
   B.where='kitchen';setExpr(B,'fear');place(B,14.9,7.2,-Math.PI/2);B.pose='stand';await gwait(0.3);if(!alive(run))return;
   line('bree','Devon? DEVON! Oh my God—',{expr:'scream'});at3(B.x,1.6,B.z,(p,t)=>SFX.scream(thru(p,3400),t,'F',1),2.5);await npcMove(B,12.0,7.05,3.3);if(!alive(run))return;await npcMove(B,11.0,6.62,3.0);if(!alive(run))return;B.yaw=Math.PI;B.pose='bang';B.look=[11,1.6,5.5];
@@ -2857,7 +2874,7 @@ async function coldBree(){const run=G.run;const T=CHARS.toni,B=CHARS.bree;
   await nudge(11.0,1.45,6.3,0.4);if(!alive(run))return;
   at3(11.4,1.1,6.1,(p,t)=>SFX.rattle(p,t));await line('bree','Manny?! Why won’t it open? Why won’t it OPEN?',{expr:'scream'});if(!alive(run))return;
   await line('manny','The pin! There’s a pin in the latch, pull it out!',{expr:'fear'});if(!alive(run))return;
-  G.flags.coldStage=2;toniTool('ext');toniShow(8.6,8.1,Math.PI/2);toniWalk(10.35,7.3,1.9);await gwait(1.0);if(!alive(run))return;
+  G.flags.coldStage=2;toniTool('ext');toniShow(7.3,8.1,Math.PI/2);toniWalk(10.35,7.3,1.9);await gwait(1.0);if(!alive(run))return;
   at3(11.4,1.1,6.1,(p,t)=>SFX.rattle(p,t));await line('bree','I can’t find it, I can’t—',{expr:'scream'});if(!alive(run))return;
   await waitUntil(()=>TONI.state==='idle');if(!alive(run))return;toniFace(B.x,B.z);await gwait(0.3);if(!alive(run))return;
   // he sprays her, and the window goes white
@@ -2865,7 +2882,8 @@ async function coldBree(){const run=G.run;const T=CHARS.toni,B=CHARS.bree;
   await tween(1.4,k=>{FZ.powder=k*0.96;if(((k*20)|0)%3===0)glassPaint();});sprayOn(false);if(!alive(run))return;glassPaint();
   T.poseOv=null;await tween(0.35,k=>{T.x=lerp(10.35,10.55,k);T.z=lerp(7.3,7.2,k);});if(!alive(run))return;toniFace(B.x,B.z);
   for(let i=0;i<2;i++){T.poseOv='swingUp';await gwait(0.35);if(!alive(run))return;T.poseOv='swingDown';await gwait(0.06);at3(11,1.5,6.4,(p,t)=>{const f=thru(p,3200);SFX.clang(f,t,i===1);if(i===0){if(scr)try{scr.stop(t);}catch(e){}smp(f,t,'screamFshort',0.9,1,0.04);}},1.8);shake(0.02,0.25);if(i===0){glassHand(66,30,0);B.shake=0;}}
-  if(!alive(run))return;B.where='none';T.poseOv=null;toniTool(null);at3(11,0.3,6.6,(p,t)=>SFX.fall(thru(p,2600),t+0.15),1.6);
+  if(!alive(run))return;B.where='none';T.poseOv=null;at3(11,0.3,6.6,(p,t)=>SFX.fall(thru(p,2600),t+0.15),1.6);
+  gwait(2.4).then(()=>{if(alive(run)&&G.flags.coldStage===2)toniWalk(14.9,7.6,2.5).then(()=>{if(alive(run)&&G.flags.coldStage===2){toniHide();toniTool(null);}});});
   // the powder settles off the glass; her hand slides down it
   const hand=(g,k)=>{const r=mulberry(77),y=lerp(30,72,k);g.lineCap='round';
     for(let i=0;i<4;i++){const x0=60.5+i*3.6+(i===0?-1:0),top=28-(i===1||i===2?3:0)+r()*2;let yy=top;g.strokeStyle='rgba(118,8,6,.8)';
@@ -2874,7 +2892,7 @@ async function coldBree(){const run=G.run;const T=CHARS.toni,B=CHARS.bree;
     g.fillStyle='rgba(125,9,7,.85)';g.beginPath();g.ellipse(66,y+6,5.5,6,0.1,0,TAU);g.fill();g.fillStyle='rgba(125,9,7,.7)';g.beginPath();g.ellipse(71.5,y+3,1.6,3.5,-0.6,0,TAU);g.fill();
     g.fillStyle='rgba(150,18,12,.6)';for(let i=0;i<3;i++){g.beginPath();g.ellipse(62+i*4,y+12,1,1.6+r()*4,0,0,TAU);g.fill();}};
   await tween(3.6,k=>{FZ.powder=0.96*(1-k);FZ.layers[FZ.layers.length-1]=g=>hand(g,k);glassPaint();});
-  if(!alive(run))return;toniHide();await line('manny','Bree… oh God. Bree.',{expr:'sad'});if(!alive(run))return;
+  if(!alive(run))return;await line('manny','Bree… oh God. Bree.',{expr:'sad'});if(!alive(run))return;
   thinkM('No bars. There’s never any bars in the walk-in. Somebody call. Somebody, please.',4);await gwait(3.6);}
 async function coldManager(){const run=G.run;const T=CHARS.toni,M=CHARS.manager;G.flags.coldStage=3;
   M.where='kitchen';place(M,14.9,8.6,-Math.PI/2);M.pose='phoneEar';setExpr(M,'neutral');
@@ -2883,7 +2901,7 @@ async function coldManager(){const run=G.run;const T=CHARS.toni,M=CHARS.manager;
   M.look=[CHARS.devon.x-1.2,0.3,CHARS.devon.z];await gwait(0.9);if(!alive(run))return;setExpr(M,'fear');
   await line('manager','Devon? Oh, Jesus. Oh, Jesus Christ.',{expr:'fear'});if(!alive(run))return;
   // he backs away, right up against the walk-in door
-  toniTool('rocker');toniShow(8.6,8.1,Math.PI/2);M.look=null;const mv=npcMove(M,11.1,6.75,0.9,{faceCh:T});await toniWalk(10.0,7.7,1.3);if(!alive(run))return;M.pose='plead';M.look=[10.0,1.75,7.7];
+  toniTool('rocker');toniShow(7.3,8.1,Math.PI/2);M.look=null;const mv=npcMove(M,11.1,6.75,0.9,{faceCh:T});await toniWalk(10.0,7.7,1.3);if(!alive(run))return;M.pose='plead';M.look=[10.0,1.75,7.7];
   mv.then(()=>{if(alive(run)){toniFace(M.x,M.z);M.yaw=Math.atan2(T.x-M.x,T.z-M.z);}});
   await line('manager','Okay. Okay, buddy. Easy. Is this about the write-up? The drawing? Nobody’s mad about the drawing—',{expr:'fear'});if(!alive(run))return;
   T.poseOv='type';await toniSay('Time for your performance review.');if(!alive(run))return;T.poseOv=null;
