@@ -32,7 +32,11 @@ FACE = {
     'ruben': dict(seed=51, desc='11 year old Mexican-American boy, messy black hair, black rectangular glasses, dark t-shirt'),
     'lucia': dict(seed=61, desc='16 year old Mexican-American girl, long black hair pulled back in a ponytail, dark eyes, black dress'),
     'manny': dict(seed=71, desc='38 year old Mexican-American man, short black hair, full short black beard, red work shirt, pizza cook'),
-    # Toni keeps his painted mascot head (50-chars.js): the image model couldn't make the stocking mask, only a bare face.
+    # Toni: the stocking mask from Jordan's reference picture (tools/faces/toni-ref.jpg, kept out of git), cropped from its
+    # left half. The detector can't read a mask, so the eyes and smile are marked by hand. His mask never changes, and the
+    # back of his head takes the bare stocking at the neck, not the top band (that's his hat).
+    'toni': dict(only='neutral', source='toni-ref.jpg', crop=(0, 0, 704, 768), back=[0.03, 0.1],
+                 marks=dict(eyeR=[342.5, 177.5], eyeL=[421, 182.5], nose=[381.5, 215], mouthR=[322.5, 235], mouthL=[435, 240])),
 }
 EXPR = {
     'fear': ('terrified screaming face, eyes wide open in horror, eyebrows raised high, mouth wide open', 0.62),
@@ -146,6 +150,8 @@ if __name__ == '__main__':
         for expr in EXPRS:
             if FACE[who].get('only') and expr != FACE[who]['only']: continue
             png = out / f'{who}-{expr}.png'
+            if not png.exists() and FACE[who].get('source'):
+                Image.open(out / FACE[who]['source']).convert('RGB').crop(FACE[who]['crop']).save(png); continue
             if not png.exists():
                 print('generating', who, expr, flush=True); gen(who, expr).save(png); gc.collect()
     _pipe.clear(); gc.collect()
@@ -153,10 +159,11 @@ if __name__ == '__main__':
     lf = out / 'landmarks.json'
     marks = json.loads(lf.read_text()) if lf.exists() else {}
     for who in who_list:
-        img = Image.open(out / f'{who}-neutral.png').convert('RGB'); lm = landmarks(img)
+        img = Image.open(out / f'{who}-neutral.png').convert('RGB'); lm = FACE[who].get('marks') or landmarks(img)
         if lm is None: lm = head_guess(img); print('  no face found for', who, '- placing it from the cut-out head')
         # every expression uses the neutral face's alignment, so the face doesn't jump between frames
         M = transform(lm); marks[who] = atlas_landmarks(lm, M)
+        if FACE[who].get('back'): marks[who]['back'] = FACE[who]['back']
         for expr in EXPRS:
             if not (out / f'{who}-{expr}.png').exists(): continue
             atlas(who, expr, Image.open(out / f'{who}-{expr}.png').convert('RGB'), M); print('  ok', who, expr, flush=True)

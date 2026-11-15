@@ -55,7 +55,7 @@ On a two-core machine a line takes about 30–40 seconds.
 The cast has photo faces in the Puppet Combo style: a low-poly blocky head with a photo projected onto its front, and faceted bodies with no outlines. The people in the photos are not real. `tools/faces.py` generates each one with Realistic Vision 5.1 (a photoreal Stable Diffusion 1.5 model, CreativeML OpenRAIL-M) plus the LCM LoRA, so a face takes about a minute and a half on a CPU. Each character gets a neutral portrait and fear, angry and sad versions made from it, so they stay the same person. Each image is lined up on the eyes (OpenCV's YuNet detector), the backdrop is cut out (rembg) and replaced with the head's own hair and skin, and the result is saved in `tools/faces/`. `tools/faces_pack.py` packs them into `src/js/06-facedata.js` at 128×128 with the eye and mouth positions. The game draws blinks and the moving jaw onto the photo from those positions.
 
 - Who each person is (age, hair, clothes) is `FACE` at the top of `tools/faces.py`; the expressions are `EXPR`.
-- Toni keeps his painted mascot head: the image model couldn't make his stocking mask.
+- Toni's mask is cut from Jordan's reference picture (`tools/faces/toni-ref.jpg`, kept out of git) with the eyes and smile marked by hand in `FACE`; his body (tan stocking suit, stained white apron, chef's hat, red Converse) is built to match it in `50-chars.js`.
 - `PUPPET` in `src/js/50-chars.js` switches the whole look back to the painted faces and outlined bodies.
 
 ```

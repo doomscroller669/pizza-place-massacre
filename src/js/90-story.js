@@ -33,8 +33,10 @@ function buildBalloons(){const cols=[0xf04a6a,0xf0b93a,0x3ac3f0,0x7fe05a,0xff7af
   const str=new THREE.Mesh(new THREE.BoxGeometry(0.004,0.9,0.004),basic({color:0xdddddd}));str.position.y=1.3;g.add(str);scene.add(g);BALLOONS.push({g,b,ph:i*1.3,base:new THREE.Color(cols[i%6])});i++;}}
 function stepBalloons(dt){for(const B of BALLOONS){B.ph+=dt;B.b.position.x=Math.sin(B.ph*0.7)*0.05;B.b.position.y=1.85+Math.sin(B.ph*1.1)*0.03;B.b.material.color.copy(B.base).multiply(tintAt(B.g.position.x,1.8,B.g.position.z,1.4));}}
 /* the spare mascot head on the closet shelf */
-function buildSpareHead(){const cv=canvas(FACE_W,FACE_H);drawFace(cv.getContext('2d'),CAST.toni,'neutral');const t=texFrom(cv,false);const g=new THREE.Group();
-  const h=new THREE.Mesh(new THREE.SphereGeometry(0.2,12,10),basic({map:t}));h.rotation.y=-Math.PI/2;g.add(h);const hat=new THREE.Mesh(new THREE.CylinderGeometry(0.17,0.18,0.12,10),basic({color:0xefeae0}));hat.position.y=0.2;g.add(hat);
+function buildSpareHead(){const photo=hasPhoto('toni');const cv=photo?canvas(128,128):canvas(FACE_W,FACE_H);const t=texFrom(cv,false);const g=new THREE.Group();
+  if(photo){const im=new Image();im.onload=()=>{cv.getContext('2d').drawImage(im,0,0,128,128);t.needsUpdate=true;};im.src=FACE_DATA.toni.neutral;}else drawFace(cv.getContext('2d'),CAST.toni,'neutral');
+  // the spare mask, stuffed out with newspaper on the shelf
+  const h=new THREE.Mesh(photo?photoHeadGeo(0.09,FACE_MARKS.toni.back).scale(1,1,0.8).translate(0,0.02,0):new THREE.SphereGeometry(0.2,12,10),basic({map:t}));h.rotation.y=-Math.PI/2;g.add(h);const hat=new THREE.Mesh(photo?new THREE.CylinderGeometry(0.075,0.075,0.09,10):new THREE.CylinderGeometry(0.17,0.18,0.12,10),basic({color:0xefeae0}));hat.position.y=photo?0.14:0.2;g.add(hat);
   g.position.set(PT.spareHead[0]+0.05,PT.spareHead[1],PT.spareHead[2]);scene.add(g);const c=tintAt(17.3,1.5,31,1.3);h.material.color.copy(c);hat.material.color.copy(c);}
 /* the new ticket on the rail */
 const TICKET=new THREE.Mesh(new THREE.PlaneGeometry(0.17,0.26),basic({map:SIGN.ticketNew,side:THREE.DoubleSide,transparent:true,alphaTest:0.3}));

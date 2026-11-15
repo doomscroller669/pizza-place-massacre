@@ -7,3 +7,4 @@ local.properties
 .vo_cache/
 __pycache__/
 tools/faces/*.png
+tools/faces/toni-ref.*
