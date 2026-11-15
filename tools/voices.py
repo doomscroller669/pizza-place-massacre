@@ -1,4 +1,4 @@
-"""Voice every spoken line in the script and embed the audio in the game.
+"""Voice Toni's lines (only Toni speaks out loud; see VOICED) and embed the audio in the game.
 
 Engine: Chatterbox (Resemble AI, open source), which takes an emotion dial per line ("exaggeration") and clones each
 character's timbre from a short reference clip. The reference clips are made once with Kokoro, so the cast keeps the
@@ -483,10 +483,13 @@ def load_old():
         t = f.read_text(); i = t.index('const VO_DATA=') + len('const VO_DATA='); OLD.update(json.loads(t[i:t.rindex(';')]))
     mf = root / 'tools/voices.json'
     if mf.exists(): OLD_MANIFEST.extend(json.loads(mf.read_text()))
+# who gets a voice: only Toni (his phone's text-to-speech, and the commercial). Everyone else is silent; their lines are captions.
+VOICED = {'toni', 'announcer'}
+
 def main():
     load_old()
     old_dir = {m['key']: (m['exaggeration'], m['cfg'], m['fx']) for m in OLD_MANIFEST}
-    lines = extract()
+    lines = [l for l in extract() if l[0] in VOICED]
     data, manifest = {}, []
     engine = 'kokoro' if KOKORO_ONLY else 'chatterbox'
     for who, text in lines:

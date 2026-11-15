@@ -11,14 +11,14 @@ buildBomb();buildBalloons();buildSpareHead();
 for(const id of FAMILY){seat(CHARS[id],id);CHARS[id].pose='sit';}
 toniHide();setupInteractions();setupPrologue();resize();placeIdleJoy();
 // a debug handle for testing; harmless in play
-window.__ppmDebug={G,P,PT,CHARS,TONI,PIZZA,OVEN,DOORS,COOK,startNew,sceneManny,sceneEat,serve,ROOMS,toniSay,INTERACT,SOLIDS,NAV:()=>NAV,startHunt,HIDES,enterHide,stamp,PIE,pathTo,renderer,voPlay,toniPlay,hasVO,playTape,AC:()=>AC,master:()=>master,die,endBuild,sceneCold,sceneHouse,sceneRating,sceneRoom,sceneCharge,sceneChargeRetry,sceneEscape,sceneOut,sceneTable,enterHide,leaveHide,coldDevon,coldBree,coldManager,setPower,HPT,HAI,FZ,glassPaint,lpRate,resetWorld,checkpoint,LS,castVisible};
+window.__ppmDebug={toniShow,toniTool,toniFace,CR,sceneCredits,scoreBase,scoreCue,stopMusic,SCORE,G,P,PT,CHARS,TONI,PIZZA,OVEN,DOORS,COOK,startNew,sceneManny,sceneEat,serve,ROOMS,toniSay,INTERACT,SOLIDS,NAV:()=>NAV,startHunt,HIDES,enterHide,stamp,PIE,pathTo,renderer,voPlay,toniPlay,hasVO,playTape,AC:()=>AC,master:()=>master,die,endBuild,sceneCold,sceneHouse,sceneRating,sceneRoom,sceneCharge,sceneChargeRetry,sceneEscape,sceneOut,sceneTable,enterHide,leaveHide,coldDevon,coldBree,coldManager,setPower,HPT,HAI,FZ,glassPaint,lpRate,resetWorld,checkpoint,LS,castVisible};
 
 /* the title screen: a slow drift through the dark dining room */
 const TCAM={t:0};
 function titleCam(dt){TCAM.t+=dt;const t=TCAM.t*0.05;camera.position.set(19+Math.sin(t)*3,1.45+Math.sin(t*1.7)*0.08,23.5+Math.cos(t*0.8)*1.2);
   camera.lookAt(29+Math.sin(t*0.6)*3,1.35,13);}
 /* which beds play, from where the camera is */
-function ambience(){if(!AC)return;const g=groupAt(camera.position.x,camera.position.z);
+function ambience(){if(!AC)return;if(CR.on){for(const k in amb)setAmb(k,0,0.4);return;}const g=groupAt(camera.position.x,camera.position.z);
   const humRooms={kitchen:0.4,dining:0.22,hall:0.3,office:0.18,employee:0.32,party:0.2,closet:0.15,vest:0.2,mens:0.35,womens:0.35,store:0.2};
   setAmb('hum',(humRooms[g]||0.05)*(G.mode==='title'?0.4:1),0.8);setAmb('room',0.22,1);
   const fz=g==='freezer'?0.6:Math.max(0,0.25-Math.hypot(camera.position.x-11,camera.position.z-3)*0.03);setAmb('freezer',fz,0.6);
@@ -34,7 +34,7 @@ function frame(t){requestAnimationFrame(frame);let dt=(t-last)/1000;last=t;if(!(
   if(live){G.time+=dt;tickWaits(dt);}
   if(G.mode==='title'){titleCam(dt);}
   else if(G.mode!=='paused'&&G.mode!=='dead'){if(G.mode==='play')movePlayer(dt);stepNudge(dt);updateCamera(dt);}
-  if(live){stepToni(dt);updateDoors(dt);stepOven(dt);stepClock(dt);stepVHS(dt);stepPrologue(dt);}
+  if(live){stepToni(dt);updateDoors(dt);stepOven(dt);stepClock(dt);stepVHS(dt);stepPrologue(dt);stepCredits(dt);}
   // the family only draws when you could see them: the party room, or through its door from the dining room and hall
   for(const k in CHARS)if(k!=='toni')CHARS[k].root.visible=castVisible(k);
   if(live||G.mode==='title'){for(const k in CHARS){const c=CHARS[k];if(c.root.visible)animChar(c,dt);}stepBomb(dt);stepBalloons(dt);if(G.mode==='title')updateDoors(dt);}
@@ -45,8 +45,8 @@ function frame(t){requestAnimationFrame(frame);let dt=(t-last)/1000;last=t;if(!(
   if(TONI.state==='hunt'||TONI.state==='chase'||TONI.state==='search'||TONI.state==='note'||TONI.state==='patrol'){const T=CHARS.toni;const d=Math.hypot(T.x-P.x,T.z-P.z);hbT-=dt;if(hbT<=0&&d<12){hbT=0.4+d*0.08;SFX.heartbeat(clamp(1-d/12,0.2,1)*0.8);}}
   postU.uWake.value=Math.max(0,postU.uWake.value-dt*0.04*(G.mode==='play'?1:0));
   postU.uFlash.value=Math.max(0,postU.uFlash.value-dt*2.5);postU.uTime.value=G.time+TCAM.t;
-  ambience();updateListener();
-  renderer.setRenderTarget(rt);renderer.render(scene,camera);renderer.setRenderTarget(null);renderer.render(postScene,postCam);}
+  ambience();updateListener();stepScore(dt);
+  renderer.setRenderTarget(rt);if(CR.on)renderer.render(CR.scene,CR.cam);else renderer.render(scene,camera);renderer.setRenderTarget(null);renderer.render(postScene,postCam);}
 
 /* ---------- title buttons ---------- */
 if(LS.get('save',null))$('contBtn').hidden=false;

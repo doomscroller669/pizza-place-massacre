@@ -13,7 +13,7 @@ function castVisible(id){const c=CHARS[id];const w=c.where||'party';if(w==='none
 /* ---------- little engines: tweens, walking extras, camera shake, decals ---------- */
 const TWEENS=[],MOVERS=[];const SHAKE={a:0,t:0};
 function tween(dur,fn){return new Promise(res=>TWEENS.push({t:0,dur,fn,res,run:G.run}));}
-function npcMove(ch,x,z,speed=1.4,o={}){return new Promise(res=>MOVERS.push({ch,x,z,speed,res,run:G.run,face:o.face!==false,back:!!o.back}));}
+function npcMove(ch,x,z,speed=1.4,o={}){return new Promise(res=>MOVERS.push({ch,x,z,speed,res,run:G.run,face:o.face!==false,back:!!o.back,faceCh:o.faceCh||null}));}
 function shake(a,dur){SHAKE.a=Math.max(SHAKE.a,a);SHAKE.t=Math.max(SHAKE.t,dur);}
 const DECALS=[];
 function decal(x,y,z,w,h,face,seed=1){const cv=canvas(64,64);const g=cv.getContext('2d');const r=mulberry(seed);g.fillStyle='rgba(95,6,4,.95)';g.beginPath();g.ellipse(32,32,18+r()*6,13+r()*5,r()*3,0,TAU);g.fill();
@@ -22,17 +22,24 @@ function decal(x,y,z,w,h,face,seed=1){const cv=canvas(64,64);const g=cv.getConte
   if(face==='up')m.rotation.x=-Math.PI/2;if(face==='n')m.rotation.y=Math.PI;if(face==='e')m.rotation.y=Math.PI/2;if(face==='w')m.rotation.y=-Math.PI/2;
   m.position.set(x,y,z);scene.add(m);m.material.color.copy(tintAt(x,Math.max(y,0.5),z,1.1));DECALS.push(m);return m;}
 function clearDecals(){for(const m of DECALS){scene.remove(m);m.geometry.dispose();}DECALS.length=0;}
-/* white extinguisher powder puffing outside the freezer window */
-const PUFF=[];
-function puffs(x,y,z,n){for(let i=0;i<n;i++){const m=new THREE.Mesh(new THREE.PlaneGeometry(0.5,0.5),new THREE.MeshBasicMaterial({map:GLOW_TEX,transparent:true,depthWrite:false,color:0xe8eae8,opacity:0.0}));
-  m.position.set(x+(R()-0.5)*0.6,y+(R()-0.5)*0.5,z+R()*0.4);scene.add(m);PUFF.push({m,t:0,life:3+R()*2,vx:(R()-0.5)*0.4,vy:0.15+R()*0.2,vz:R()*0.3});}}
-function stepPuffs(dt){for(let i=PUFF.length-1;i>=0;i--){const p=PUFF[i];p.t+=dt;const k=p.t/p.life;p.m.position.x+=p.vx*dt;p.m.position.y+=p.vy*dt;p.m.position.z+=p.vz*dt;p.m.scale.setScalar(1+k*2.5);p.m.material.opacity=Math.min(0.85,p.t*3)*(1-k);
-  p.m.lookAt(camera.position);if(k>=1){scene.remove(p.m);PUFF.splice(i,1);}}}
+/* white extinguisher powder: a stream out of the horn in Toni's hand, billowing where it hits */
+const PUFF=[],SPRAY={on:false,acc:0,run:0};const _sa=new THREE.Vector3(),_sb=new THREE.Vector3();
+function puff(x,y,z,vx,vy,vz,life,s0){const m=new THREE.Mesh(new THREE.PlaneGeometry(0.5,0.5),new THREE.MeshBasicMaterial({map:GLOW_TEX,transparent:true,depthWrite:false,color:0xe8eae8,opacity:0.0}));
+  m.position.set(x,y,z);m.scale.setScalar(s0);scene.add(m);PUFF.push({m,t:0,life,vx,vy,vz,s0});}
+function sprayOn(on){SPRAY.on=on;SPRAY.run=G.run;SPRAY.acc=0;}
+function stepSpray(dt){if(!SPRAY.on)return;if(SPRAY.run!==G.run){SPRAY.on=false;return;}const T=CHARS.toni;if(!T.extra.nozzle.visible)return;
+  T.root.updateMatrixWorld(true);T.extra.hoseB.getWorldPosition(_sa);T.extra.nozzleTip.getWorldPosition(_sb);const d=_sb.clone().sub(_sa).normalize();SPRAY.acc+=dt*48;
+  while(SPRAY.acc>=1){SPRAY.acc-=1;const sp=3.4+R()*1.2;puff(_sb.x,_sb.y,_sb.z,d.x*sp+(R()-0.5)*0.5,d.y*sp+(R()-0.5)*0.4,d.z*sp+(R()-0.5)*0.5,1.6+R()*1.4,0.25);}}
+function stepPuffs(dt){stepSpray(dt);for(let i=PUFF.length-1;i>=0;i--){const p=PUFF[i];p.t+=dt;const k=p.t/p.life,dr=Math.exp(-dt*2.6);p.vx*=dr;p.vy=p.vy*dr+dt*0.12;p.vz*=dr;
+  // nothing goes through the walk-in door
+  const pz=p.m.position.z+p.vz*dt;if(G.where==='pizzeria'&&p.m.position.z>=6.06&&pz<6.06&&Math.abs(p.m.position.x-11)<0.8){p.vz=Math.abs(p.vz)*0.15;p.vx+=(R()-0.5)*1.2;p.vy+=(R()-0.3)*0.6;}
+  p.m.position.x+=p.vx*dt;p.m.position.y+=p.vy*dt;p.m.position.z+=p.vz*dt;p.m.scale.setScalar(p.s0+k*2.6);p.m.material.opacity=Math.min(0.85,p.t*4)*(1-k);
+  p.m.lookAt(camera.position);if(k>=1){scene.remove(p.m);p.m.geometry.dispose();p.m.material.dispose();PUFF.splice(i,1);}}}
 function stepPrologue(dt){
   for(let i=TWEENS.length-1;i>=0;i--){const w=TWEENS[i];if(w.run!==G.run){TWEENS.splice(i,1);continue;}w.t+=dt;const k=Math.min(1,w.t/w.dur);w.fn(k);if(k>=1){TWEENS.splice(i,1);w.res();}}
   for(let i=MOVERS.length-1;i>=0;i--){const m=MOVERS[i];const c=m.ch;if(m.run!==G.run){MOVERS.splice(i,1);c.speed=0;continue;}const dx=m.x-c.x,dz=m.z-c.z,d=Math.hypot(dx,dz);
     if(d<0.04){c.x=m.x;c.z=m.z;c.speed=0;MOVERS.splice(i,1);m.res();continue;}const st=Math.min(d,m.speed*dt);c.x+=dx/d*st;c.z+=dz/d*st;c.speed=m.speed;c.walkPh+=dt*m.speed*4.2;
-    if(m.face){const want=Math.atan2(dx,dz)+(m.back?Math.PI:0);c.yaw+=angDiff(c.yaw,want)*Math.min(1,dt*9);}}
+    if(m.face){const f=m.faceCh,want=f?Math.atan2(f.x-c.x,f.z-c.z):Math.atan2(dx,dz)+(m.back?Math.PI:0);c.yaw+=angDiff(c.yaw,want)*Math.min(1,dt*9);}}
   if(SHAKE.t>0){SHAKE.t-=dt;const a=SHAKE.a*clamp(SHAKE.t*3,0,1);camera.position.x+=(R()-0.5)*a;camera.position.y+=(R()-0.5)*a;if(SHAKE.t<=0)SHAKE.a=0;}
   stepPuffs(dt);stepCandles(dt);lightMozz();stepRain(dt);stepThunder(dt);
   if(BOXHELD.visible)BOXHELD.children.forEach(m=>{(Array.isArray(m.material)?m.material:[m.material]).forEach(mm=>mm.color.copy(tintAt(camera.position.x,1.2,camera.position.z,1.1)));});
@@ -114,7 +121,7 @@ async function sceneCold(){const run=G.run;G.who='manny';G.where='pizzeria';chec
   await waitUntil(()=>G.flags.gotMozz);if(!alive(run))return;
   // the door swings shut behind him, and the latch drops
   setObj('');$('obj').hidden=true;DOORS.freezer.target=0;DOORS.freezer.locked=true;at3(11,1,6,(p,t)=>SFX.slam(p,t));await gwait(0.6);if(!alive(run))return;at3(11,1.3,6.1,(p,t)=>SFX.clunk(p,t));
-  setMode('cine');const T=CHARS.toni;toniShow(11.0,6.5,Math.PI);TONI.house=false;TONI.armed=false;toniTool(null);
+  setMode('cine');scoreBase('dread');const T=CHARS.toni;toniShow(11.0,6.8,Math.PI);TONI.house=false;TONI.armed=false;toniTool(null);
   await nudge(11.0,1.6,6.0,0.7);if(!alive(run))return;SFX.sting();shake(0.02,0.4);
   T.poseOv='phoneUp';await toniSay('Take your break, Manny.',{at:[11.0,6.4]});if(!alive(run))return;T.poseOv=null;
   toniWalk(14.9,7.6,1.5).then(()=>{if(alive(run)&&G.flags.coldStage<1)toniHide();});
@@ -131,7 +138,7 @@ async function coldDevon(){const run=G.run;const T=CHARS.toni,D=CHARS.devon;
   await line('manny','Devon! DEVON! Behind you!',{expr:'fear'});if(!alive(run))return;
   for(let i=0;i<3;i++){SFX.knock(busFx,now());shake(0.012,0.15);await gwait(0.22);}if(!alive(run))return;
   thinkM('Earbuds. He can’t hear me. He never hears anything.',3);
-  toniTool('pin');toniShow(8.6,8.1,Math.PI/2);await toniWalk(11.15,8.7,1.6);if(!alive(run))return;toniFace(D.x,D.z);await gwait(0.5);if(!alive(run))return;
+  scoreBase('stalk');toniTool('pin');toniShow(8.6,8.1,Math.PI/2);await toniWalk(11.15,8.7,1.6);if(!alive(run))return;toniFace(D.x,D.z);await gwait(0.5);if(!alive(run))return;
   T.poseOv='swingUp';await gwait(0.45);if(!alive(run))return;T.poseOv='swingDown';await gwait(0.08);at3(D.x,1.6,D.z,(p,t)=>SFX.thud(p,t),1.6);shake(0.01,0.2);
   decal(12.0,1.35,9.87,0.6,0.5,'n',3);D.pose='crumple';setExpr(D,'pain');D.shake=0.5;await gwait(0.5);if(!alive(run))return;
   T.poseOv='swingUp';await gwait(0.4);if(!alive(run))return;T.poseOv='swingDown';await gwait(0.08);at3(D.x,1,D.z,(p,t)=>SFX.thud(p,t),1.6);shake(0.012,0.2);
@@ -148,8 +155,9 @@ async function coldBree(){const run=G.run;const T=CHARS.toni,B=CHARS.bree;
   at3(11.4,1.1,6.1,(p,t)=>SFX.rattle(p,t));await line('bree','I can’t find it, I can’t—',{expr:'scream'});if(!alive(run))return;
   await waitUntil(()=>TONI.state==='idle');if(!alive(run))return;toniFace(B.x,B.z);await gwait(0.3);if(!alive(run))return;
   // he sprays her, and the window goes white
-  T.poseOv='spray';at3(10.6,1.4,6.8,(p,t)=>SFX.hiss(p,t,1.8),2);puffs(11.0,1.5,6.4,10);B.shake=1;
-  await tween(1.4,k=>{FZ.powder=k*0.96;if(((k*20)|0)%3===0)glassPaint();});if(!alive(run))return;glassPaint();
+  T.poseOv='spray';setExpr(B,'scream');await gwait(0.25);if(!alive(run))return;at3(10.6,1.4,6.8,(p,t)=>SFX.hiss(p,t,1.8),2);sprayOn(true);B.shake=1;
+  await tween(1.4,k=>{FZ.powder=k*0.96;if(((k*20)|0)%3===0)glassPaint();});sprayOn(false);if(!alive(run))return;glassPaint();
+  T.poseOv=null;await tween(0.35,k=>{T.x=lerp(10.35,10.68,k);T.z=lerp(7.3,6.98,k);});if(!alive(run))return;toniFace(B.x,B.z);
   for(let i=0;i<2;i++){T.poseOv='swingUp';await gwait(0.35);if(!alive(run))return;T.poseOv='swingDown';await gwait(0.06);at3(11,1.5,6.4,(p,t)=>SFX.clang(p,t),1.6);shake(0.02,0.25);if(i===0){glassHand(66,30,0);B.shake=0;}}
   if(!alive(run))return;B.where='none';T.poseOv=null;toniTool(null);
   // the powder settles off the glass; her hand slides down it
@@ -169,32 +177,33 @@ async function coldManager(){const run=G.run;const T=CHARS.toni,M=CHARS.manager;
   M.look=[CHARS.devon.x-1.2,0.3,CHARS.devon.z];await gwait(0.9);if(!alive(run))return;setExpr(M,'fear');
   await line('manager','Devon? Oh, Jesus. Oh, Jesus Christ.',{expr:'fear'});if(!alive(run))return;
   // he backs away, right up against the walk-in door
-  toniTool('rocker');toniShow(8.6,8.1,Math.PI/2);M.look=[8.6,1.7,8.1];npcMove(M,11.1,6.75,0.9,{back:true});await toniWalk(10.0,7.7,1.3);if(!alive(run))return;toniFace(M.x,M.z);M.pose='plead';
+  toniTool('rocker');toniShow(8.6,8.1,Math.PI/2);M.look=null;const mv=npcMove(M,11.1,6.75,0.9,{faceCh:T});await toniWalk(10.0,7.7,1.3);if(!alive(run))return;M.pose='plead';M.look=[10.0,1.75,7.7];
+  mv.then(()=>{if(alive(run)){toniFace(M.x,M.z);M.yaw=Math.atan2(T.x-M.x,T.z-M.z);}});
   await line('manager','Okay. Okay, buddy. Easy. Is this about the write-up? The drawing? Nobody’s mad about the drawing—',{expr:'fear'});if(!alive(run))return;
   T.poseOv='type';await toniSay('Time for your performance review.');if(!alive(run))return;T.poseOv=null;
   line('manager','Wait— WAIT—',{expr:'scream'});
   // he spins him around and puts his face into the glass
   await tween(0.25,k=>{T.x=lerp(10.0,11.1,k);T.z=lerp(7.7,7.2,k);});if(!alive(run))return;T.yaw=Math.PI;M.yaw=Math.PI;M.look=null;M.pose='pinned';T.poseOv='grab';toniTool(null);
   await nudge(11.05,1.5,6.2,0.25);if(!alive(run))return;
-  for(let i=0;i<3;i++){await tween(0.13,k=>{M.z=lerp(6.75,6.38,k);T.z=lerp(7.2,6.85,k);});if(!alive(run))return;
+  for(let i=0;i<3;i++){await tween(0.13,k=>{M.z=lerp(6.75,6.38,k);T.z=lerp(7.2,6.92,k);});if(!alive(run))return;
     at3(11,1.5,6.05,(p,t)=>{SFX.knock(p,t);SFX.crack(p,t);},1.4);shake(0.03,0.2);setExpr(M,i===2?'pain':'scream');glassCrack(58+i*5,46-i*3,6+i*3,11+i);glassBlood(60,46,10+i*7,14+i*10,21+i);
-    if(i<2){await tween(0.32,k=>{M.z=lerp(6.38,6.75,k);T.z=lerp(6.85,7.2,k);});if(!alive(run))return;}}
+    if(i<2){await tween(0.32,k=>{M.z=lerp(6.38,6.75,k);T.z=lerp(6.92,7.2,k);});if(!alive(run))return;}}
   // he slides down the glass
   glassAdd(()=>{});await tween(1.1,k=>{M.y=-k*0.55;FZ.layers[FZ.layers.length-1]=(g)=>{g.strokeStyle='rgba(110,8,6,.8)';g.lineCap='round';g.lineWidth=9;g.beginPath();g.moveTo(60,48);g.lineTo(lerp(60,57,k),lerp(48,100,k));g.stroke();};glassPaint();});if(!alive(run))return;
   // then he's dragged down below the window, and the rocker comes down. And again.
-  await tween(0.3,k=>{M.z=lerp(6.38,6.9,k);M.y=-0.55-k*0.5;});if(!alive(run))return;M.where='none';toniTool('rocker');T.poseOv='chopUp';await gwait(0.3);if(!alive(run))return;
+  await tween(0.3,k=>{M.z=lerp(6.38,6.9,k);M.y=-0.55-k*0.5;T.z=lerp(6.92,7.15,k);});if(!alive(run))return;M.where='none';toniTool('rocker');T.poseOv='chopUp';await gwait(0.3);if(!alive(run))return;
   for(let i=0;i<4;i++){T.poseOv='chopUp';await gwait(0.32);if(!alive(run))return;T.poseOv='chopDown';await gwait(0.05);at3(11,0.5,6.8,(p,t)=>SFX.chop(p,t),1.4);shake(0.018,0.2);postU.uRed.value=0.12;
     glassBlood(40+R()*48,70+R()*24,22,24,40+i);await gwait(0.12);postU.uRed.value=0;}
   if(!alive(run))return;await gwait(1.1);if(!alive(run))return;
   // he stands, cleans the glass for Manny, and shows him the phone
-  T.poseOv=null;toniTool('rag');await tween(0.4,k=>{T.z=lerp(7.2,6.55,k);});if(!alive(run))return;await nudge(11.0,1.6,6.2,0.4);if(!alive(run))return;
+  T.poseOv=null;toniTool('rag');{const z0=T.z;await tween(0.4,k=>{T.z=lerp(z0,6.78,k);});}if(!alive(run))return;await nudge(11.0,1.6,6.2,0.4);if(!alive(run))return;
   T.poseOv='wipe';at3(11,1.5,6.1,(p,t)=>SFX.drag(p,t,1.2),1.4);await gwait(0.9);if(!alive(run))return;glassWipe();await gwait(0.5);if(!alive(run))return;
-  toniTool(null);T.poseOv='phoneUp';await gwait(0.4);if(!alive(run))return;
+  toniTool(null);await tween(0.2,k=>{T.z=lerp(6.78,6.82,k);});if(!alive(run))return;T.poseOv='phoneUp';await gwait(0.4);if(!alive(run))return;
   await toniSay('Keep the ovens on. Got a party coming.',{at:[11.0,6.3]});if(!alive(run))return;T.poseOv=null;
-  await toniWalk(14.9,7.6,1.5);if(!alive(run))return;toniHide();at3(18,1,30,(p,t)=>SFX.slam(p,t),3);await gwait(1.2);if(!alive(run))return;at3(18,0.5,40,(p,t)=>SFX.engine(p,t),6);
+  scoreBase('dread');await toniWalk(14.9,7.6,1.5);if(!alive(run))return;toniHide();at3(18,1,30,(p,t)=>SFX.slam(p,t),3);await gwait(1.2);if(!alive(run))return;at3(18,0.5,40,(p,t)=>SFX.engine(p,t),6);
   // Manny slides down the door
   P.eyeOverride=0.8;await gwait(2.4);if(!alive(run))return;await line('manny','Kid… what did you do?',{expr:'sad'});if(!alive(run))return;
-  await gwait(0.8);await fadeTo(1,2);if(!alive(run))return;for(const id of STAFF)CHARS[id].where='none';sceneHouse();}
+  await gwait(0.8);await fadeTo(1,2);if(!alive(run))return;for(const id of STAFF)CHARS[id].where='none';sceneCredits();}
 
 /* ============================================================
    THE RAMIREZ HOUSE
@@ -246,7 +255,7 @@ async function sceneHouse(){const run=G.run;checkpoint('house');houseReset();hou
   P.seated=null;P.limitYaw=null;P.x=174.35;P.z=3.5;P.yaw=-Math.PI/2;P.pitch=-0.05;
   setObj('Answer the door.','The front door is through the arch on your right, in the front hall.');G.flags.atDoor=false;
   await waitUntil(()=>G.flags.atDoor);if(!alive(run))return;setObj('');$('obj').hidden=true;
-  DOORS.hFront.target=1;at3(180,1,3.6,(p,t)=>SFX.door(p,t),2);setAmb('rain',0.75,0.5);setMode('cine');await nudge(181.05,1.75,3.6,0.9);if(!alive(run))return;
+  DOORS.hFront.target=1;at3(180,1,3.6,(p,t)=>SFX.door(p,t),2);setAmb('rain',0.75,0.5);setMode('cine');scoreBase('dread');await nudge(181.05,1.75,3.6,0.9);if(!alive(run))return;
   await gwait(1.6);if(!alive(run))return;await line('lucia','Um. Hi.',{name:'Lucia'});if(!alive(run))return;
   T.tilt=0.3;await gwait(1.2);if(!alive(run))return;T.tilt=0;
   setMode('play');setObj('Take the pizza.','He’s holding it out to you.');G.flags.tookPizza=false;await waitUntil(()=>G.flags.tookPizza);if(!alive(run))return;
@@ -260,7 +269,7 @@ async function sceneHouse(){const run=G.run;checkpoint('house');houseReset();hou
   if(c2===0){T.tilt=0.25;await gwait(1.2);T.tilt=0;remember('Your driver noticed that.');}else if(c2===1){await gwait(1.2);remember('Your driver will remember that.');}
   if(!alive(run))return;
   toniWalk(190.4,5.2,1.3).then(()=>{if(alive(run))toniHide();});await gwait(1.8);if(!alive(run))return;
-  setMode('play');await waitUntil(()=>P.x<179.2);if(!alive(run))return;DOORS.hFront.target=0;at3(180,1,3.6,(p,t)=>SFX.door(p,t),2);setAmb('rain',0.4,0.8);
+  setMode('play');await waitUntil(()=>P.x<179.2);if(!alive(run))return;DOORS.hFront.target=0;at3(180,1,3.6,(p,t)=>SFX.door(p,t),2);setAmb('rain',0.4,0.8);scoreBase(null);
   setMode('play');setObj('Bring the pizza to the table.','Back through the arch, to the dining room.');G.flags.boxDown=false;await waitUntil(()=>G.flags.boxDown);if(!alive(run))return;
   setObj('');$('obj').hidden=true;BOXHELD.visible=false;TBOX.g.visible=true;TBOX.lid.rotation.x=0;SFX.pick();
   setMode('cine');await fadeTo(1,0.3);if(!alive(run))return;luciaSeat();await fadeTo(0,0.4);if(!alive(run))return;
@@ -295,7 +304,7 @@ async function sceneRating(){const run=G.run;const D=CHARS.dad,GP=CHARS.grandpa,
   await line('ruben','In horror movies, this is the part where the pizza’s poisoned.',{expr:'neutral'});if(!alive(run))return;
   await line('alex','Shut up, Ruben.',{expr:'neutral'});if(!alive(run))return;
   // and it was
-  GP.pose='sit';GP.look=[GP.x,1.6,GP.z+1];at3(GP.x,1.2,GP.z,(p,t)=>SFX.buzz(p,t),1.2);await gwait(1.4);if(!alive(run))return;
+  scoreBase('dread');GP.pose='sit';GP.look=[GP.x,1.6,GP.z+1];at3(GP.x,1.2,GP.z,(p,t)=>SFX.buzz(p,t),1.2);await gwait(1.4);if(!alive(run))return;
   U.pose='sit';await line('uncle','Man, I’m wiped. Somebody spike the—',{expr:'neutral'});if(!alive(run))return;U.pose='slumpBack';setExpr(U,'out');await gwait(1.0);if(!alive(run))return;
   await line('grandpa','Hey. HEY. Sit up. What’s wrong with… with my…',{expr:'angry'});if(!alive(run))return;GP.pose='slumpTable';setExpr(GP,'out');at3(GP.x,0.9,GP.z,(p,t)=>SFX.thud(p,t),1.2);await gwait(0.6);if(!alive(run))return;
   A.pose='sit';await line('alex','Lucia? I feel… weird…',{expr:'sad'});if(!alive(run))return;A.pose='slumpTable';setExpr(A,'out');await gwait(0.5);if(!alive(run))return;
@@ -308,9 +317,9 @@ async function sceneRating(){const run=G.run;const D=CHARS.dad,GP=CHARS.grandpa,
 
 /* ---------- after they pass out: her phone, her room ---------- */
 async function sceneRoom(continuing){const run=G.run;
-  if(!continuing){checkpoint('room');houseReset();houseCast();for(const id of FAMILY){const c=CHARS[id];c.pose=id==='uncle'||id==='ruben'?'slumpBack':'slumpTable';setExpr(c,'out');}
+  if(!continuing){checkpoint('room');scoreBase('dread');houseReset();houseCast();for(const id of FAMILY){const c=CHARS[id];c.pose=id==='uncle'||id==='ruben'?'slumpBack':'slumpTable';setExpr(c,'out');}
     const D=CHARS.dad;D.root.rotation.z=-1.4;D.x=169.2;D.pose='limp';TBOX.g.visible=true;TBOX.lid.rotation.x=-2.75;luciaSeat();setMode('cine');await fadeTo(0,1);if(!alive(run))return;}
-  else checkpoint('room');
+  else checkpoint('room');scoreBase('dread');
   P.seated=null;P.limitYaw=null;P.x=174.3;P.z=3.5;setMode('play');setObj('Wake your dad.','He’s on the floor by the head of the table.');G.flags.shookDad=false;
   await waitUntil(()=>G.flags.shookDad);if(!alive(run))return;
   setMode('cine');await line('lucia','Dad. Dad, wake up. Please wake up.',{name:'Lucia'});if(!alive(run))return;
@@ -328,7 +337,7 @@ async function sceneRoom(continuing){const run=G.run;
   await sceneCharge();}
 async function sceneCharge(){const run=G.run;checkpoint('charge');
   setObj('Wait for it to turn on.','Come on. Come on.');lpCharging();chargeT=0;G.lpCharge=true;
-  const T=CHARS.toni;TONI.house=true;TONI.sightK=0.8;toniShow(160.6,1.6,Math.PI/2);DOORS.hGarLaun.target=1;
+  scoreBase('stalk');const T=CHARS.toni;TONI.house=true;TONI.sightK=0.8;toniShow(160.6,1.6,Math.PI/2);DOORS.hGarLaun.target=1;
   // footsteps through the kitchen and down the hall
   toniWalk(164.3,7.7,1.3).then(()=>{if(alive(run))toniWalk(158.5,8.0,1.2);});await gwait(5);if(!alive(run))return;
   toniSay('Hi. I’m inside.');await gwait(6);if(!alive(run))return;
@@ -337,7 +346,7 @@ async function sceneCharge(){const run=G.run;checkpoint('charge');
   await line('lucia','No, no, no, no…',{name:'Lucia'});if(!alive(run))return;lpClose();
   await waitUntil(()=>TONI.state==='idle');if(!alive(run))return;await toniWalk(153.9,8.25,1.2);if(!alive(run))return;toniFace(153.9,9.5);
   at3(153.9,1,9,(p,t)=>SFX.rattle(p,t),2);await gwait(1.2);if(!alive(run))return;
-  setObj('Hide!','Under the bed, or in the closet.');G.flags.canHide=true;let hid=false;G.onHide=()=>{hid=true;};
+  scoreBase('dread');setObj('Hide!','Under the bed, or in the closet.');G.flags.canHide=true;let hid=false;G.onHide=()=>{hid=true;};
   at3(153.9,1,9,(p,t)=>SFX.card(p,t),2);thinkL('Is that… a card? He’s opening the lock.',2.6);
   const t0=G.time;await waitUntil(()=>hid||G.time-t0>7.5);if(!alive(run))return;
   if(!hid){DOORS.hLucia.locked=false;DOORS.hLucia.target=1;at3(153.9,1,9,(p,t)=>SFX.door(p,t),2);toniWalk(P.x,P.z,2.4);await gwait(0.9);if(!alive(run))return;
@@ -364,7 +373,7 @@ async function sceneEscape(continuing){const run=G.run;
     const D=CHARS.dad;D.root.rotation.z=-1.4;D.x=169.2;D.pose='limp';CHARS.uncle.where='none';TBOX.g.visible=true;TBOX.lid.rotation.x=-2.75;
     P.seated=null;P.hidden=null;P.limitYaw=null;P.x=153.9;P.z=11.2;P.yaw=0;P.pitch=0;DOORS.hLucia.target=1;DOORS.hLucia.ang=1;setMode('cine');await fadeTo(0,0.8);if(!alive(run))return;}
   else checkpoint('escape');
-  G.flags.canHide=true;G.onHide=null;G.flags.escaping=true;HAI.takeT=0;HAI.took=['uncle'];
+  scoreBase('stalk');G.flags.canHide=true;G.onHide=null;G.flags.escaping=true;HAI.takeT=0;HAI.took=['uncle'];
   setMode('play');setObj('Get out of the house. The front door is past the living room.','Stay out of his sight. Duck behind furniture, or hide in a closet, under a bed or in the shower until he passes. He hears you run.');
   const T=CHARS.toni;TONI.house=true;TONI.sightK=0.75;toniShow(171.5,6.2,Math.PI);TONI.state='idle';await gwait(4);if(!alive(run))return;
   TONI.state='patrol';TONI.path=[];HAI.pauseT=0;HAI.lostT=0;setAmb('hunt',0.3,1.5);}
@@ -395,7 +404,7 @@ async function houseCheckSpot(h){const T=CHARS.toni,run=G.run;TONI.state='walk';
 function caught(why){if(G.mode==='dead')return;const T=CHARS.toni;TONI.state='idle';T.poseOv='grab';G.flags.escaping=false;at3(P.x,1.2,P.z,(p,t)=>SFX.thud(p,t));die('SIGNED FOR.',why);}
 
 /* ---------- out the front door ---------- */
-async function sceneOut(){const run=G.run;G.flags.escaping=false;setObj('');$('obj').hidden=true;setMode('cine');setAmb('hunt',0,1);postU.uDanger.value=0;
+async function sceneOut(){const run=G.run;scoreBase(null);G.flags.escaping=false;setObj('');$('obj').hidden=true;setMode('cine');setAmb('hunt',0,1);postU.uDanger.value=0;
   const T=CHARS.toni;toniHide();TONI.house=false;
   // everyone he took is in the van, slumped against each other
   [['dad',193.0,2.7,-Math.PI/2-0.4,0],['alex',193.3,3.5,-Math.PI/2+0.3,0.5],['grandpa',194.1,2.4,-Math.PI/2,-0.3],['ruben',193.9,3.9,-Math.PI/2+0.5,0.4],['uncle',194.2,3.2,-Math.PI/2-0.2,-0.5]].forEach(([id,x,z,y,lean])=>{const c=CHARS[id];c.where='van';c.root.rotation.set(0,0,0);place(c,x,z,y,0.42);c.pose='sitFloor';c.tilt=lean;setExpr(c,'out');});

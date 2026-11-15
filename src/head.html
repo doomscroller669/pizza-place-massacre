@@ -284,6 +284,14 @@ button{font:inherit;color:inherit}
 #vhs{position:fixed;inset:0;z-index:46;background:#000;display:flex;align-items:center;justify-content:center;cursor:pointer}
 #vhsCv{width:100%;height:100%;object-fit:contain;image-rendering:pixelated}
 #vhsSkip{position:absolute;right:var(--gr);bottom:calc(var(--sb) + 12px);font-size:15px;letter-spacing:.14em;color:rgba(239,226,196,.5);margin:0;text-transform:uppercase}
+/* the opening credits: the words sit low over the pizza, in old slasher orange */
+#credits{position:fixed;inset:0;z-index:45;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#crText{position:absolute;left:0;right:0;bottom:calc(var(--sb) + 13vh);text-align:center;opacity:0;transition:opacity .9s ease;padding:0 6vw}
+#crText.on{opacity:1}
+#crText .k{font-family:var(--f-type);font-size:clamp(13px,2.1vw,17px);letter-spacing:.34em;text-transform:lowercase;color:#d6c39a;margin:0;text-shadow:0 1px 3px #000}
+#crText .k:empty{display:none}
+#crText .n{font-family:var(--f-brand);font-size:clamp(26px,5.4vw,46px);line-height:1.05;letter-spacing:.04em;color:#ec7a2c;margin:6px 0;text-shadow:0 0 14px rgba(236,122,44,.35),0 2px 0 #3a1404}
+#crSkip{position:absolute;right:var(--gr);bottom:calc(var(--sb) + 12px);font-size:15px;letter-spacing:.14em;color:rgba(239,226,196,.4);margin:0;text-transform:uppercase}
 #fade{position:fixed;inset:0;z-index:50;background:#000;opacity:0;pointer-events:none;transition:opacity 1s linear}
 #card{position:fixed;inset:0;z-index:51;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;pointer-events:none;opacity:0;transition:opacity .8s}
 #card.on{opacity:1}
@@ -342,6 +350,7 @@ button{font:inherit;color:inherit}
   </div>
 </div>
 
+<div id="credits" hidden><div id="crText" aria-live="polite"><p class="k" id="crK"></p><p class="n" id="crN"></p><p class="k" id="crB"></p></div><p id="crSkip">Tap to skip</p></div>
 <div id="vhs" hidden><canvas id="vhsCv" width="320" height="240" aria-label="A training tape playing"></canvas><p id="vhsSkip">Tap to skip</p></div>
 
 <section id="title" class="screen" aria-label="Title screen">
@@ -354,7 +363,7 @@ button{font:inherit;color:inherit}
       <button class="mi" id="ctlBtn" type="button" aria-expanded="false"><span>Controls</span><i></i><b>Free</b></button>
     </div>
     <div id="ctlPanel" class="cpanel" hidden></div>
-    <p class="fine"><b>No substitutions. No refunds.</b> Contains violence, gore, and loud sudden sounds. Headphones recommended. Toni talks through your device’s text-to-speech voice.</p>
+    <p class="fine"><b>No substitutions. No refunds.</b> Contains violence, gore, and loud sudden sounds. Headphones recommended.</p>
     <p id="loadErr" hidden>The 3D engine didn’t load. Check your connection and reload the page.</p>
     <p class="taphint blink" id="sndHint">Tap anywhere for sound</p>
   </div>

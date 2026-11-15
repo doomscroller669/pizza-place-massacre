@@ -81,7 +81,7 @@ function line(who,text,o={}){return new Promise(async res=>{const ch=CHARS[who];
   const fin=()=>{if(done)return;done=true;if(o.dur)voStop(0.12);DS=null;$('dlg').hidden=true;res();};
   DS={skip:()=>{if(Date.now()-t0>250){voStop();fin();}}};
   const vd=await voPlay(who,text,pos);if(!alive(run)||done)return;
-  let dur;if(vd)dur=o.dur?Math.min(o.dur,vd+0.1):vd+0.55;else{dur=o.dur||clamp(1.6+text.length*0.065,2.2,8);murmur(who,text,pos);}
+  let dur;if(vd)dur=o.dur?Math.min(o.dur,vd+0.1):vd+0.55;else dur=o.dur||clamp(1.6+text.length*0.065,2.2,8);   // everyone but Toni is silent: the line is read, not heard
   if(ch)say(ch,vd?Math.min(vd,dur):dur*0.8);
   gwait(dur).then(()=>{if(alive(run))fin();});});}
 function choose(opts,o={}){return new Promise(res=>{$('dlg').hidden=false;$('dlgWho').textContent=o.who||'';$('dlgText').textContent=o.prompt||'';$('dlgMore').hidden=true;
@@ -113,6 +113,7 @@ addEventListener('keydown',e=>{
   if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)&&G.mode!=='title')e.preventDefault();
   keys[e.code]=true;
   if(VHS.on){if(!e.repeat&&['Escape','KeyE','Space','Enter'].includes(e.code))vhsEnd();return;}
+  if(CR.on){if(!e.repeat&&['Escape','KeyE','Space','Enter'].includes(e.code))crSkip();return;}
   if(!$('cook').hidden){COOK.key(e);return;}
   if(DS){if(/^Digit[1-9]$/.test(e.code)&&DS.pick)DS.pick(+e.code.slice(5)-1);else if(['Space','Enter','KeyE'].includes(e.code)&&!e.repeat&&DS.skip)DS.skip();return;}
   if(noteRes&&!e.repeat&&['Escape','KeyE','Space','Enter'].includes(e.code)){e.preventDefault();noteRes();return;}
@@ -159,6 +160,6 @@ $('retryBtn').addEventListener('click',()=>{$('dead').hidden=true;if(AC&&AC.stat
 const toTitle=()=>{location.reload();};
 $('quitBtn').addEventListener('click',toTitle);$('deadQuit').addEventListener('click',toTitle);$('endQuit').addEventListener('click',toTitle);
 $('againBtn').addEventListener('click',()=>{LS.del('save');location.reload();});
-function die(head,lineTxt){if(G.mode==='dead')return;G.run++;hushToni();bubble('off');setMode('dead');P.hidden=null;$('hideMask').hidden=true;$('dlg').hidden=true;DS=null;
+function die(head,lineTxt){if(G.mode==='dead')return;G.run++;scoreBase(null,true);hushToni();bubble('off');setMode('dead');P.hidden=null;$('hideMask').hidden=true;$('dlg').hidden=true;DS=null;
   setAmb('hunt',0,0.3);postU.uFlash.value=0.9;SFX.sting();$('deadHead').textContent=head||'ORDER UP.';$('deadLine').textContent=lineTxt||'';
   setTimeout(()=>{$('dead').hidden=false;setTimeout(()=>$('retryBtn').focus({preventScroll:true}),30);},900);}

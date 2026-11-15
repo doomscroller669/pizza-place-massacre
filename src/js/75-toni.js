@@ -47,13 +47,24 @@ function stepToni(dt){const T=CHARS.toni;if(!T||!T.root.visible)return;
   if(T.yawT!=null&&!moving){T.yaw+=angDiff(T.yaw,T.yawT)*Math.min(1,dt*5);if(Math.abs(angDiff(T.yaw,T.yawT))<0.02)T.yawT=null;}
   T.speed=moving?TONI.speed:0;if(moving){T.walkPh+=dt*TONI.speed*4.2;TONI.stepT-=dt*TONI.speed;if(TONI.stepT<=0){TONI.stepT=0.72;at3(T.x,0.1,T.z,(p,t)=>SFX.stomp(p,t),2.2);}}
   T.pose=T.poseOv||((TONI.state==='aim'||T.aiming)?'aim':T.typing?(T.tilt?'typeHead':'type'):(T.carrying?'carry':'stand'));
-  if(T.extra.screen)T.extra.screen.material.color.setHex(T.typing||T.poseOv==='phoneUp'?0xffffff:0x8fa3bf);if(T.extra.phone)T.extra.phone.rotation.y=T.poseOv==='phoneUp'?Math.PI:0;
+  if(T.extra.screen)T.extra.screen.material.color.setHex(T.typing||T.poseOv==='phoneUp'?0xffffff:0x8fa3bf);if(T.extra.phone){const up=T.poseOv==='phoneUp';T.extra.phone.rotation.set(up?-(POSES.phoneUp.shR+POSES.phoneUp.elR):-0.3,0,0);}
+  if(T.extra.nozzle){const spr=!!(T.extra.tools.ext.visible&&T.poseOv==='spray');T.extra.nozzle.visible=spr;T.extra.extStub.visible=!spr;T.extra.phone.visible=!spr;hoseUpdate(T,spr);}
   if(T.extra.gun)T.extra.gun.visible=!!TONI.armed;
   if(TONI.house){if(T.extra.glow)T.extra.glow.visible=LIGHTSET==='dark';if(TONI.state==='patrol'||TONI.state==='chase'||TONI.state==='search')houseThink(dt);}
   else if(TONI.state==='hunt'||TONI.state==='chase'||TONI.state==='aim'||TONI.state==='search')huntThink(dt);}
 
+/* the extinguisher's hose: tank to horn, sagging between his hands while he sprays */
+const HOSE={g:new THREE.Group(),segs:[],mat:basic({color:0x1c1c1c})};
+{const geo=new THREE.CylinderGeometry(0.014,0.014,1,5);for(let i=0;i<9;i++){const m=new THREE.Mesh(geo,HOSE.mat);HOSE.g.add(m);HOSE.segs.push(m);}HOSE.g.visible=false;scene.add(HOSE.g);}
+const _ha=new THREE.Vector3(),_hb=new THREE.Vector3(),_hc=new THREE.Vector3(),_hp=new THREE.Vector3(),_hq=new THREE.Vector3(),_hup=new THREE.Vector3(0,1,0);
+function hosePt(t,o){const u=1-t;return o.set(u*u*_ha.x+2*u*t*_hc.x+t*t*_hb.x,u*u*_ha.y+2*u*t*_hc.y+t*t*_hb.y,u*u*_ha.z+2*u*t*_hc.z+t*t*_hb.z);}
+function hoseUpdate(T,on){HOSE.g.visible=on&&T.root.visible;if(!HOSE.g.visible)return;T.root.updateMatrixWorld(true);
+  T.extra.hoseA.getWorldPosition(_ha);T.extra.hoseB.getWorldPosition(_hb);_hc.copy(_ha).add(_hb).multiplyScalar(0.5);_hc.y-=0.24;
+  const n=HOSE.segs.length;for(let i=0;i<n;i++){hosePt(i/n,_hp);hosePt((i+1)/n,_hq);const m=HOSE.segs[i];m.position.copy(_hp).add(_hq).multiplyScalar(0.5);_hq.sub(_hp);m.scale.set(1,_hq.length()*1.1,1);m.quaternion.setFromUnitVectors(_hup,_hq.normalize());}
+  HOSE.mat.color.setHex(0x1c1c1c).multiply(tintAt(T.x,1.2,T.z,1.1));}
+
 /* ---------- the hunt ---------- */
-function startHunt(){const T=CHARS.toni;TONI.armed=true;TONI.huntT=0;TONI.lostT=0;TONI.lastSeen=[P.x,P.z];G.flags.hidSeen=false;
+function startHunt(){const T=CHARS.toni;scoreBase('stalk');TONI.armed=true;TONI.huntT=0;TONI.lostT=0;TONI.lastSeen=[P.x,P.z];G.flags.hidSeen=false;
   if(!T.root.visible)toniShow(35.4,12.7,-Math.PI/2);DOORS.party.target=1;TONI.state='hunt';TONI.speed=2.1;TONI.path=pathTo(T.x,T.z,P.x,P.z);setAmb('hunt',0.55,1.5);}
 let barkT=0;
 function huntThink(dt){const T=CHARS.toni;TONI.huntT+=dt;barkT-=dt;const sees=toniSees();
@@ -78,7 +89,7 @@ async function toniCheckSpot(h){const T=CHARS.toni,run=G.run;TONI.path=pathTo(T.
   for(let i=0;i<3;i++){SFX.heartbeat(0.7);await gwait(0.9);if(!alive(run))return;}
   if(!P.hidden){TONI.state='hunt';return;}
   at3(h.ex,0.1,h.ez,(p,t)=>SFX.slideNote(p,t));await gwait(0.8);if(!alive(run))return;
-  TONI.armed=false;setAmb('hunt',0,2);postU.uDanger.value=0;
+  TONI.armed=false;setAmb('hunt',0,2);postU.uDanger.value=0;scoreBase(null);
   TONI.state='return';toniWalk(35.4,12.7,1.5).then(()=>{if(alive(run)){toniHide();DOORS.party.target=0;}});
   await openNote('hand','Slid under the door','<p>It’s okay.</p><p>I forgive you.</p><p>Just do your job.</p>');
   if(TONI.note)TONI.note();}

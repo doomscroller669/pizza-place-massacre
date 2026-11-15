@@ -387,14 +387,23 @@ function buildChar(id){const s=CAST[id];const ch={id,s,mats:[],j:{},pose:'stand'
   if(s.toni){// the phone, always in his right hand, and the gun he holds in his left once he's hunting
     const ph=new THREE.Group();const body=part(ch,GEO.box(0.075,0.15,0.012),'#111',{ink:0.004});ph.add(body);const scr=new THREE.Mesh(new THREE.PlaneGeometry(0.064,0.13),new THREE.MeshBasicMaterial({color:0x9fd0ff,map:PHONE_SCR.tex}));scr.position.z=0.007;ph.add(scr);ch.extra.screen=scr;
     ph.position.set(0,-0.1,0.04);ph.rotation.x=-0.3;ch.j.handR.add(ph);ch.extra.phone=ph;
+    // the extinguisher's horn, gripped in his right hand while he sprays
+    const nz=new THREE.Group();const ng=part(ch,GEO.cyl(0.017,0.017,0.09,6),'#141414',{ink:0});ng.position.y=-0.04;nz.add(ng);const nh=part(ch,GEO.cyl(0.018,0.048,0.17,8),'#141414',{ink:0});nh.position.y=-0.17;nz.add(nh);
+    const nb=new THREE.Object3D();nb.position.y=0.01;nz.add(nb);const nt=new THREE.Object3D();nt.position.y=-0.27;nz.add(nt);nz.position.set(0,-0.05,0.02);nz.visible=false;ch.j.handR.add(nz);
+    ch.extra.nozzle=nz;ch.extra.hoseB=nb;ch.extra.nozzleTip=nt;
     const gun=new THREE.Group();const gb=part(ch,GEO.box(0.035,0.11,0.17),'#1a1a1a',{ink:0.004});gb.position.set(0,0,0.04);gun.add(gb);const gg=part(ch,GEO.box(0.03,0.11,0.04),'#2a2018',{ink:0.004});gg.position.set(0,-0.08,-0.02);gun.add(gg);
     gun.position.set(0,-0.12,0.02);gun.rotation.x=-1.3;gun.visible=false;ch.j.handL.add(gun);ch.extra.gun=gun;
     const tools={};const T0=(name,build)=>{const g=new THREE.Group();build(g);g.visible=false;ch.j.handL.add(g);tools[name]=g;};
     // the dough pin: a long hardwood rolling pin, gripped by one handle
     T0('pin',g=>{const b=part(ch,GEO.cyl(0.04,0.04,0.42,10),'#b58a5a',{ink:0,map:TX.wood.t,smooth:true});b.position.y=-0.3;g.add(b);const h=part(ch,GEO.cyl(0.018,0.018,0.12,6),'#8a6038',{ink:0});h.position.y=-0.05;g.add(h);});
     // the kitchen's fire extinguisher, held by its handle
+    // (carried by the handle; the hose's horn rides clipped to the tank until he sprays, then it's in his right hand)
     T0('ext',g=>{const b=part(ch,GEO.cyl(0.075,0.075,0.44,10),'#c41e1a',{ink:0,smooth:true});b.position.set(0,-0.3,0.02);g.add(b);const t=part(ch,GEO.cyl(0.03,0.04,0.06,8),'#1a1a1a',{ink:0});t.position.set(0,-0.06,0.02);g.add(t);
-      const n=part(ch,GEO.cyl(0.012,0.02,0.14,6),'#111',{ink:0});n.rotation.x=1.3;n.position.set(0,-0.06,0.1);g.add(n);});
+      const lev=part(ch,GEO.box(0.03,0.012,0.11),'#2a2a2a',{ink:0});lev.position.set(0,-0.025,0.05);lev.rotation.x=0.25;g.add(lev);
+      const lbl=part(ch,GEO.box(0.09,0.12,0.012),'#e8e2d0',{ink:0});lbl.position.set(0,-0.3,0.097);g.add(lbl);
+      const stub=new THREE.Group();const sh=part(ch,GEO.cyl(0.012,0.012,0.16,6),'#141414',{ink:0});sh.position.y=-0.04;stub.add(sh);const sn=part(ch,GEO.cyl(0.016,0.04,0.12,8),'#141414',{ink:0});sn.position.y=-0.17;stub.add(sn);
+      stub.position.set(0.085,-0.1,0.02);g.add(stub);ch.extra.extStub=stub;
+      const a=new THREE.Object3D();a.position.set(0.035,-0.07,0.02);g.add(a);ch.extra.hoseA=a;});
     // the pizza rocker: a long curved blade with a handle at each end
     T0('rocker',g=>{const sh=new THREE.Shape();sh.moveTo(-0.26,0);sh.quadraticCurveTo(0,-0.16,0.26,0);sh.lineTo(0.26,0.035);sh.quadraticCurveTo(0,-0.11,-0.26,0.035);sh.closePath();
       const geo=new THREE.ExtrudeGeometry(sh,{depth:0.006,bevelEnabled:false});const b=new THREE.Mesh(geo,psx(new THREE.MeshBasicMaterial({color:0xeef2f6,side:THREE.DoubleSide})));b.material.userData.base=new THREE.Color(0xf4f8fc);ch.mats.push(b.material);b.position.set(-0.26,-0.06,0);b.rotation.z=Math.PI/2;g.add(b);
@@ -454,12 +463,12 @@ const POSES={
   pinned:{spine:0.35,neck:-0.15,shL:-1.0,shR:-1.0,elL:-0.6,elR:-0.6,armOut:0.3},
   swingUp:{shL:-2.9,elL:-0.6,shR:-0.6,elR:-0.9,spine:-0.12},
   swingDown:{shL:-0.5,elL:-0.15,shR:-0.6,elR:-0.9,spine:0.35,neck:0.2},
-  spray:{shL:-1.3,elL:-0.2,shR:-1.2,elR:-0.5,armIn:0.3},
+  spray:{shL:-0.45,elL:-0.35,shR:-1.4,elR:-0.2,armIn:0.12,spine:0.06},
   grab:{shL:-1.25,shR:-1.25,elL:-0.75,elR:-0.75,armIn:0.35,spine:0.1},
   chopUp:{hipL:-0.5,hipR:-0.5,kneeL:0.9,kneeR:0.9,hipsY:-0.18,spine:0.45,shL:-2.7,elL:-0.6,shR:-0.6,elR:-0.9},
   chopDown:{hipL:-0.5,hipR:-0.5,kneeL:0.9,kneeR:0.9,hipsY:-0.18,spine:0.85,neck:0.3,shL:-0.6,elL:-0.1,shR:-0.6,elR:-0.9},
   wipe:{shL:-1.6,elL:-0.6,armIn:0.2,shR:-0.6,elR:-0.9},
-  phoneUp:{shR:-1.45,elR:-0.35,armIn:0.25,shL:-0.4,elL:-0.3},
+  phoneUp:{shR:-1.7,elR:-0.2,armIn:0.42,shL:-0.4,elL:-0.3},
   // the wake
   slumpTable:{hipL:-1.5,hipR:-1.5,kneeL:1.5,kneeR:1.5,spine:1.0,neck:0.5,head:0.3,shL:-1.0,shR:-1.1,elL:-1.2,elR:-1.0,hipsY:-0.47,headZ:0.3},
   slumpBack:{hipL:-1.5,hipR:-1.5,kneeL:1.5,kneeR:1.5,spine:-0.25,neck:-0.4,head:-0.2,shL:0.15,shR:0.15,elL:-0.1,elR:-0.1,hipsY:-0.47,armOut:0.2,headZ:-0.2},

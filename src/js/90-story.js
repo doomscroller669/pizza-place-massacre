@@ -153,7 +153,7 @@ async function serve(){const run=G.run;G.flags.served=true;G.flags.serving=true;
 /* ---------- checkpoints ---------- */
 function saveFlags(){LS.set('save',{ckpt:G.ckpt,flags:G.flags,strikes:G.strikes});}
 function checkpoint(name){G.ckpt=name;LS.set('save',{ckpt:name,flags:JSON.parse(JSON.stringify(G.flags)),strikes:G.strikes});}
-function resetWorld(){G.run++;WAITS.length=0;TWEENS.length=0;MOVERS.length=0;clearDecals();lpClose();G.lpCharge=false;G.noLeave=false;G.onHide=null;SHAKE.t=0;VOICE.busy=Promise.resolve();hushToni();bubble('off');DS=null;$('dlg').hidden=true;$('note').hidden=true;noteRes=null;$('cook').hidden=true;$('hideMask').hidden=true;$('vhs').hidden=true;VHS.on=false;stopMusic();
+function resetWorld(){G.run++;scoreBase(null,true);crEnd();WAITS.length=0;TWEENS.length=0;MOVERS.length=0;clearDecals();lpClose();G.lpCharge=false;G.noLeave=false;G.onHide=null;SHAKE.t=0;VOICE.busy=Promise.resolve();hushToni();bubble('off');DS=null;$('dlg').hidden=true;$('note').hidden=true;noteRes=null;$('cook').hidden=true;$('hideMask').hidden=true;$('vhs').hidden=true;VHS.on=false;stopMusic();
   P.hidden=null;P.seated=null;P.limitYaw=null;P.crouch=false;P.eyeOverride=null;NUDGE.on=false;G.clock=null;$('timer').hidden=true;$('obj').hidden=true;$('carry').hidden=true;
   PIZZA.reset();OVEN.on=false;OVEN.done=false;PIE.hand.visible=false;PIE.world.visible=false;if(PIE.table.parent!==scene){scene.add(PIE.table);}PIE.table.visible=false;
   TONI.state='off';TONI.armed=false;TONI.path=[];TONI.note=null;TONI.house=false;TONI.sightK=1;HAI.sawHide=false;setAmb('hunt',0);setAmb('oven',0);postU.uDanger.value=0;postU.uWake.value=0;postU.uRed.value=0;
@@ -196,7 +196,7 @@ async function sceneTable(){const run=G.run;pizzeriaReset();checkpoint('table');
   await toniSay('No substitutions. No refunds.',{pa:true});if(!alive(run))return;
   await line('uncle','Twelve pizzas? What is this, some prank show? Where’s the camera?',{expr:'angry'});if(!alive(run))return;
   // he shows himself in the doorway
-  const T=CHARS.toni;toniShow(35.7,12.9,Math.PI/2+0.2);DOORS.party.target=1;at3(34,1,12.7,(p,t)=>SFX.door(p,t));SFX.sting();await nudge(35.7,1.75,12.9,0.9);if(!alive(run))return;
+  const T=CHARS.toni;toniShow(35.7,12.9,Math.PI/2+0.2);DOORS.party.target=1;at3(34,1,12.7,(p,t)=>SFX.door(p,t));SFX.sting();scoreBase('dread');await nudge(35.7,1.75,12.9,0.9);if(!alive(run))return;
   for(const id of FAMILY){CHARS[id].look=[35.7,1.7,12.9];}T.tilt=0.45;T.typing=true;await gwait(2.2);if(!alive(run))return;T.typing=false;
   await line('ruben','No. No, no, no. That’s the mascot. From the sign outside.',{expr:'fear'});if(!alive(run))return;
   await line('grandpa','I know that walk. That’s the delivery boy. Forty minutes late, and the pizza was cold.',{expr:'angry'});if(!alive(run))return;
@@ -228,7 +228,7 @@ async function sceneTable(){const run=G.run;pizzeriaReset();checkpoint('table');
 /* ============================================================
    SCENE: MANNY, PIZZA 1
    ============================================================ */
-async function sceneManny(){const run=G.run;G.who='manny';if(G.where!=='pizzeria'||!TARPS.meshes[0].visible)pizzeriaReset();checkpoint('manny1');
+async function sceneManny(){const run=G.run;scoreBase(null);G.who='manny';if(G.where!=='pizzeria'||!TARPS.meshes[0].visible)pizzeriaReset();checkpoint('manny1');
   P.seated=null;P.limitYaw=null;P.x=PT.freezerStart[0];P.z=PT.freezerStart[1];P.yaw=0;P.pitch=-0.15;P.eyeOverride=0.75;
   for(const id of FAMILY){CHARS[id].pose='sit';setExpr(CHARS[id],'fear');}
   setAmb('freezer',0.55,0.5);setAmb('hum',0.18);setMode('cine');await titleCard('Pizza 1 of 12','Kiddie Pie',2.2);if(!alive(run))return;await fadeTo(0,1.6);if(!alive(run))return;

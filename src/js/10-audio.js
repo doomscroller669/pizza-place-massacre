@@ -115,14 +115,6 @@ const SFX={
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.9,t+0.3);g.gain.exponentialRampToValueAtTime(0.01,t+4.5);s.connect(lp);lp.connect(g);g.connect(busAmb);s.start(t);s.stop(t+4.6);},
 };
 
-/* family voices: a soft murmur under each subtitle, never real words, so Toni's phone stays the only real voice */
-const VOX={manager:{f0:112,F:[600,1150]},bree:{f0:215,F:[850,1700]},devon:{f0:120,F:[640,1200]},dad:{f0:118,F:[650,1100]},grandpa:{f0:102,F:[560,950],shake:1},uncle:{f0:110,F:[620,1250]},alex:{f0:190,F:[800,1500]},ruben:{f0:205,F:[820,1600]},lucia:{f0:215,F:[850,1700]},manny:{f0:104,F:[600,1000]}};
-function murmur(who,text,pos){if(!AC||!VOX[who])return;const v=VOX[who];const n=Math.max(2,Math.min(14,Math.round(text.replace(/[^a-z]/gi,'').length/3.4)));
-  const dest=pos?mkPanner(pos.x,pos.y,pos.z,2):busFx;let t=now()+0.03;
-  for(let i=0;i<n;i++){const d=0.07+Math.random()*0.09;const o=AC.createOscillator();o.type='sawtooth';const f=v.f0*(0.88+Math.random()*0.28);o.frequency.setValueAtTime(f,t);o.frequency.linearRampToValueAtTime(f*(0.92+Math.random()*0.12),t+d);
-    const f1=AC.createBiquadFilter();f1.type='bandpass';f1.frequency.value=v.F[0]*(0.8+Math.random()*0.4);f1.Q.value=5;const f2=AC.createBiquadFilter();f2.type='bandpass';f2.frequency.value=v.F[1]*(0.8+Math.random()*0.5);f2.Q.value=7;
-    const g=AC.createGain();g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(0.11,t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+d);
-    o.connect(f1);o.connect(f2);f1.connect(g);f2.connect(g);g.connect(dest);o.start(t);o.stop(t+d+0.05);t+=d+0.025+Math.random()*0.04;if(Math.random()<0.15)t+=0.12;}}
 
 /* ---------- music: "Pepper Toni's", the theme song ----------
    A 90s pizza-chain jingle on a worn tape: drawbar organ lead, oom-pah bass, off-beat chord stabs, a little drum kit,
@@ -176,6 +168,81 @@ function startTheme(o={}){if(!AC)return;stopMusic();const st={alive:true,loop:0,
   st.stop=()=>{st.alive=false;clearTimeout(st.timer);out.gain.setTargetAtTime(0,AC.currentTime,0.25);setTimeout(()=>{try{out.disconnect();tape.stop();wow.stop();}catch(e){}},1600);};}
 function startJingle(slow){startTheme(slow?{warped:true,quiet:true,noTag:true}:{});}
 function stopMusic(){if(musicOn&&musicOn.stop)musicOn.stop();musicOn=null;}
+
+/* ---------- the score: 80s horror synth for the scary parts ----------
+   Detuned saw pads, a filtered bass ostinato, bell tones and toms, all synthesized. Four cues:
+   'dread'  slow: a pad that never resolves, a ticking low pulse, two bells a half step apart
+   'stalk'  an eighth-note bass ostinato under the pad, a tom on the one: Toni is moving
+   'chase'  sixteenths, kick and snare, stabs, a screaming lead: he's seen you
+   'theme'  the main title: the Pepper Toni's jingle turned minor, over the pulse (the opening credits)
+   A scene sets the base cue with scoreBase(); a chase takes over while he's after you, and death or a reset stops it. */
+const SCORE={cur:null,base:null,chaseT:0};
+const CUES={
+  dread:{bpm:56,bars:4,gain:0.85},
+  stalk:{bpm:100,bars:4,gain:0.8},
+  chase:{bpm:148,bars:4,gain:0.75},
+  theme:{bpm:96,bars:20,loopTo:4,gain:1.3},
+};
+function scoreVoices(out){
+  const osc=(type,f,t,dur,peak,a=0.01,rel=0.08,dest=out,det=0)=>{const v=AC.createOscillator();v.type=type;v.frequency.value=f;v.detune.value=det;const g=AC.createGain();g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(peak,t+a);
+    g.gain.setTargetAtTime(0.0001,t+Math.max(a,dur),rel);v.connect(g);g.connect(dest);v.start(t);v.stop(t+Math.max(a,dur)+rel*7);return v;};
+  return {
+    osc,
+    // two detuned saws per note through one slow lowpass: the pad
+    pad(notes,t,dur,amp,cut=900){const f=AC.createBiquadFilter();f.type='lowpass';f.Q.value=1.2;f.frequency.setValueAtTime(cut*0.6,t);f.frequency.linearRampToValueAtTime(cut,t+dur*0.6);f.connect(out);
+      for(const m of notes){osc('sawtooth',mhz(m),t,dur,amp,Math.min(1.4,dur*0.4),0.7,f,-9);osc('sawtooth',mhz(m),t,dur,amp,Math.min(1.4,dur*0.4),0.7,f,9);}},
+    // the ostinato: saw plus a sub, a filter that snaps shut
+    bass(m,t,dur,amp,open=1100){const f=AC.createBiquadFilter();f.type='lowpass';f.Q.value=6;f.frequency.setValueAtTime(open,t);f.frequency.exponentialRampToValueAtTime(140,t+Math.max(0.06,dur*0.9));f.connect(out);
+      osc('sawtooth',mhz(m),t,dur*0.9,amp,0.004,0.03,f);osc('square',mhz(m-12),t,dur*0.9,amp*0.5,0.004,0.03,f);},
+    // a bell, like a detuned electric piano struck hard
+    bell(m,t,amp,len=2.4){const f=mhz(m);osc('sine',f,t,0.01,amp,0.003,len/3);osc('sine',f*2.008,t,0.01,amp*0.35,0.003,len/5);osc('sine',f*3.97,t,0.01,amp*0.12,0.003,len/9);},
+    lead(m,t,dur,amp){const f=AC.createBiquadFilter();f.type='lowpass';f.frequency.value=2600;f.connect(out);const v=osc('square',mhz(m),t,dur,amp,0.02,0.15,f);const lfo=AC.createOscillator();lfo.frequency.value=5.5;const lg=AC.createGain();lg.gain.value=18;lfo.connect(lg);lg.connect(v.detune);lfo.start(t);lfo.stop(t+dur+1);
+      osc('sawtooth',mhz(m),t,dur,amp*0.5,0.02,0.15,f,7);},
+    tom(t,f0=110,amp=0.5){const v=AC.createOscillator();v.frequency.setValueAtTime(f0,t);v.frequency.exponentialRampToValueAtTime(f0*0.45,t+0.35);const g=AC.createGain();g.gain.setValueAtTime(amp,t);g.gain.exponentialRampToValueAtTime(0.0001,t+0.5);v.connect(g);g.connect(out);v.start(t);v.stop(t+0.55);},
+    kick(t,amp=0.6){const v=AC.createOscillator();v.frequency.setValueAtTime(150,t);v.frequency.exponentialRampToValueAtTime(40,t+0.12);const g=AC.createGain();g.gain.setValueAtTime(amp,t);g.gain.exponentialRampToValueAtTime(0.0001,t+0.28);v.connect(g);g.connect(out);v.start(t);v.stop(t+0.3);},
+    snare(t,amp=0.3){sNoise(out,t,0.16,'bandpass',1700,0.8,amp,0.002);osc('triangle',180,t,0.05,amp*0.4,0.002,0.03);},
+    hat(t,amp=0.05){sNoise(out,t,0.03,'highpass',7500,0.7,amp,0.001);},
+    tick(t,amp=0.08){sNoise(out,t,0.02,'bandpass',3200,6,amp,0.001);},
+    swell(t,dur,amp=0.12){const s=AC.createBufferSource();s.buffer=noiseBuf;s.loop=true;const f=AC.createBiquadFilter();f.type='bandpass';f.Q.value=2;f.frequency.setValueAtTime(300,t);f.frequency.exponentialRampToValueAtTime(5000,t+dur);
+      const g=AC.createGain();g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(amp,t+dur);g.gain.linearRampToValueAtTime(0.0001,t+dur+0.05);s.connect(f);f.connect(g);g.connect(out);s.start(t);s.stop(t+dur+0.1);},
+    boom(t,amp=0.9){const v=AC.createOscillator();v.frequency.setValueAtTime(70,t);v.frequency.exponentialRampToValueAtTime(28,t+1.6);const g=AC.createGain();g.gain.setValueAtTime(amp,t);g.gain.exponentialRampToValueAtTime(0.0001,t+2.4);v.connect(g);g.connect(out);v.start(t);v.stop(t+2.5);
+      sNoise(out,t,1.8,'lowpass',900,0.7,amp*0.35,0.003);},
+  };}
+/* one bar of a cue, scheduled at t0 */
+function scoreBar(name,V,b,t0,spb){const e8=spb/2,s16=spb/4;
+  if(name==='dread'){const ch=[[57,60,64],[58,62,65],[57,60,64],[56,59,62]][b%4];V.pad(ch,t0,spb*4,0.035,700);V.osc('sine',mhz(ch[0]-24),t0,spb*4,0.12,0.8,0.8);
+    for(let i=0;i<8;i++){V.bass(33,t0+i*e8,e8*0.5,i%2?0.05:0.08,420);V.tick(t0+i*e8+e8*0.5,0.025);}
+    if(b%2===0)V.bell(b%4===0?76:77,t0+spb*0.02,0.09,3.2);if(b%4===3)V.swell(t0+spb*2,spb*2,0.06);return;}
+  if(name==='stalk'){const ost=b%2?[33,33,45,33,31,31,43,32]:[33,33,45,33,33,33,46,33];ost.forEach((m,i)=>V.bass(m,t0+i*e8,e8*0.85,0.16,b%4===3?1500:1000));
+    V.pad(b%4<2?[57,60,64]:[53,57,60],t0,spb*4,0.022,800);V.tom(t0,95,0.45);V.tom(t0+spb*2,95,0.3);for(let i=0;i<8;i++)V.hat(t0+i*e8,i%2?0.035:0.02);
+    if(b%4===0){[[76,0],[77,1],[76,2],[72,3]].forEach(([m,q])=>V.bell(m,t0+q*spb,0.07,1.6));}if(b%4===2)V.bell(71,t0,0.06,3);return;}
+  if(name==='chase'){const ost=[45,45,57,45,45,45,48,45,45,45,57,45,51,50,48,47];ost.forEach((m,i)=>V.bass(b%4===3&&i>=12?m+2:m,t0+i*s16,s16*0.9,0.15,1600));
+    for(let q=0;q<4;q++){V.kick(t0+q*spb,0.5);if(q%2)V.snare(t0+q*spb,0.26);for(let k=0;k<4;k++)V.hat(t0+q*spb+k*s16,k%2?0.04:0.025);}
+    for(let q=0;q<4;q++)[69,72,76].forEach(m=>V.osc('square',mhz(m),t0+q*spb+e8,e8*0.35,0.018,0.003,0.03));
+    if(b%2===0)V.lead(b%4===0?88:89,t0,spb*1.8,0.035);if(b%4===0)sNoise(V.out,t0,1.2,'highpass',5000,0.5,0.1,0.003);return;}
+  if(name==='theme'){// C minor: Cm, Ab, Fm, G; the jingle's tune, turned minor, enters at bar 4
+    const CH=[[48,51,55],[44,48,51],[41,44,48],[43,47,50]],ch=CH[b%4];const root=[36,32,29,31][b%4];
+    const loud=b>=16?1.25:b>=12?1.1:1;
+    for(let i=0;i<8;i++){V.bass(i%2?root+12:root,t0+i*e8,e8*0.8,0.13*loud,b>=12?1500:900);}
+    V.pad(ch.map(m=>m+12),t0,spb*4,b<2?0.016:0.028,b>=12?1300:800);
+    if(b>=12){V.tom(t0,90,0.45);V.tom(t0+spb*2,90,0.35);V.kick(t0,0.45);for(let i=0;i<8;i++)V.hat(t0+i*e8,0.03);if(b%4===3)for(let k=0;k<4;k++)V.tom(t0+spb*3+k*s16,150-k*15,0.3);}
+    if(b>=16){const AR=[[72,75,79,84],[68,72,75,80],[65,68,72,77],[67,71,74,79]][b%4];for(let i=0;i<16;i++)V.osc('square',mhz(AR[i%4]),t0+i*s16,s16*0.6,0.014,0.002,0.02);}
+    const MEL=['C5-D#5-G5-D#5-','G#5-G5D#5-C5--','F5-G#5-C6-G#5-','G5---D5-D#5F5','D#5-G5-C6-G5-','G#5G5D#5-C5-D#5-','F5-D#5-D5-C5-','D5---G4---'];
+    if(b>=4){const mb=MEL[(b-4)%8],up=b>=16?12:0;for(const [k,n,len] of parseBar(mb))V.bell(midi(n)+up,t0+k*e8,b>=12?0.11:0.09,Math.max(1.2,len*e8*2));}
+    if(b===3)V.swell(t0+spb*2,spb*2,0.08);if(b===12||b===16)sNoise(V.out,t0,1.6,'highpass',4500,0.5,0.12,0.003);}}
+function scoreCue(name){if(!AC)return;if(SCORE.cur&&SCORE.cur.name===name)return;scoreStop(1.4);const C=CUES[name];if(!C)return;
+  const out=AC.createGain();out.gain.value=0;out.gain.setTargetAtTime(C.gain,AC.currentTime,0.6);out.connect(busMus);const V=scoreVoices(out);V.out=out;
+  const st={name,alive:true,out};SCORE.cur=st;const spb=60/C.bpm,bar=spb*4;let b=0,t=now()+0.1;
+  const tick=()=>{if(!st.alive)return;while(t<AC.currentTime+0.7){scoreBar(name,V,b,t,spb);t+=bar;b++;if(b>=C.bars)b=C.loopTo||0;}st.timer=setTimeout(tick,150);};tick();
+  st.stop=(fade)=>{st.alive=false;clearTimeout(st.timer);out.gain.cancelScheduledValues(AC.currentTime);out.gain.setTargetAtTime(0,AC.currentTime,fade/3);setTimeout(()=>{try{out.disconnect();}catch(e){}},fade*1000+3000);};}
+function scoreStop(fade=1.4){if(SCORE.cur){SCORE.cur.stop(fade);SCORE.cur=null;}}
+function scoreBase(name,now){SCORE.base=name||null;if(now&&AC){if(name)scoreCue(name);else scoreStop(0.15);}}
+/* one hit for the end of the title: a boom under everything */
+function scoreHit(amp=0.9){if(!AC)return;const g=AC.createGain();g.gain.value=1;g.connect(busMus);scoreVoices(g).boom(now(),amp);setTimeout(()=>{try{g.disconnect();}catch(e){}},4000);}
+/* each frame: the base cue, or the chase while he's after you (it lingers a few seconds after he loses you) */
+function stepScore(dt){if(!AC)return;let want=SCORE.base;const after=TONI.state==='chase'||TONI.state==='aim';if(after)SCORE.chaseT=5;else SCORE.chaseT=Math.max(0,SCORE.chaseT-dt);
+  if(want&&SCORE.chaseT>0)want='chase';if(G.mode==='dead'||G.mode==='title')want=null;
+  const cur=SCORE.cur&&SCORE.cur.name;if(cur!==want){if(want)scoreCue(want);else if(cur)scoreStop(G.mode==='dead'?0.1:1.6);}}
 
 /* the arcade cabinets' attract modes, heard through the wall */
 function arcadeLoop(dest){const step=()=>{if(!AC)return;const t=now();const base=[262,330,392,523][(Math.random()*4)|0];

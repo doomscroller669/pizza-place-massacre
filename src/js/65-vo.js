@@ -1,7 +1,7 @@
 /* ============================================================
-   THE CAST'S VOICES. Every line the family, Lucia and Manny say is pre-recorded (tools/voices.py renders them with
-   a local neural voice and embeds them as VO_DATA). Toni is the only one left on the device's text-to-speech:
-   the flat phone voice stays his alone.
+   TONI'S VOICE. Only Toni is heard: his phone reads his typing out loud, pre-recorded by tools/voices.py and embedded
+   as VO_DATA (the device's text-to-speech covers any line that isn't recorded). Everyone else is silent; their lines
+   are captions.
    ============================================================ */
 const VO={buf:{},src:null,gain:null,queue:null,ready:false};
 function voKey(who,text){let h=0x811c9dc5;const s=who+'|'+text;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0;}return h.toString(16).padStart(8,'0');}

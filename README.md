@@ -16,6 +16,8 @@ Toni's typed lines play in Pepper Toni's recorded cartoon-mascot voice. Only a l
 Milestone 2: the prologue, the table and pizza 1.
 
 - **Cold open, 10:04 PM.** Manny is latched in the walk-in and watches Toni kill the closing crew through the door window: Devon at the dish pit, Bree at the freezer door, and the manager, Rick, against the glass. The window keeps what happened (frost, cracks, blood, the wipe) for the rest of the night.
+- **Opening credits.** Right after the cold open, a pizza is made in the dark kitchen from shot to shot under the credits: the dough is dropped and rolled out, the sauce is ladled on, the cheese falls, it goes into the oven and comes out, and it gets a pepperoni face. The title lands on the smiling pizza, the cutter slices it eight ways, and it bleeds. Tap to skip. The names are `CREDITS` at the top of `src/js/87-credits.js`.
+- **The score.** 80s horror synth, synthesized live: a slow dread cue, a stalking ostinato when Toni is moving, a chase cue that takes over while he's after you, and the main title theme (the Pepper Toni's jingle turned minor) for the credits. Everyone but Toni is silent; their lines are captions.
 - **The Ramirez house, 10:41 PM.** Lucia at her mother's wake. The late delivery and Toni, in the suit, silent on the porch. Grandpa's two-dollar tip and the one-star rating on Lucia's phone, the "sorry it was late" text, and the drugged pizza.
 - **Chase 1.** Lucia's dead phone, her locked bedroom, the power cut, the card in the lock, then out through the dark house while Toni searches it. She can duck behind furniture or hide in closets, under beds and behind the shower curtain. Out the front door, his van is at the curb.
 - The whole restaurant: party room, kitchen, walk-in freezer, storeroom, office, employee room, back hall, dining room and buffet, game zone, fun zone and ball pit, storage closet, front entrance and restrooms.
@@ -30,13 +32,15 @@ Milestone 2: the prologue, the table and pizza 1.
 - `tools/assemble.py` stitches `src/` into `game/pizza-place-massacre.html` (the same page as the Claude artifact) and writes the app's offline copy, `app/src/main/assets/index.html`, with three.js bundled.
 - Every push to `main` runs `.github/workflows/build.yml`, which builds the APK and publishes it as a new release, then builds the Windows app and the GitHub Pages web version.
 - Every build is signed with the same key (`app/pizza.keystore`), so updates install over the old app. That key is only suitable for sideloading, not for the Play Store.
-- Toni's lines are recorded like everyone else's (as `toni`) and play through a small-speaker filter: positional from his phone, or over the PA. A line with no recording falls back to the phone's TextToSpeech engine through `window.AndroidTTS` (`MainActivity`), or `speechSynthesis` in a browser.
+- Toni's lines are recorded (as `toni`) and play through a small-speaker filter: positional from his phone, or over the PA. A line with no recording falls back to the phone's TextToSpeech engine through `window.AndroidTTS` (`MainActivity`), or `speechSynthesis` in a browser.
 
 After editing anything in `src/`, run `python3 tools/assemble.py` and commit the regenerated files.
 
 ## Voices
 
-Every line is recorded. `tools/voices.py` finds every `line('who', …)`, `thinkL(…)`, `thinkM(…)`, `SAY_*` choice list, `toniSay(…)`, `MINUTES_LINE` and the training tape's captions in `src/js/`, and records each one with Chatterbox (Resemble AI's open-source voice model), which has an emotion dial per line. Each character's reference clip is made in two steps: Kokoro reads a sample in the cast voice, then Chatterbox re-reads it with feeling, and every line clones that second clip. Toni is Pepper Toni's cartoon mascot voice, lifted a little in pitch after recording.
+Only Toni is heard. Everyone else (the family, Lucia, Manny, the closing crew) is silent, and their lines are captions: it's creepier, and it keeps the game small. `VOICED` in `tools/voices.py` lists who gets recorded (`toni`, and `announcer` for the commercial).
+
+`tools/voices.py` finds every `toniSay(…)`, `MINUTES_LINE` and the training tape's captions in `src/js/` (it can also find `line('who', …)`, `thinkL(…)`, `thinkM(…)` and the `SAY_*` choice lists, for anyone added to `VOICED`), and records each one with Chatterbox (Resemble AI's open-source voice model), which has an emotion dial per line. The reference clip is made in two steps: Kokoro reads a sample in the cast voice, then Chatterbox re-reads it with feeling, and every line clones that second clip. Toni is Pepper Toni's cartoon mascot voice, lifted a little in pitch after recording.
 
 Every take is checked twice. A speech recognizer (faster-whisper) must hear the written words, and a phoneme recognizer (wav2vec2) must hear the names said right: Lucia is loo-SEE-ah, mijo is MEE-ho, mija is MEE-ha. The script respells those names for the voice model (`PRON`), and a take that fails either check is recorded again with a new seed, up to five takes. The result goes into `src/js/05-vodata.js`.
 
