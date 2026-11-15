@@ -5,6 +5,7 @@
    ============================================================ */
 const ORDER1={who:'alex',label:'Pizza 1 · Alex',tops:{pepperoni:3},allergy:'seeds',minutes:6};
 const FAMILY=['dad','grandpa','uncle','alex','ruben'];
+const MINUTES_LINE=['','You have one minute, Manny.','You have two minutes, Manny.','You have three minutes, Manny.','You have four minutes, Manny.','You have five minutes, Manny.','You have six minutes, Manny.'];
 function yawTo(x,z){return Math.atan2(-(x-P.x),-(z-P.z));}
 const NUDGE={on:false};
 function nudge(x,y,z,sec=0.8){const ty=yawTo(x,z),dh=Math.hypot(x-P.x,z-P.z),tp=Math.atan2(y-P.eye,dh);NUDGE.on=true;NUDGE.t=0;NUDGE.dur=sec;NUDGE.y0=P.yaw;NUDGE.p0=P.pitch;NUDGE.y1=P.yaw+angDiff(P.yaw,ty);NUDGE.p1=clamp(tp,-0.9,0.9);return gwait(sec);}
@@ -12,8 +13,8 @@ function stepNudge(dt){if(!NUDGE.on)return;NUDGE.t+=dt;const k=smooth(clamp(NUDG
 const charPos=(id,dy=1.25)=>{const c=CHARS[id];return [c.x,c.y+dy,c.z];};
 
 /* ---------- the bomb on the table, party hats, balloons ---------- */
-const BOMB={cv:canvas(64,24),tex:null,mesh:null,n:0,blink:0,fast:0};
-function bombDisplay(){const g=BOMB.cv.getContext('2d');g.fillStyle='#120302';g.fillRect(0,0,64,24);g.fillStyle='#ff3b22';g.font='15px '+FONT_PIX;g.textAlign='center';g.fillText(`PIZZAS ${BOMB.n}/12`,32,17);g.textAlign='left';BOMB.tex.needsUpdate=true;}
+const BOMB={cv:canvas(96,32),tex:null,mesh:null,n:0,blink:0,fast:0};
+function bombDisplay(){const g=BOMB.cv.getContext('2d');g.fillStyle='#120302';g.fillRect(0,0,96,32);g.fillStyle='#3a0a06';g.font='15px '+FONT_PIX;g.textAlign='center';g.fillText('PIZZAS 88/88',48,21);g.fillStyle='#ff3b22';g.fillText(`PIZZAS ${BOMB.n}/12`,48,21);g.textAlign='left';BOMB.tex.needsUpdate=true;}
 function buildBomb(){BOMB.tex=texFrom(BOMB.cv,false);const g=new THREE.Group();g.position.set(40,0.765,15.5);
   const boxM=basic({map:SIGN.pepBox});const b=new THREE.Mesh(new THREE.BoxGeometry(0.46,0.07,0.46),basic({color:0xa87a48}));b.position.y=0.035;g.add(b);
   const lid=new THREE.Mesh(new THREE.PlaneGeometry(0.46,0.46).rotateX(-Math.PI/2),basic({map:SIGN.logo}));lid.position.y=0.072;g.add(lid);
@@ -43,41 +44,41 @@ TICKET.position.set(18.7,1.72,9.75);TICKET.visible=false;scene.add(TICKET);
 const M=()=>G.who==='manny',L=()=>G.who==='lucia';
 function setupInteractions(){
   // Lucia, at the table
-  ix('alex',[41.75,0.95,16.75],'Look at Alex',async()=>{G.flags.sawBand=true;nudge(41.75,0.9,16.75,0.5);setExpr(CHARS.alex,'sad');await openNote('band','Alex’s wrist','<b>MEDICAL ALERT</b><p style="margin:.4em 0 0">SEVERE ALLERGY:</p><b>SESAME</b><p style="margin:.4em 0 0;font-size:14px">Carries epinephrine</p>');thinkL('Sesame. He can’t even be near it.');},()=>L()&&G.flags.freeLook,4.5);
-  ix('bomb',[40,0.85,15.5],'Look at the box',()=>{thinkL('A pizza box with wires running under every chair. It counts pizzas, not seconds.',4.5);},()=>L()&&G.flags.freeLook,5);
-  ix('banner',[40,2.4,10.2],'Read the banner',()=>{thinkL('"Ramirez party of 6!! :)" He made us a banner.',3.5);},()=>L()&&G.flags.freeLook,8);
-  ix('dadTalk',[41.8,1.2,13.85],'Talk to Dad',async()=>{G.flags.freeLook=false;G.flags.talkedDad=true;setMode('cine');await line('lucia','Dad... what do we do?',{name:'Lucia'});await line('dad','We stay calm. We do what he says. I’m getting you two out of here, mija.',{expr:'sad'});setMode('play');G.flags.freeLook=true;},()=>L()&&G.flags.freeLook&&!G.flags.talkedDad,4);
+  ix('alex',[41.75,0.95,16.75],'Look at Alex',async()=>{G.flags.sawBand=true;nudge(41.75,0.9,16.75,0.5);setExpr(CHARS.alex,'sad');await openNote('band','Alex’s wrist','<b>MEDICAL ALERT</b><p style="margin:.4em 0 0">SEVERE ALLERGY:</p><b>SESAME</b><p style="margin:.4em 0 0;font-size:14px">Carries epinephrine</p>');thinkL('Sesame. He can’t even touch it. Last time, he ended up in the hospital.',4);},()=>L()&&G.flags.freeLook,4.5);
+  ix('bomb',[40,0.85,15.5],'Look at the box',()=>{thinkL('Wires going under every chair. And it’s counting pizzas, not seconds. Oh my God.',4.5);},()=>L()&&G.flags.freeLook,5);
+  ix('banner',[40,2.4,10.2],'Read the banner',()=>{thinkL('“Ramirez, party of six,” with a smiley face. He made us a banner. That’s so messed up.',4);},()=>L()&&G.flags.freeLook,8);
+  ix('dadTalk',[41.8,1.2,13.85],'Talk to Dad',async()=>{G.flags.freeLook=false;G.flags.talkedDad=true;setMode('cine');await line('lucia','Dad? What do we do?',{name:'Lucia'});await line('dad','I don’t know, mija. I don’t know. We stay calm, we do what he says, and I get you two out. Okay?',{expr:'sad'});setMode('play');G.flags.freeLook=true;},()=>L()&&G.flags.freeLook&&!G.flags.talkedDad,4);
   // Manny, back of house
   ix('freezerDoor',[11,1.2,5.75],'Push the door',()=>{DOORS.freezer.target=1;DOORS.freezer.locked=false;at3(11,1,6,(p,t)=>SFX.door(p,t,true));G.flags.outFreezer=true;setObj('Read the new ticket on the rail above the pass window.','The ticket rail hangs over the pass window, on the dining room side of the kitchen.');},()=>M()&&!G.flags.outFreezer&&G.flags.unlocked,1.8);
-  ix('bodies',[10,0.4,3.4],'Look at them',()=>{thinkM(G.flags.lookedBodies?'Don’t look. Don’t look at them.':'They were alive at ten o’clock. I watched him do it through that window.',4);G.flags.lookedBodies=true;},()=>M()&&!G.flags.outFreezer,2.4);
+  ix('bodies',[10,0.4,3.4],'Look at them',()=>{thinkM(G.flags.lookedBodies?'Don’t look at them. Don’t.':'They were alive at ten. I watched him do it through that little window. I just… watched.',4.5);G.flags.lookedBodies=true;},()=>M()&&!G.flags.outFreezer,2.4);
   ix('ticket',PT.ticket,()=>G.flags.ticketRead?'Read the ticket again':'Read the new ticket',()=>readTicket(),()=>M()&&TICKET.visible,1.9);
   ix('recipe',PT.recipe,'Read the recipe binder',()=>openNote('card','Pepper Toni’s recipe binder','<h3>KIDDIE PIE (10")</h3><ol><li>Stretch one dough ball to the ring.</li><li>One ladle of red sauce. Leave a rim.</li><li>Mozzarella, edge to edge.</li><li>Pepperoni smile! (5 to 7 pieces)</li><li>Finish the crust with <span class="star">Toni’s Famous Seeds ★</span></li></ol><p style="margin-top:.6em;font-size:13px;color:#7a5a3a">Bake 1 belt. Cut in 8. “Kids love the seeds!”</p>'),()=>M(),1.8);
-  ix('seeds',PT.seeds,'Look at the shaker',()=>thinkM('"Toni’s Famous Seeds." It’s sesame. We put it on everything.',3.5),()=>M(),1.6);
+  ix('seeds',PT.seeds,'Look at the shaker',()=>thinkM('“Toni’s Famous Seeds.” It’s just sesame. We put it on everything.',3.5),()=>M(),1.6);
   ix('dough',PT.dough,'Take a dough ball',()=>{take('dough');},()=>M()&&G.flags.ticketRead&&!PIZZA.have.dough&&!PIZZA.cur,1.9);
   ix('sauce',PT.sauce,'Take the sauce',()=>{take('sauce');},()=>M()&&G.flags.ticketRead&&!PIZZA.have.sauce&&!PIZZA.cur,1.8);
   ix('fridge',PT.fridge,'Open the reach-in fridge',()=>openFridge(),()=>M()&&G.flags.ticketRead&&!(PIZZA.cur&&PIZZA.cur.step>3),1.9);
   ix('pepperoni',PT.pepperoni,'Take the pepperoni',()=>{take('pepperoni');},()=>M()&&G.flags.ticketRead&&!PIZZA.have.pepperoni,1.9);
   ix('prep',PT.prep,()=>PIZZA.cur?'Keep making the pizza':'Make the pizza',async()=>{const ok=await COOK.open();if(ok){PIZZA.held='raw';PIZZA.have={};PIE.hand.visible=true;repaintPie();setCarry();setObj('Put the pizza on the oven belt, at the left end of the oven.','The conveyor oven is against the back wall. Pizzas go in on the left and come out on the right.');}},
     ()=>M()&&G.flags.ticketRead&&!PIZZA.held&&!OVEN.on&&!OVEN.done&&(PIZZA.cur||(PIZZA.have.dough&&PIZZA.have.sauce&&PIZZA.have.cheese)),1.9);
-  ix('prepNeed',PT.prep,'Make the pizza (need dough, sauce and cheese)',()=>thinkM('I need dough, sauce and mozzarella first.'),()=>M()&&G.flags.ticketRead&&!PIZZA.cur&&!(PIZZA.have.dough&&PIZZA.have.sauce&&PIZZA.have.cheese),1.9);
+  ix('prepNeed',PT.prep,'Make the pizza (need dough, sauce and cheese)',()=>thinkM('Can’t make it yet. Dough, sauce, cheese. Come on, Manny.'),()=>M()&&G.flags.ticketRead&&!PIZZA.cur&&!(PIZZA.have.dough&&PIZZA.have.sauce&&PIZZA.have.cheese),1.9);
   ix('ovenIn',PT.ovenIn,'Put it on the belt',()=>{ovenLoad();setObj('It bakes on the belt. Don’t wander far.','The pizza comes out the right end of the oven when it’s done. Look around while you wait.');bakeLine();},()=>M()&&PIZZA.held==='raw',2);
   ix('ovenOut',PT.ovenOut,'Take the pizza off the belt',()=>{OVEN.done=false;PIE.world.visible=false;PIZZA.held='baked';PIE.hand.visible=true;SFX.pick();setCarry();setObj('Cut it on the cutting board by the pass.','The cutting board is on the counter to the right of the pass window.');},()=>M()&&OVEN.done&&!PIZZA.held,2);
   ix('cut',PT.cut,'Cut it into eight',async()=>{for(let i=0;i<4;i++){SFX.slice();await gwait(0.22);}PIZZA.cur.cut=true;PIZZA.held='cut';repaintPie();setCarry();setObj('Put it in the pass window and ring the bell.','Set it on the steel shelf in the pass window. Toni picks it up from the other side.');},()=>M()&&PIZZA.held==='baked',1.9);
   ix('pass',PT.pass,'Put it in the window and ring the bell',()=>serve(),()=>M()&&PIZZA.held==='cut'&&(TONI.state==='off'||TONI.state==='idle'),2.2);
-  ix('passEarly',PT.pass,'The pass window',()=>thinkM(PIZZA.held==='baked'?'Cut it first. Eight slices.':'Nothing to serve yet.'),()=>M()&&G.flags.ticketRead&&PIZZA.held!=='cut'&&!G.flags.served,1.9);
+  ix('passEarly',PT.pass,'The pass window',()=>thinkM(PIZZA.held==='baked'?'Gotta cut it first. Eight slices.':'Nothing to send out yet.'),()=>M()&&G.flags.ticketRead&&PIZZA.held!=='cut'&&!G.flags.served,1.9);
   // things to find while it bakes
   ix('tv',PT.tv,'Play the training tape',()=>playTape(),()=>M(),1.8);
   ix('board',PT.board,'Read the pinned form',()=>openNote('form','Pinned to the corkboard','<p>PEPPER TONI’S — EMPLOYEE INCIDENT REPORT</p><p>Filed by: Manny (kitchen)<br>Employee involved: the night driver</p><p>What happened: Found a drawing taped inside his locker door. People cut into slices like a pizza. Eight of them. I think it’s us.</p><p>Action taken:</p><span class="scrawl">He’s harmless. Kid barely talks. — Mgr</span>'),()=>M(),2);
-  ix('mug',PT.mug,'Look at the mug',()=>thinkM('"World’s Best Boss." Smashed into three pieces.',3),()=>M(),1.6);
-  ix('polygraph',PT.polygraph,'Look at the machine',()=>thinkM('The boss’s lie detector. He bought it to catch whoever was skimming the register.',4),()=>M(),1.7);
-  ix('toniLocker',PT.toniLocker,'Look at the padlocked locker',()=>thinkM('Padlocked. Someone wrote DRIVER on the tape.',3),()=>M(),1.6);
+  ix('mug',PT.mug,'Look at the mug',()=>thinkM('“World’s Best Boss.” Smashed in three pieces. Guess somebody disagreed.',3.5),()=>M(),1.6);
+  ix('polygraph',PT.polygraph,'Look at the machine',()=>thinkM('The boss’s lie detector. Bought it to catch whoever was skimming the register. Never caught anybody.',4.5),()=>M(),1.7);
+  ix('toniLocker',PT.toniLocker,'Look at the padlocked locker',()=>thinkM('Padlocked. The tape says “Driver.” That’s his.',3),()=>M(),1.6);
   ix('sketch1',PT.sketch1,'Pick up the drawing',()=>{G.flags.sketch1=true;openNote('sketch','Left on the bench',`<canvas id="sk1" width="300" height="220" aria-label="A careful pencil drawing of a young woman, eyes closed, smiling"></canvas>`).then(()=>{});setTimeout(drawSketch1,0);},()=>M(),1.6);
-  ix('keypad',PT.keypad,'Look at the keypad',()=>thinkM('A pizza with eight slices. Eight digits. I don’t know any of them.',3.5),()=>M(),1.6);
-  ix('frontDoor',PT.frontDoor,'Try the front door',()=>{at3(21,1,33.9,(p,t)=>SFX.clunk(p,t));thinkM('Locked. And the grate’s down outside. His car’s still in the lot.',4);},()=>M(),1.8);
-  ix('partyDoor',[33.85,1.5,12.7],'Look through the porthole',()=>{thinkM(G.flags.serving?'He’s in there with them.':'A family at the party table. A little girl—no, a teenager. Balloons. God.',4);},()=>M(),1.6);
-  ix('nightcaller',PT.nightcaller,'Look at the cabinet',()=>thinkM('NIGHT CALLER. "Lock every door before he calls." No tokens.',3.5),()=>M(),1.7);
-  ix('claw',PT.claw,'Look at the claw machine',()=>thinkM('Two dollars a try. Nobody’s ever won anything out of it.',3),()=>M(),1.8);
-  ix('spareHead',PT.spareHead,'Look at the shelf',()=>thinkM('The spare Toni head. The eyes are felt pepperoni. I always hated wearing it.',4),()=>M(),1.8);
+  ix('keypad',PT.keypad,'Look at the keypad',()=>thinkM('Eight slices, eight numbers. And I don’t have a single one.',3.5),()=>M(),1.6);
+  ix('frontDoor',PT.frontDoor,'Try the front door',()=>{at3(21,1,33.9,(p,t)=>SFX.clunk(p,t));thinkM('Locked. The grate’s down outside. And his car’s still in the lot. He’s not going anywhere.',4.5);},()=>M(),1.8);
+  ix('partyDoor',[33.85,1.5,12.7],'Look through the porthole',()=>{thinkM(G.flags.serving?'He’s in there with them.':'There’s a whole family in there. Kids. Balloons on the chairs. Oh God.',4);},()=>M(),1.6);
+  ix('nightcaller',PT.nightcaller,'Look at the cabinet',()=>thinkM('Night Caller. “Lock every door before he calls.” No tokens, though.',3.5),()=>M(),1.7);
+  ix('claw',PT.claw,'Look at the claw machine',()=>thinkM('Two bucks a try. Nobody’s ever won a thing out of that.',3),()=>M(),1.8);
+  ix('spareHead',PT.spareHead,'Look at the shelf',()=>thinkM('The spare Toni head. I had to wear that thing at birthday parties. The kids used to cry.',4.5),()=>M(),1.8);
 }
 function take(k){PIZZA.have[k]=true;SFX.pick();setCarry();const names={dough:'a dough ball',sauce:'the sauce',pepperoni:'the pepperoni',cheese:'the mozzarella'};sub('Took '+(names[k]||k)+'.',1.6);ingredientObj();}
 function ingredientObj(){const h=PIZZA.have;const need=[];if(!h.dough)need.push('dough');if(!h.sauce)need.push('sauce');if(!h.cheese)need.push('mozzarella');if(!h.pepperoni)need.push('pepperoni');
@@ -97,8 +98,8 @@ function drawSketch1(){const c=$('sk1');if(!c)return;const g=c.getContext('2d');
 /* ---------- the training tape ---------- */
 const VHS={on:false,t:0,res:null};
 const TAPE=[[0,'PEPPER TONI’S TRAINING TAPE #3'],[2.6,'Hi, team! It’s me, PEPPER TONI!'],[5.4,'Today we’re making a KIDDIE PIE!'],[8.2,'Stretch it! Sauce it! Cheese it!'],[11,'Give it a pepperoni SMILE!'],[13.8,'And never forget…'],[15.6,'TONI’S FAMOUS SEEDS on the crust!'],[18.6,'Kids LOVE ’em!'],[21,'Remember: FAMILY COMES FIRST!'],[24,'']];
-function playTape(){return new Promise(res=>{VHS.on=true;VHS.t=0;VHS.res=res;$('vhs').hidden=false;setMode('ui');startJingle(true);});}
-function vhsEnd(){if(!VHS.on)return;VHS.on=false;$('vhs').hidden=true;stopMusic();setMode('play');if(VHS.res)VHS.res();VHS.res=null;}
+function playTape(){return new Promise(res=>{VHS.on=true;VHS.t=0;VHS.said='';VHS.res=res;$('vhs').hidden=false;setMode('ui');startJingle(true);});}
+function vhsEnd(){if(!VHS.on)return;VHS.on=false;toniHush();$('vhs').hidden=true;stopMusic();setMode('play');if(VHS.res)VHS.res();VHS.res=null;}
 $('vhs').addEventListener('pointerdown',e=>{e.preventDefault();if(VHS.t>0.6)vhsEnd();});
 function stepVHS(dt){if(!VHS.on)return;VHS.t+=dt;const t=VHS.t;const g=$('vhsCv').getContext('2d');g.fillStyle='#2a6be8';g.fillRect(0,0,320,240);
   g.fillStyle='#f0c22b';g.fillRect(0,170,320,70);g.fillStyle='#d63b2b';for(let x=0;x<320;x+=40)g.fillRect(x,170,20,6);
@@ -110,7 +111,7 @@ function stepVHS(dt){if(!VHS.on)return;VHS.t+=dt;const t=VHS.t;const g=$('vhsCv'
   if(st>=1){g.fillStyle='#c8321f';g.beginPath();g.arc(0,0,40,0,TAU);g.fill();g.fillStyle='#f4e6b0';g.beginPath();g.arc(0,0,38,0,TAU);g.fill();}
   if(st>=2){g.fillStyle='#a3241a';[[-14,-10],[14,-10],[-20,8],[-10,16],[0,19],[10,16],[20,8]].forEach(([x,y])=>{g.beginPath();g.arc(x,y,5,0,TAU);g.fill();});}
   if(st>=3&&t>15.6){g.fillStyle='#fff';const rr6=mulberry(8);for(let i=0;i<60;i++){const a=rr6()*TAU;g.fillRect(Math.cos(a)*44,Math.sin(a)*44,2,2);}}g.restore();
-  let cap='';for(const [tt,c] of TAPE)if(t>=tt)cap=c;g.fillStyle='rgba(0,0,0,.6)';g.fillRect(0,196,320,30);g.fillStyle='#fff';g.font='15px '+FONT_PIX;g.textAlign='center';g.fillText(cap,160,216);g.textAlign='left';
+  let cap='';for(const [tt,c] of TAPE)if(t>=tt)cap=c;if(cap!==VHS.said){VHS.said=cap;if(cap)toniPlay(cap,null,'tape',0.9);}g.fillStyle='rgba(0,0,0,.6)';g.fillRect(0,196,320,30);g.fillStyle='#fff';g.font='15px '+FONT_PIX;g.textAlign='center';g.fillText(cap,160,216);g.textAlign='left';
   // tape wear
   for(let i=0;i<3;i++){const y=((t*60+i*97)%260)-10;g.fillStyle='rgba(255,255,255,.08)';g.fillRect(0,y,320,3+i);}
   speck(g,320,240,180,['rgba(255,255,255,.18)','rgba(0,0,0,.25)'],1);if(((t*2)|0)%2===0){g.fillStyle='#fff';g.font='12px '+FONT_PIX;g.fillText('PLAY ▶',14,20);}
@@ -119,8 +120,8 @@ function stepVHS(dt){if(!VHS.on)return;VHS.t+=dt;const t=VHS.t;const g=$('vhsCv'
 /* ---------- Manny: the ticket, the timer, the bake ---------- */
 async function readTicket(){const first=!G.flags.ticketRead;
   await openNote('ticket','',`<div class="tk">PEPPER TONI’S<br>FAMILY PIZZERIA</div><p>TABLE: PARTY ROOM<br>RAMIREZ · PARTY OF 6<br>ORDER 1 OF 12 · 11:52 PM</p><p class="big">1x KIDDIE PIE 10"</p><p>&nbsp;&nbsp;as menu<br>&nbsp;&nbsp;red sauce · mozz<br>&nbsp;&nbsp;pepperoni smile</p><p>FOR: the brother</p><div class="hand">:)</div>`);
-  if(!first)return;G.flags.ticketRead=true;ingredientObj();await toniSay(`You have ${['zero','one','two','three','four','five','six'][ORDER1.minutes]} minutes, Manny.`,{pa:true});
-  if(!G.clock)startClock(ORDER1.minutes*60,ORDER1.label);thinkM('A Kiddie Pie. Like the menu. Okay.');}
+  if(!first)return;G.flags.ticketRead=true;ingredientObj();await toniSay(MINUTES_LINE[ORDER1.minutes],{pa:true});
+  if(!G.clock)startClock(ORDER1.minutes*60,ORDER1.label);thinkM('Kiddie Pie. Like the menu. Okay. I can do this.');}
 function startClock(sec,label){G.clock={t:sec,on:true,w2:sec<=120,w30:sec<=30,label};$('timer').hidden=false;$('timerLab').textContent=label;drawStrikes();}
 function drawStrikes(){[...$('strikes').children].forEach((el,i)=>el.classList.toggle('on',i<G.strikes));}
 function stepClock(dt){const c=G.clock;if(!c||!c.on)return;c.t-=dt;const s=Math.max(0,Math.ceil(c.t));$('clock').textContent=String((s/60)|0).padStart(2,'0')+':'+String(s%60).padStart(2,'0');$('timer').classList.toggle('low',c.t<=30);
@@ -133,7 +134,7 @@ async function bakeLine(){const run=G.run;const T=CHARS.toni;toniShow(18.7,12.4,
 function ovenDone(){if(G.who!=='manny')return;setObj('Take the pizza off the right end of the belt.','The oven bell rang. It comes out on the right side.');}
 async function latePizza(){const run=G.run;await toniSay('Your delivery is late.',{pa:true});if(!alive(run))return;setObj('Hide. He’s coming.','Lose him first, then hide in a locker or a bathroom stall. If he sees you hide, he’ll open it.');
   TONI.note=async()=>{G.strikes++;drawStrikes();if(G.strikes>=3){await toniSay('Three strikes. You’re fired.',{pa:true});if(alive(run))die('FIRED.','Three late pizzas. Toni doesn’t keep a cook who can’t keep time.');return;}
-    startClock(180,ORDER1.label+' · again');G.clock.w2=false;if(PIZZA.held)setCarry();thinkM('He forgives me. Okay. Okay.');restoreObj();};
+    startClock(180,ORDER1.label+' · again');G.clock.w2=false;if(PIZZA.held)setCarry();thinkM('He… forgives me? Okay. Okay. Breathe.');restoreObj();};
   startHunt();}
 function restoreObj(){if(PIZZA.held==='raw')setObj('Put the pizza on the oven belt.');else if(PIZZA.held==='baked')setObj('Cut it on the cutting board by the pass.');else if(PIZZA.held==='cut')setObj('Put it in the pass window and ring the bell.');else if(OVEN.on)setObj('It bakes on the belt. Don’t wander far.');else if(OVEN.done)setObj('Take the pizza off the right end of the belt.');else if(PIZZA.cur)setObj('Finish the pizza at the prep table.');else ingredientObj();}
 
@@ -142,7 +143,7 @@ async function serve(){const run=G.run;G.flags.served=true;G.flags.serving=true;
   PIE.world.visible=true;PIE.world.position.set(17.6,0.96,9.95);lightPie(PIE.world,17.6,1.2,10.3);SFX.bell();setObj('');$('obj').hidden=true;
   G.result=checkPie(ORDER1,PIZZA.cur);saveFlags();
   setMode('cine');const T=CHARS.toni;toniShow(35.4,12.7,-Math.PI/2);DOORS.party.target=1;await gwait(0.6);if(!alive(run))return;
-  thinkM('He’s coming for it.',2.5);await toniWalk(17.6,11.7,1.5);if(!alive(run))return;toniFace(17.6,9);await nudge(T.x,1.6,T.z,0.8);if(!alive(run))return;
+  thinkM('Here he comes.',2.5);await toniWalk(17.6,11.7,1.5);if(!alive(run))return;toniFace(17.6,9);await nudge(T.x,1.6,T.z,0.8);if(!alive(run))return;
   PIE.world.visible=false;T.carrying=true;PIE.table.visible=true;T.j.spine.add(PIE.table);PIE.table.position.set(0,0.28,0.3);PIE.table.rotation.set(0,0,0);SFX.pick();
   T.tilt=0.5;await gwait(1.4);if(!alive(run))return;T.tilt=0;toniWalk(35.4,12.7,1.4);await gwait(1.6);if(!alive(run))return;
   await fadeTo(1,1.2);if(!alive(run))return;await sceneEat();}
@@ -170,45 +171,45 @@ async function sceneTable(){const run=G.run;checkpoint('table');G.who='lucia';$(
   const s=PT.seats.lucia;P.x=s[0]-0.1;P.z=s[1];P.seated=true;P.yaw=Math.PI/2;P.pitch=-0.35;P.limitYaw=[Math.PI/2,1.95];
   for(const id of FAMILY){CHARS[id].pose='sitOut';setExpr(CHARS[id],'out');}
   setAmb('room',0.25);setAmb('hum',0.12);setMode('cine');postU.uWake.value=1;await fadeTo(0,3);if(!alive(run))return;
-  SFX.gasp(busFx,now(),0.5);await gwait(1.2);if(!alive(run))return;thinkL('...Where...',2.5);await gwait(2.5);if(!alive(run))return;
+  SFX.gasp(busFx,now(),0.5);await gwait(1.2);if(!alive(run))return;thinkL('Mm… where…',2.5);await gwait(2.5);if(!alive(run))return;
   await nudge(40,0.9,15.5,1.6);if(!alive(run))return;
   await toniSay('Welcome to Pepper Toni’s Family Pizzeria. Where family comes first.',{pa:true});if(!alive(run))return;
   postU.uWake.value=0.35;setMode('play');
-  CHARS.dad.pose='sitScared';setExpr(CHARS.dad,'fear');CHARS.dad.look=[P.x,1.2,P.z];await line('dad','Lucia? ...Lucia!',{expr:'fear'});if(!alive(run))return;
-  CHARS.alex.pose='sitScared';setExpr(CHARS.alex,'fear');CHARS.alex.look=charPos('dad');await line('alex','Dad? Where are we?',{expr:'fear'});if(!alive(run))return;
-  CHARS.grandpa.pose='sit';setExpr(CHARS.grandpa,'angry');await line('grandpa','What the hell is this?',{expr:'angry'});if(!alive(run))return;
-  CHARS.uncle.pose='sit';setExpr(CHARS.uncle,'angry');CHARS.uncle.look=[34,1.6,12.7];await line('uncle','Hey! HEY! Who’s out there?',{expr:'angry'});if(!alive(run))return;
-  CHARS.ruben.pose='sitScared';setExpr(CHARS.ruben,'fear');await line('ruben','This is a party room. Why are we in a party room?',{expr:'fear'});if(!alive(run))return;
+  CHARS.dad.pose='sitScared';setExpr(CHARS.dad,'fear');CHARS.dad.look=[P.x,1.2,P.z];await line('dad','Lucia? Lucia! Mija, look at me!',{expr:'fear'});if(!alive(run))return;
+  CHARS.alex.pose='sitScared';setExpr(CHARS.alex,'fear');CHARS.alex.look=charPos('dad');await line('alex','Dad? Where are we? Why is everything spinning?',{expr:'fear'});if(!alive(run))return;
+  CHARS.grandpa.pose='sit';setExpr(CHARS.grandpa,'angry');await line('grandpa','What the hell is this? Who put a damn hat on me?',{expr:'angry'});if(!alive(run))return;
+  CHARS.uncle.pose='sit';setExpr(CHARS.uncle,'angry');CHARS.uncle.look=[34,1.6,12.7];await line('uncle','Hey! HEY! Whoever’s out there, open the door!',{expr:'angry'});if(!alive(run))return;
+  CHARS.ruben.pose='sitScared';setExpr(CHARS.ruben,'fear');await line('ruben','Why are there balloons? Nobody here has a birthday.',{expr:'fear'});if(!alive(run))return;
   postU.uWake.value=0;
   await toniSay('Ramirez, party of six. Your table is ready.',{pa:true});if(!alive(run))return;
-  CHARS.dad.pose='stand';CHARS.dad.y=0;setExpr(CHARS.dad,'angry');BOMB.fast=4;await line('dad','That’s it. We’re leaving—',{expr:'angry',dur:1.6});if(!alive(run))return;
+  CHARS.dad.pose='stand';CHARS.dad.y=0;setExpr(CHARS.dad,'angry');BOMB.fast=4;await line('dad','Okay, that’s it. Kids, up. We’re leaving—',{expr:'angry',dur:1.6});if(!alive(run))return;
   toniSay('Please remain seated. The table is wired to a bomb.',{pa:true});await gwait(2.2);if(!alive(run))return;
   CHARS.dad.pose='sitScared';setExpr(CHARS.dad,'shock');await nudge(40,0.85,15.5,0.8);if(!alive(run))return;await VOICE.busy;if(!alive(run))return;
-  await line('lucia','There’s a pizza box in the middle of the table. With wires.',{name:'Lucia'});if(!alive(run))return;
+  await line('lucia','Dad, stop! There’s wires. They go under all of us.',{name:'Lucia'});if(!alive(run))return;
   await toniSay('Tonight’s special: twelve pizzas. Finish them all and get the code.',{pa:true});if(!alive(run))return;
   await toniSay('No substitutions. No refunds.',{pa:true});if(!alive(run))return;
-  await line('uncle','Twelve pizzas? Is this a joke?',{expr:'angry'});if(!alive(run))return;
+  await line('uncle','Twelve pizzas? What is this, some prank show? Where’s the camera?',{expr:'angry'});if(!alive(run))return;
   // he shows himself in the doorway
   const T=CHARS.toni;toniShow(35.7,12.9,Math.PI/2+0.2);DOORS.party.target=1;at3(34,1,12.7,(p,t)=>SFX.door(p,t));SFX.sting();await nudge(35.7,1.75,12.9,0.9);if(!alive(run))return;
   for(const id of FAMILY){CHARS[id].look=[35.7,1.7,12.9];}T.tilt=0.45;T.typing=true;await gwait(2.2);if(!alive(run))return;T.typing=false;
-  await line('ruben','That’s… that’s the mascot. From the sign.',{expr:'fear'});if(!alive(run))return;
-  await line('grandpa','It’s that delivery boy. The one who showed up late.',{expr:'angry'});if(!alive(run))return;
+  await line('ruben','No. No, no, no. That’s the mascot. From the sign outside.',{expr:'fear'});if(!alive(run))return;
+  await line('grandpa','I know that walk. That’s the delivery boy. Forty minutes late, and the pizza was cold.',{expr:'angry'});if(!alive(run))return;
   T.tilt=0;toniWalk(33,12.7,1.3).then(()=>{if(alive(run)){toniHide();DOORS.party.target=0;at3(34,1,12.7,(p,t)=>SFX.door(p,t));}});await gwait(1.8);if(!alive(run))return;
   for(const id of FAMILY)CHARS[id].look=null;
   // the first Telltale choice
   CHARS.grandpa.look=[P.x,1.2,P.z];await nudge(...charPos('grandpa',1.4),0.8);if(!alive(run))return;
-  await line('grandpa','This is about that damn rating, isn’t it? Lucia. What did you write?',{expr:'angry'});if(!alive(run))return;
-  const SAY_L1=['You told me to give him one star.','It was just a review.','I’m sorry. This is my fault.'];const c=await choose(SAY_L1,{who:'Lucia',prompt:'',timeout:7});if(!alive(run))return;G.flags.c1=c;if(c>=0){await line('lucia',SAY_L1[c],{name:'Lucia'});if(!alive(run))return;}
-  if(c===0){await line('grandpa','And you listened? Since when do you listen to me?',{expr:'angry'});await line('dad','Enough. Both of you.',{expr:'angry'});remember('Your grandfather will remember that.');}
-  else if(c===1){await line('uncle','Just a review. Tell that to the psycho in the cheese suit.',{expr:'smirk'});}
-  else if(c===2){await line('dad','Mija, no. This isn’t on you. Look at me. It isn’t.',{expr:'sad'});remember('Your dad will remember that.');}
-  else{await line('grandpa','Nothing? Typical.',{expr:'angry'});remember('Your grandfather noticed you said nothing.');}
+  await line('grandpa','This is about that damn rating, isn’t it? Lucia. What did you write about him?',{expr:'angry'});if(!alive(run))return;
+  const SAY_L1=['You told me to give him one star!','It was just a stupid review!','I’m sorry. This is all my fault.'];const c=await choose(SAY_L1,{who:'Lucia',prompt:'',timeout:7});if(!alive(run))return;G.flags.c1=c;if(c>=0){await line('lucia',SAY_L1[c],{name:'Lucia'});if(!alive(run))return;}
+  if(c===0){await line('grandpa','Oh, so now you listen to me? Now?',{expr:'angry'});await line('dad','Enough! Both of you, stop it.',{expr:'angry'});remember('Your grandfather will remember that.');}
+  else if(c===1){await line('uncle','Yeah? Go tell that to the psycho in the cheese suit.',{expr:'smirk'});}
+  else if(c===2){await line('dad','No. Mija, no. Look at me. This is not on you, okay? It’s not.',{expr:'sad'});remember('Your dad will remember that.');}
+  else{await line('grandpa','Nothing to say? Typical.',{expr:'angry'});remember('Your grandfather noticed you said nothing.');}
   if(!alive(run))return;
   // the clue: Alex's bracelet
   CHARS.dad.look=charPos('alex');await nudge(...charPos('alex',1.1),0.8);if(!alive(run))return;
-  await line('dad','Alex. Look at me. Whatever they bring you, you check it first. No seeds. You hear me?',{expr:'sad'});if(!alive(run))return;
-  setExpr(CHARS.alex,'sad');await line('alex','I know, Dad. I’m not a baby.',{expr:'sad'});if(!alive(run))return;
-  await line('ruben','Rule one: never split up. Rule two… I don’t know rule two.',{expr:'fear'});if(!alive(run))return;
+  await line('dad','Alex. Alex, look at me. Whatever he brings you, you check it first. Every bite. No seeds, okay?',{expr:'sad'});if(!alive(run))return;
+  setExpr(CHARS.alex,'sad');await line('alex','I know, Dad. I know. I’m not a baby.',{expr:'sad'});if(!alive(run))return;
+  await line('ruben','Okay. Horror movie rules. Rule one, never split up. Rule two… I don’t remember rule two.',{expr:'fear'});if(!alive(run))return;
   CHARS.dad.look=null;
   // a moment to look around
   G.flags.freeLook=true;setObj('Look around the table.','Look at Alex. Look at the box in the middle of the table.');
@@ -225,11 +226,11 @@ async function sceneManny(){const run=G.run;G.who='manny';checkpoint('manny1');
   P.seated=null;P.limitYaw=null;P.x=PT.freezerStart[0];P.z=PT.freezerStart[1];P.yaw=0;P.pitch=-0.15;P.eyeOverride=0.75;
   for(const id of FAMILY){CHARS[id].pose='sit';setExpr(CHARS[id],'fear');}
   setAmb('freezer',0.55,0.5);setAmb('hum',0.18);setMode('cine');await titleCard('Pizza 1 of 12','Kiddie Pie',2.2);if(!alive(run))return;await fadeTo(0,1.6);if(!alive(run))return;
-  thinkM('Still in the walk-in. I can’t feel my fingers.',3);await gwait(3.4);if(!alive(run))return;
+  thinkM('Still in the walk-in. I can’t feel my fingers anymore.',3.5);await gwait(3.4);if(!alive(run))return;
   // he unlocks it and walks off. Squeaking.
   at3(11,1,6,(p,t)=>SFX.clunk(p,t));await gwait(0.5);for(let i=0;i<5;i++){at3(11.5+i*1.2,0.1,7.5+i*0.5,(p,t)=>SFX.squeak(p,t),2);await gwait(0.6);}if(!alive(run))return;
   G.flags.unlocked=true;await toniSay('New order. Ticket’s on the rail.',{pa:true});if(!alive(run))return;
-  TICKET.visible=true;P.eyeOverride=null;thinkM('Okay. Okay. Just do what he says.',3);
+  TICKET.visible=true;P.eyeOverride=null;thinkM('It’s open. Okay. Do what he says, and you go home.',3.5);
   setMode('play');setObj('Get out of the freezer.','The door is unlocked now. Walk up to it and push it.');}
 
 /* ============================================================
@@ -242,24 +243,24 @@ async function sceneEat(){const run=G.run;G.who='lucia';const res=G.result;const
   await nudge(34.8,1.5,12.7,0.6);await toniWalk(42.7,18.1,1.3);if(!alive(run))return;toniFace(41.8,16);await nudge(41.8,1.1,16.6,0.8);if(!alive(run))return;
   T.carrying=false;scene.add(PIE.table);PIE.table.position.set(41.8,0.77,16.05);PIE.table.rotation.set(0,0,0);lightPie(PIE.table,41.8,1,16);SFX.pick();BOMB.n=1;bombDisplay();BOMB.fast=1.5;
   await toniSay('Enjoy your meal.');if(!alive(run))return;
-  await line('uncle','What about her? She doesn’t get one?',{expr:'angry'});if(!alive(run))return;
+  await line('uncle','Hey. What about her? Where’s hers?',{expr:'angry'});if(!alive(run))return;
   T.tilt=0.4;await toniSay('One Star’s order is running late.');if(!alive(run))return;T.tilt=0;
   await line('lucia','...One star.',{name:'Lucia'});if(!alive(run))return;
   A.look=[P.x,1.2,P.z];setExpr(A,'fear');await nudge(...charPos('alex',1.1),0.7);if(!alive(run))return;
   await line('alex','Lucia?',{expr:'fear'});if(!alive(run))return;
-  const SAY_L2=['It’s okay. Just eat.','Look at it first.','You don’t have to do this.'];const c=await choose(SAY_L2,{who:'Lucia',timeout:6});if(!alive(run))return;G.flags.c2=c;if(c>=0){await line('lucia',SAY_L2[c],{name:'Lucia'});if(!alive(run))return;}
-  if(c===1){setExpr(A,'sad');await line('alex',res.kind==='allergy'?'There’s seeds… Dad, there’s seeds on the crust—':'…No seeds. It’s just pepperoni.',{expr:res.kind==='allergy'?'fear':'sad'});if(!alive(run))return;
-    if(res.kind==='allergy'){await toniSay('Clean plate, please.');if(!alive(run))return;TONI.armed=true;T.typing=false;T.aiming=true;T.yaw=Math.atan2(D.x-T.x,D.z-T.z);await line('dad','Okay! Okay. Just… eat around them, mijo. Eat around them.',{expr:'fear'});T.aiming=false;}}
-  else if(c===2){await line('dad','Lucia, don’t. Don’t give him a reason.',{expr:'fear'});}
+  const SAY_L2=['It’s okay, Alex. Just eat it.','Wait. Check it first.','You don’t have to do this!'];const c=await choose(SAY_L2,{who:'Lucia',timeout:6});if(!alive(run))return;G.flags.c2=c;if(c>=0){await line('lucia',SAY_L2[c],{name:'Lucia'});if(!alive(run))return;}
+  if(c===1){setExpr(A,'sad');await line('alex',res.kind==='allergy'?'Dad… there’s seeds. There’s seeds all over the crust—':'No seeds. Just pepperoni. Okay. Okay.',{expr:res.kind==='allergy'?'fear':'sad'});if(!alive(run))return;
+    if(res.kind==='allergy'){await toniSay('Clean plate, please.');if(!alive(run))return;TONI.armed=true;T.typing=false;T.aiming=true;T.yaw=Math.atan2(D.x-T.x,D.z-T.z);await line('dad','Okay! Okay! Just eat around them, mijo. Slow. Eat around them.',{expr:'fear'});T.aiming=false;}}
+  else if(c===2){await line('dad','Lucia, stop. Don’t. Don’t give him a reason.',{expr:'fear'});}
   else if(c===0){remember('Alex will remember that.');}
   if(!alive(run))return;A.look=null;
   // Alex eats
   A.pose='eat';for(let i=0;i<3;i++){at3(A.x,1.1,A.z,(p,t)=>SFX.crunch(p,t),1.5);await gwait(1.1);if(!alive(run))return;}A.pose='sit';
-  if(res.ok){await gwait(1.4);if(!alive(run))return;setExpr(A,'sad');await line('dad','Okay. Okay, mijo. You’re okay.',{expr:'sad'});if(!alive(run))return;
+  if(res.ok){await gwait(1.4);if(!alive(run))return;setExpr(A,'sad');await line('dad','That’s it. That’s it, mijo. You’re okay. You’re okay.',{expr:'sad'});if(!alive(run))return;
     await toniSay(R()<0.5?'Good job. 👍':'Five stars, Manny.');if(!alive(run))return;G.flags.alex='alive';}
   else{await toniSay('That’s not what they ordered.');if(!alive(run))return;
     if(res.kind==='allergy'){A.pose='choke';A.shake=1;setExpr(A,'choke');at3(A.x,1.2,A.z,(p,t)=>SFX.choke(p,t),2);await gwait(0.9);if(!alive(run))return;
-      D.pose='stand';setExpr(D,'scream');BOMB.fast=3;line('dad','ALEX! His pen—his pen’s in his jacket! LET ME—',{expr:'scream'});await gwait(1.1);if(!alive(run))return;
+      D.pose='stand';setExpr(D,'scream');BOMB.fast=3;line('dad','ALEX! His pen! His pen’s in his jacket! Let me get it, PLEASE—',{expr:'scream'});await gwait(1.1);if(!alive(run))return;
       TONI.armed=true;T.aiming=true;T.yaw=Math.atan2(D.x-T.x,D.z-T.z);await gwait(1.2);if(!alive(run))return;D.pose='sitScared';setExpr(D,'fear');await gwait(1.6);if(!alive(run))return;
       A.shake=0;A.pose='slumpDead';setExpr(A,'dead');at3(A.x,1,A.z,(p,t)=>SFX.gasp(p,t,0.3),2);await gwait(1.6);if(!alive(run))return;}
     else{TONI.armed=true;T.aiming=true;T.yaw=Math.atan2(A.x-T.x,A.z-T.z);await gwait(1.3);if(!alive(run))return;$('fade').style.transitionDuration='0s';$('fade').style.opacity='1';

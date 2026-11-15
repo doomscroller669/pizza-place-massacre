@@ -22,6 +22,10 @@ function quad(key,o,U,V,opts={}){
   for(let j=0;j<nv;j++)for(let i=0;i<nu;i++){const a=P(i,j),bb=P(i+1,j),c=P(i+1,j+1),d=P(i,j+1);const ua=UV(a,i,j),ub=UV(bb,i+1,j),uc=UV(c,i+1,j+1),ud=UV(d,i,j+1);
     for(const [p,uv] of [[a,ua],[bb,ub],[c,uc],[a,ua],[c,uc],[d,ud]]){b.pos.push(p[0],p[1],p[2]);b.nrm.push(n[0],n[1],n[2]);b.uv.push(uv[0],uv[1]);b.tint.push(tint[0],tint[1],tint[2]);}}
 }
+/* contact shadows: a soft dark patch on the floor under furniture, so nothing looks pasted on.
+   round=true for cylinders. k = how far the soft edge reaches past the footprint. */
+function shadowRect(x0,x1,z0,z1,k=0.14,round=false){const X0=Math.min(x0,x1)-k,X1=Math.max(x0,x1)+k,Z0=Math.min(z0,z1)-k,Z1=Math.max(z0,z1)+k;
+  quad(round?'!shadowRound':'!shadowRect',[X0,0.006,Z1],[X1-X0,0,0],[0,0,-(Z1-Z0)],{fit:true,nu:1,nv:1});}
 /* collision: axis-aligned rects on the floor plan. top = height, used for sight lines and ducking */
 const SOLIDS=[];
 function solid(x0,x1,z0,z1,top=3,tag){const r={x0:Math.min(x0,x1),x1:Math.max(x0,x1),z0:Math.min(z0,z1),z1:Math.max(z0,z1),top,tag,on:true};SOLIDS.push(r);return r;}
@@ -36,12 +40,14 @@ function box(key,x0,x1,y0,y1,z0,z1,opts={}){
   if(f.includes('t'))quad(K('t'),[x0,y1,z1],[dx,0,0],[0,0,-dz],fo('t'));
   if(f.includes('b'))quad(K('b'),[x0,y0,z0],[dx,0,0],[0,0,dz],fo('b'));
   if(opts.collide!==false&&y0<1.6&&y1>0.25)solid(x0,x1,z0,z1,y1,opts.tag);
+  if(opts.shadow!==false&&y0<0.02&&y1>0.2&&Math.min(x1-x0,z1-z0)>0.12&&!/^!/.test(typeof key==='string'?key:'x'))shadowRect(x0,x1,z0,z1,Math.min(0.2,0.08+(y1-y0)*0.06));
 }
 function cyl(key,cx,cz,y0,y1,r,seg=8,opts={}){for(let i=0;i<seg;i++){const a0=i/seg*TAU,a1=(i+1)/seg*TAU;const p0=[cx+Math.cos(a0)*r,y0,cz+Math.sin(a0)*r],p1=[cx+Math.cos(a1)*r,y0,cz+Math.sin(a1)*r];
     quad(key,p1,[p0[0]-p1[0],0,p0[2]-p1[2]],[0,y1-y0,0],Object.assign({nu:1,nv:1},opts));}
   if(opts.top!==false){for(let i=0;i<seg;i++){const a0=i/seg*TAU,a1=(i+1)/seg*TAU;const b=bucket(opts.topKey||key);const t=opts.tint||[1,1,1];const s=(TX[(opts.topKey||key).replace(/^!/,'')]||{s:1}).s;
     const pts=[[cx,y1,cz],[cx+Math.cos(a1)*r,y1,cz+Math.sin(a1)*r],[cx+Math.cos(a0)*r,y1,cz+Math.sin(a0)*r]];pts.forEach(p=>{b.pos.push(p[0],p[1],p[2]);b.nrm.push(0,1,0);b.uv.push(p[0]/s,-p[2]/s);b.tint.push(t[0],t[1],t[2]);});}}
-  if(opts.collide)solid(cx-r,cx+r,cz-r,cz+r,y1);}
+  if(opts.collide)solid(cx-r,cx+r,cz-r,cz+r,y1);
+  if(y0<0.02&&y1>0.2&&opts.shadow!==false)shadowRect(cx-r,cx+r,cz-r,cz+r,0.12,true);}
 /* a flat picture on a wall: n is the direction it faces (one of 'n','s','e','w'); (x,z) on the wall surface */
 function sign(name,x,y,z,w,h,face,opts={}){const key=SIGN[name]?'sign:'+name:name;const d=0.012;const o2=Object.assign({fit:true,nu:1,nv:1},opts);
   if(face==='s')quad(key,[x-w/2,y,z+d],[w,0,0],[0,h,0],o2);if(face==='n')quad(key,[x+w/2,y,z-d],[-w,0,0],[0,h,0],o2);
@@ -151,16 +157,23 @@ const LIGHT_GAIN=1.6;
 function bake(){const meshes=[];
   for(const [key,b] of SB){const unlit=key[0]==='!';const name=key.replace(/^!/,'');const n=b.pos.length/3;const col=new Float32Array(n*3);
     for(let i=0;i<n;i++){const p=[b.pos[i*3],b.pos[i*3+1],b.pos[i*3+2]],nn=[b.nrm[i*3],b.nrm[i*3+1],b.nrm[i*3+2]];
-      let L=unlit?[1,1,1]:lightAt(p[0],p[1],p[2],nn);const h=unlit?1:0.95+((Math.sin(p[0]*12.99+p[1]*78.2+p[2]*37.7)*43758.5)%1+1)%1*0.08;
+      let L=unlit?[1,1,1]:lightAt(p[0],p[1],p[2],nn);let h=unlit?1:0.95+((Math.sin(p[0]*12.99+p[1]*78.2+p[2]*37.7)*43758.5)%1+1)%1*0.08;
+      if(!unlit)h*=occlusion(p,nn);
       col[i*3]=Math.min(1.25,L[0]*b.tint[i*3]*h);col[i*3+1]=Math.min(1.25,L[1]*b.tint[i*3+1]*h);col[i*3+2]=Math.min(1.25,L[2]*b.tint[i*3+2]*h);}
     const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(b.pos,3));geo.setAttribute('uv',new THREE.Float32BufferAttribute(b.uv,2));geo.setAttribute('color',new THREE.BufferAttribute(col,3));
     const map=name.startsWith('sign:')?SIGN[name.slice(5)]:(TX[name]&&TX[name].t);
-    const cut=['grate','blood','night','plush','ballpit'].includes(name)||name.startsWith('sign:');
-    const m=basic({map,vertexColors:true,transparent:name==='glass',opacity:1,alphaTest:cut?0.4:0,side:THREE.DoubleSide,depthWrite:name!=='glass'});
+    const cut=['grate','blood','night','plush','ballpit'].includes(name)||name.startsWith('sign:');const shade=name.startsWith('shadow');
+    const m=basic({map,vertexColors:true,transparent:name==='glass'||shade,opacity:1,alphaTest:cut?0.4:0,side:THREE.DoubleSide,depthWrite:name!=='glass'&&!shade});
+    if(shade){m.polygonOffset=true;m.polygonOffsetFactor=-2;m.polygonOffsetUnits=-2;}
     if(name==='night'||name==='white')m.fog=false;
     const mesh=new THREE.Mesh(geo,m);mesh.matrixAutoUpdate=false;scene.add(mesh);meshes.push(mesh);}
   SB.clear();return meshes;}
 
+/* soft occlusion baked into the vertex light: the bottom of a wall, the edge of a floor, the corners of a ceiling */
+function occlusion(p,n){const r=roomAt(p[0],p[2]);let k=1;
+  if(Math.abs(n[1])<0.5){k*=lerp(0.7,1,clamp(p[1]/0.9,0,1));if(r)k*=lerp(0.88,1,clamp((r.h-p[1])/0.6,0,1));}
+  else if(r){const d=Math.min(p[0]-r.x0,r.x1-p[0],p[2]-r.z0,r.z1-p[2]);k*=lerp(n[1]>0?0.72:0.8,1,clamp(d/1.1,0,1));}
+  return k;}
 /* light a dynamic object: one color sampled where it stands */
 function tintAt(x,y,z,k=1){const L=lightAt(x,y,z,null);return new THREE.Color(Math.min(1.2,L[0]*k),Math.min(1.2,L[1]*k),Math.min(1.2,L[2]*k));}
 

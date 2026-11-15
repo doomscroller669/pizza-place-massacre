@@ -4,12 +4,17 @@ Engine: Chatterbox (Resemble AI, open source), which takes an emotion dial per l
 character's timbre from a short reference clip. The reference clips are made once with Kokoro, so the cast keeps the
 voices it already had. With --kokoro, everything is rendered with Kokoro alone (fast, flat).
 
-Finds line('who', ...), thinkL(...), thinkM(...) and SAY_* arrays (Lucia's picked choices) in src/js/*.js,
-renders each with that character's voice and the line's direction (DIRECT below), post-processes with ffmpeg,
-and writes src/js/05-vodata.js (base64 MP3 keyed by an FNV-1a hash of "who|text", computed the same way in the game).
-Toni is never voiced here: he talks through the device's own text-to-speech, by design.
+Finds line('who', ...), thinkL(...), thinkM(...), SAY_* arrays (Lucia's picked choices), toniSay(...), MINUTES_LINE and the
+training tape's captions (TAPE) in src/js/*.js, renders each with that character's voice and the line's direction (DIRECT below),
+post-processes with ffmpeg, and writes src/js/05-vodata.js (base64 MP3 keyed by an FNV-1a hash of "who|text", computed the same
+way in the game). Toni ('toni') is Pepper Toni's cartoon mascot voice: his phone reads his typing out in it.
 
-Needs: pip install chatterbox-tts kokoro-onnx soundfile; ffmpeg; Kokoro's model files
+Each character's reference clip is made in two steps: Kokoro reads REF_TEXT in the cast voice, then Chatterbox re-reads it with
+feeling from that clip. The second clip is the one every line clones, so the cast keeps its timbre but loses Kokoro's flat delivery.
+Every take is checked twice: a speech recognizer must hear the written words, and a phoneme recognizer must hear the names said
+right (Lucia = loo-SEE-ah, mijo = MEE-ho, mija = MEE-ha). A take that fails either is recorded again with a new seed.
+
+Needs: pip install chatterbox-tts kokoro-onnx soundfile faster-whisper transformers; ffmpeg; Kokoro's model files
   kokoro-v1.0.onnx and voices-v1.0.bin from github.com/thewh1teagle/kokoro-onnx/releases (model-files-v1.0).
   Chatterbox downloads its own weights from huggingface.co on first use.
 Usage: python3 tools/voices.py /path/to/kokoro-models [--kokoro] [--only who]
@@ -31,8 +36,10 @@ CAST = {
     'alex':      dict(voice='am_puck',    speed=0.98, pitch=1.16, ex=0.7),
     'ruben':     dict(voice='am_echo',    speed=1.04, pitch=1.2,  ex=0.7),
     'lucia':     dict(voice='af_sky',     speed=0.95, pitch=1.03, ex=0.6),
-    'manny':     dict(voice='am_fenrir',  speed=0.9,  pitch=0.98, ex=0.5),
-    'announcer': dict(voice='am_puck',    speed=1.08, pitch=1.04, ex=1.0),
+    'manny':     dict(voice='am_fenrir',  speed=0.94, pitch=0.98, ex=0.7),
+    # Pepper Toni, the mascot: a bouncy cartoon voice, pitched up after recording (fx 'toon')
+    'toni':      dict(voice='am_puck',    speed=1.12, pitch=1.16, ex=1.05, fx='toon'),
+    'announcer': dict(voice='am_puck',    speed=1.12, pitch=1.16, ex=1.1,  fx='toon', same='toni'),
 }
 # what each reference clip says: varied sentences, so the clone hears a range
 REF_TEXT = {
@@ -42,72 +49,95 @@ REF_TEXT = {
     'alex': "Dad, can we go home now? I don't like it here. It smells weird, and Ruben keeps telling me scary movie stuff. It's not funny.",
     'ruben': "Okay, okay, okay. This is exactly like the movies. Rule one, never split up. Rule two, don't trust the mascot. Rule three, I forgot rule three.",
     'lucia': "I just want this night to be over. It's Mom's funeral and he's complaining about pizza. Whatever. I'm not eating that. It looks disgusting.",
-    'manny': "Twelve years at this place. I know every oven, every timer, every busted tile. Just breathe. Do the job. Get through the night. Get home.",
-    'announcer': "Come on down to Pepper Toni's! Pizza, games, and fun for the whole family! Pepper Toni's, where family comes first!",
+    'manny': "Twelve years in this kitchen, man. Twelve years! I know every oven, every timer, every busted tile. And tonight? Tonight I just want to get home. That's it. Just breathe, Manny. Get home.",
+    'toni': "Hiya, pals! It's me, Pepper Toni! Who's hungry? Ha ha! Extra cheese, extra pepperoni, and extra fun for the whole family! Come on down, I saved you a seat!",
+    'announcer': "Hiya, pals! It's me, Pepper Toni! Who's hungry? Ha ha! Extra cheese, extra pepperoni, and extra fun for the whole family! Come on down, I saved you a seat!",
 }
+# how hard the second step of each reference clip acts
+BOOT_EX = {'toni': 1.15, 'announcer': 1.15}
 # ---------- direction: (who, start of the line) -> exaggeration, cfg weight, effect ----------
 # exaggeration: 0.25 flat .. 0.5 normal .. 1.0 big .. 2.0 screaming. Lower cfg (0.3) slows and loosens the delivery for big moments.
 DIRECT = [
-    ('lucia', 'Dad... what do we do', 0.75, 0.4, None),
-    ('dad', 'We stay calm', 0.6, 0.45, 'shaky'),
-    ('dad', 'Lucia? ...Lucia', 1.15, 0.3, None),
-    ('alex', 'Dad? Where are we', 1.0, 0.35, 'shaky'),
+    # the table wakes
+    ('lucia', 'Mm\u2026 where', 0.5, 0.3, None),
+    ('dad', 'Lucia? Lucia! Mija, look at me', 1.2, 0.3, None),
+    ('alex', 'Dad? Where are we', 1.0, 0.35, None),
     ('grandpa', 'What the hell is this', 1.0, 0.35, None),
     ('uncle', 'Hey! HEY!', 1.5, 0.3, 'shout'),
-    ('ruben', 'This is a party room', 1.1, 0.35, None),
-    ('dad', 'That\u2019s it. We\u2019re leaving', 1.2, 0.35, 'shout'),
-    ('lucia', 'There\u2019s a pizza box in the middle', 0.65, 0.4, None),
-    ('uncle', 'Twelve pizzas?', 1.0, 0.35, None),
-    ('ruben', 'That\u2019s\u2026 that\u2019s the mascot', 0.9, 0.35, 'shaky'),
-    ('grandpa', 'It\u2019s that delivery boy', 0.8, 0.4, None),
+    ('ruben', 'Why are there balloons', 1.1, 0.35, None),
+    ('dad', 'Okay, that\u2019s it. Kids, up', 1.2, 0.35, 'shout'),
+    ('lucia', 'Dad, stop! There\u2019s wires', 1.2, 0.35, None),
+    ('uncle', 'Twelve pizzas?', 1.0, 0.38, None),
+    ('ruben', 'No. No, no, no', 1.1, 0.35, None),
+    ('grandpa', 'I know that walk', 0.85, 0.4, None),
     ('grandpa', 'This is about that damn rating', 1.05, 0.35, None),
-    ('grandpa', 'And you listened?', 0.85, 0.4, None),
-    ('dad', 'Enough. Both of you', 0.9, 0.4, None),
-    ('uncle', 'Just a review', 0.75, 0.45, None),
-    ('dad', 'Mija, no.', 0.85, 0.35, 'shaky'),
-    ('grandpa', 'Nothing? Typical', 0.65, 0.45, None),
-    ('dad', 'Alex. Look at me', 0.9, 0.35, None),
-    ('alex', 'I know, Dad', 0.85, 0.4, 'shaky'),
-    ('ruben', 'Rule one', 0.95, 0.4, 'shaky'),
-    ('uncle', 'What about her?', 0.9, 0.4, None),
+    ('lucia', 'You told me to give him one star', 1.1, 0.35, None),
+    ('lucia', 'It was just a stupid review', 1.0, 0.4, None),
+    ('lucia', 'I\u2019m sorry. This is all my fault', 1.0, 0.35, None),
+    ('grandpa', 'Oh, so now you listen to me', 0.95, 0.4, None),
+    ('dad', 'Enough! Both of you', 1.1, 0.4, None),
+    ('uncle', 'Yeah? Go tell that', 0.85, 0.42, None),
+    ('dad', 'No. Mija, no', 0.9, 0.35, None),
+    ('grandpa', 'Nothing to say? Typical', 0.7, 0.45, None),
+    ('dad', 'Alex. Alex, look at me', 0.9, 0.38, None),
+    ('alex', 'I know, Dad. I know', 0.85, 0.4, None),
+    ('ruben', 'Okay. Horror movie rules', 1.0, 0.4, None),
+    ('lucia', 'Dad? What do we do', 0.8, 0.4, None),
+    ('dad', 'I don\u2019t know, mija', 0.85, 0.4, None),
+    # the first pizza
+    ('uncle', 'Hey. What about her', 0.9, 0.4, None),
     ('lucia', '...One star', 0.55, 0.35, None),
-    ('alex', 'Lucia?', 1.0, 0.35, 'shaky'),
-    ('alex', 'There\u2019s seeds', 1.4, 0.3, 'shaky'),
-    ('alex', '\u2026No seeds', 0.75, 0.4, 'shaky'),
-    ('dad', 'Okay! Okay. Just\u2026 eat around them', 1.3, 0.3, 'shaky'),
-    ('dad', 'Lucia, don\u2019t', 0.85, 0.4, None),
-    ('dad', 'Okay. Okay, mijo', 0.95, 0.35, 'shaky'),
+    ('alex', 'Lucia?', 1.0, 0.35, None),
+    ('lucia', 'It\u2019s okay, Alex', 0.75, 0.4, None),
+    ('lucia', 'Wait. Check it first', 0.8, 0.4, None),
+    ('lucia', 'You don\u2019t have to do this', 1.1, 0.35, None),
+    ('alex', 'Dad\u2026 there\u2019s seeds', 1.4, 0.3, None),
+    ('alex', 'No seeds. Just pepperoni', 0.75, 0.4, None),
+    ('dad', 'Okay! Okay! Just eat around them', 1.3, 0.3, None),
+    ('dad', 'Lucia, stop. Don\u2019t', 0.9, 0.4, None),
+    ('dad', 'That\u2019s it. That\u2019s it, mijo', 0.95, 0.35, None),
     ('dad', 'ALEX! His pen', 1.9, 0.25, 'shout'),
-    ('lucia', 'Sesame.', 0.55, 0.45, None),
-    ('lucia', 'A pizza box with wires', 0.5, 0.45, None),
-    ('lucia', '"Ramirez party', 0.55, 0.45, None),
-    ('lucia', '...Where', 0.6, 0.3, None),
-    ('lucia', 'You told me to give him', 0.9, 0.4, None),
-    ('lucia', 'It was just a review', 0.65, 0.45, None),
-    ('lucia', 'I\u2019m sorry. This is my fault', 1.0, 0.35, 'shaky'),
-    ('lucia', 'It\u2019s okay. Just eat', 0.7, 0.4, 'shaky'),
-    ('lucia', 'Look at it first', 0.75, 0.4, None),
-    ('lucia', 'You don\u2019t have to do this', 0.95, 0.35, 'shaky'),
-    ('manny', 'Don\u2019t look', 0.85, 0.35, 'shaky'),
-    ('manny', 'They were alive', 0.85, 0.35, 'shaky'),
-    ('manny', 'He forgives me', 0.85, 0.35, 'shaky'),
-    ('manny', 'Still in the walk-in', 0.65, 0.4, 'cold'),
-    ('manny', 'Okay. Okay. Just do what he says', 0.8, 0.35, 'shaky'),
-    ('manny', 'He\u2019s coming for it', 0.7, 0.4, None),
-    ('manny', 'A family at the party table', 0.75, 0.4, None),
-    ('announcer', 'Pepper Toni', 1.1, 0.4, None),
+    # Lucia looking around
+    ('lucia', 'Sesame. He can\u2019t even touch it', 0.65, 0.45, None),
+    ('lucia', 'Wires going under every chair', 0.85, 0.4, None),
+    ('lucia', '\u201cRamirez, party of six', 0.7, 0.45, None),
+    # Manny
+    ('manny', 'Still in the walk-in', 0.75, 0.4, None),
+    ('manny', 'It\u2019s open. Okay', 0.85, 0.38, None),
+    ('manny', 'Don\u2019t look at them', 0.85, 0.35, None),
+    ('manny', 'They were alive at ten', 0.9, 0.35, None),
+    ('manny', 'He\u2026 forgives me', 0.9, 0.35, None),
+    ('manny', 'Here he comes', 0.85, 0.4, None),
+    ('manny', 'There\u2019s a whole family', 0.85, 0.38, None),
+    ('manny', 'Kiddie Pie. Like the menu', 0.75, 0.42, None),
+    ('manny', 'Locked. The grate', 0.8, 0.42, None),
+    # Toni's mascot voice: sunny by default; flatter where the moment is grim
+    ('toni', 'Ramirez, party of five', 0.6, 0.45, 'toon'),
+    ('toni', 'That\u2019s not what they ordered', 0.8, 0.45, 'toon'),
+    ('toni', 'Three strikes', 1.2, 0.35, 'toon'),
+    ('toni', 'Hi, team!', 1.2, 0.35, 'toon'),
+    ('toni', 'Today we\u2019re making', 1.2, 0.35, 'toon'),
+    ('toni', 'Stretch it!', 1.2, 0.35, 'toon'),
+    ('toni', 'Give it a pepperoni', 1.2, 0.35, 'toon'),
+    ('toni', 'TONI\u2019S FAMOUS SEEDS', 1.2, 0.35, 'toon'),
+    ('toni', 'Kids LOVE', 1.2, 0.35, 'toon'),
+    ('toni', 'Remember: FAMILY', 1.2, 0.35, 'toon'),
+    ('announcer', 'Pepper Toni', 1.2, 0.35, 'toon'),
 ]
 def direction(who, text):
     for w, start, ex, cfg, fx in DIRECT:
         if w == who and text.startswith(start): return ex, cfg, fx
-    return CAST[who]['ex'], 0.5, None
+    c = CAST[who]
+    return c['ex'], 0.42 if c.get('fx') == 'toon' else 0.45, c.get('fx')
 
 EXTRA = [('announcer', "Pepper Toni's! Where family comes first!")]
 
 def fnv(s):
+    """FNV-1a over UTF-16 code units, exactly like the game's voKey (so an emoji hashes the same in both)"""
     h = 0x811c9dc5
-    for ch in s:
-        h ^= ord(ch); h = (h * 0x01000193) & 0xffffffff
+    b = s.encode('utf-16-le')
+    for i in range(0, len(b), 2):
+        h ^= b[i] | (b[i + 1] << 8); h = (h * 0x01000193) & 0xffffffff
     return format(h, '08x')
 
 def js_strings(expr):
@@ -151,16 +181,30 @@ def extract():
         for m in re.finditer(r"\bSAY_\w+\s*=\s*\[", s):
             expr = s[m.end():s.index('];', m.end())]
             lines += [('lucia', t) for t in js_strings(expr)]
+        for m in re.finditer(r"\btoniSay\(", s):
+            expr, _ = arg_span(s, m.end())
+            lines += [('toni', t) for t in js_strings(expr)]
+        for m in re.finditer(r"\b(MINUTES_LINE|TAPE)\s*=\s*\[", s):
+            expr = s[m.end():s.index('];', m.end())]
+            lines += [('toni', t) for t in js_strings(expr) if '#' not in t]
     seen, out = set(), []
     for l in lines + EXTRA:
         if l not in seen: seen.add(l); out.append(l)
     return out
 
-def spoken(text, for_kokoro=True):
-    t = text.replace('\u2019', "'").replace('\u2018', "'").replace('\u201c', '"').replace('\u201d', '"')
+# how the names are said: respelled so the models can't guess wrong (Lucia = loo-SEE-ah, mijo = MEE-ho, mija = MEE-ha)
+PRON = [(r'\bLucia\b', 'Lucee-uh'), (r'\bmijo\b', 'meeho'), (r'\bMijo\b', 'Meeho'), (r'\bmija\b', 'meeha'), (r'\bMija\b', 'Meeha')]
+EMOJI = {'\U0001F44D': 'thumbs up', '\U0001F620': 'angry face', '\U0001F355': 'pizza', '\u2b50': 'star', '\U0001F642': 'slightly smiling face', '\U0001F60A': 'smiling face'}
+def spoken(text, for_kokoro=True, respell=True):
+    t = text
+    for k, v in EMOJI.items():
+        if k in t: t = re.sub(r'\.?\s*' + k, '. ' + v.capitalize() + '.', t)
+    t = t.replace('\u2019', "'").replace('\u2018', "'").replace('\u201c', '"').replace('\u201d', '"')
+    if respell:
+        for a, b in PRON: t = re.sub(a, b, t)
     t = re.sub('\u2014$', '!' if '!' in t else '.', t)
     t = t.replace('\u2014', ', ').replace('\u2026', '...').replace(':)', '').replace('!!', '!')
-    t = re.sub(r'\b([A-Z]{2,})\b', lambda m: m.group(1).capitalize(), t)   # shouting reads as words, not letters
+    t = re.sub(r"\b([A-Z]{2,}(?:'[A-Z]+)?)\b", lambda m: m.group(1).capitalize(), t)   # shouting reads as words, not letters
     t = re.sub(r'^\.\.\.', '', t).strip()
     t = re.sub(r'(\w)\.\.\.$', r'\1.', t)
     return t
@@ -178,14 +222,33 @@ def kokoro(who, text, wav_out):
     af = [f'asetrate={int(sr*p)}', f'aresample={sr}', f'atempo={1/p:.4f}'] if abs(p - 1) > 0.005 else ['anull']
     subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', str(raw), '-af', ','.join(af), str(wav_out)], check=True); raw.unlink()
 
-def reference(who):
+def kokoro_ref(who):
     ref = cache / f'ref-{who}-{fnv(json.dumps(CAST[who]) + REF_TEXT[who])}.wav'
     if not ref.exists():
         print('reference clip', who, flush=True); kokoro(who, REF_TEXT[who], ref)
     return ref
+def reference(who):
+    """the clip every line clones: Chatterbox re-reading REF_TEXT with feeling, from the Kokoro clip. Best of three takes."""
+    who = CAST[who].get('same', who)
+    if KOKORO_ONLY: return kokoro_ref(who)
+    ex = BOOT_EX.get(who, 0.8)
+    ref = cache / f'ref2-{who}-{fnv(json.dumps(CAST[who]) + REF_TEXT[who] + str(ex))}.wav'
+    if not ref.exists():
+        best = None
+        for k in range(3):
+            cand = ref.with_name(ref.stem + f'.c{k}.wav')
+            if not cand.exists():
+                print('expressive reference clip', who, 'take', k + 1, flush=True)
+                chatterbox(who, REF_TEXT[who], cand, ex, 0.4, seed=k, prompt=kokoro_ref(who))
+            sc, got = take_score(cand, REF_TEXT[who])
+            print(f'   heard ({sc}): {got}', flush=True)
+            if best is None or sc > best[0]: best = (sc, cand)
+            if sc >= 0.9: break
+        ref.write_bytes(best[1].read_bytes())
+    return ref
 
 _cb = None
-def chatterbox(who, text, wav_out, ex, cfg, seed=0):
+def chatterbox(who, text, wav_out, ex, cfg, seed=0, prompt=None):
     global _cb
     import torch, torchaudio
     if _cb is None:
@@ -193,17 +256,17 @@ def chatterbox(who, text, wav_out, ex, cfg, seed=0):
         torch.set_num_threads(max(1, os.cpu_count() or 1))
         _cb = ChatterboxTTS.from_pretrained(device='cpu')
     torch.manual_seed(int(fnv(who + text), 16) % 100000 + seed * 7919)   # same line, same take; a new seed for a retake
-    wav = _cb.generate(spoken(text, for_kokoro=False), audio_prompt_path=str(reference(who)), exaggeration=ex, cfg_weight=cfg, temperature=0.8)
+    wav = _cb.generate(spoken(text, for_kokoro=False), audio_prompt_path=str(prompt or reference(who)), exaggeration=ex, cfg_weight=cfg, temperature=0.8)
     torchaudio.save(str(wav_out), wav, _cb.sr)
 
+TOON = 1.07   # the mascot's lift: pitch and formants up a little, at the same speed, like a cartoon voice
 FX = {
     None: [],
-    'shaky': ['vibrato=f=5.5:d=0.08'],
-    'cold': ['vibrato=f=7:d=0.12', 'tremolo=f=6:d=0.15'],
     'shout': ['acompressor=threshold=-24dB:ratio=6:attack=2:release=60', 'volume=2.2', 'alimiter=limit=0.9'],
+    'toon': ['asetrate=24000*%s' % TOON, 'aresample=24000', 'atempo=%.4f' % (1 / TOON), 'treble=g=3:f=3500', 'acompressor=threshold=-22dB:ratio=4:attack=3:release=60'],
 }
 def finish(wav, dst, fx):
-    af = ['highpass=f=80'] + FX[fx] + ['acompressor=threshold=-20dB:ratio=3:attack=5:release=80', 'loudnorm=I=-17:TP=-2:LRA=11',
+    af = ['aresample=24000', 'highpass=f=80'] + FX[fx] + ['acompressor=threshold=-20dB:ratio=3:attack=5:release=80', 'loudnorm=I=-17:TP=-2:LRA=11',
           'silenceremove=start_periods=1:start_threshold=-50dB', 'areverse', 'silenceremove=start_periods=1:start_threshold=-50dB', 'areverse']
     subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', str(wav), '-af', ','.join(af), '-ac', '1', '-ar', '22050',
                     '-c:a', 'libmp3lame', '-b:a', '40k', str(dst)], check=True)
@@ -227,10 +290,38 @@ def heard(path):
     except Exception: return ''
     segs, _ = _w.transcribe(y, language='en', beam_size=3)
     return ' '.join(s.text for s in segs)
+_ph = None
+def phones(path):
+    """the phones a wav2vec2 phoneme recognizer hears, as espeak IPA"""
+    global _ph
+    import torch, librosa
+    from transformers import Wav2Vec2ForCTC, Wav2Vec2PhonemeCTCTokenizer, Wav2Vec2FeatureExtractor
+    if _ph is None:
+        M = 'facebook/wav2vec2-lv-60-espeak-cv-ft'
+        _ph = (Wav2Vec2PhonemeCTCTokenizer.from_pretrained(M, do_phonemize=False), Wav2Vec2FeatureExtractor.from_pretrained(M), Wav2Vec2ForCTC.from_pretrained(M).eval())
+    tok, fe, model = _ph
+    try: y, _ = librosa.load(str(path), sr=16000)
+    except Exception: return ''
+    with torch.no_grad(): logits = model(fe(y, sampling_rate=16000, return_tensors='pt').input_values).logits
+    return tok.decode(torch.argmax(logits, -1)[0])
+# each name and the phones it must come out as (loo-SEE-ah, MEE-ho, MEE-ha; never loo-CHEE-ah or MEE-jo)
+NAMES = [(r'\bLucia\b', r'l ?\S* ?s ?(i|iː|ɪ) ?(j ?)?(ə|a|ɐ|ʌ|ɑ|æ)'), (r'\b[Mm]ijo\b', r'm ?(i|iː|ɪ) ?(h|x|ç) ?(o|oʊ|ɔ|ʊ|ə|u)'), (r'\b[Mm]ija\b', r'm ?(i|iː|ɪ) ?(h|x|ç) ?(a|ɑː|ɑ|ɐ|æ|ə|ʌ)')]
+def names_ok(path, text):
+    need = [(len(re.findall(w, text)), ph) for w, ph in NAMES if re.search(w, text)]
+    if not need: return True, ''
+    got = phones(path)
+    return all(len(re.findall(ph, got)) >= min(n, 2) for n, ph in need), got
 def take_score(path, text):
     import difflib
-    a, b = words(spoken(text)), words(heard(path))
-    wr = difflib.SequenceMatcher(None, a, b).ratio()
+    sc, got = words_score(path, text)
+    ok, ph = names_ok(path, text)
+    if not ok: return round(sc * 0.5, 3), got + '  [names wrong: ' + ph + ']'
+    return sc, got
+def words_score(path, text):
+    import difflib
+    a, b = words(spoken(text, respell=False)), words(heard(path))
+    a2 = words(spoken(text))
+    wr = max(difflib.SequenceMatcher(None, a, b).ratio(), difflib.SequenceMatcher(None, a2, b).ratio())
     # names and one-word lines get spelled every which way ("Lucia" -> "loo shia"), so letters count too
     cr = difflib.SequenceMatcher(None, ''.join(a), ''.join(b)).ratio() if b else 0
     sc = max(wr, cr - 0.1) if len(a) > 2 else max(wr, cr + 0.25 if cr >= 0.45 else cr)
@@ -250,15 +341,15 @@ def main():
     for who, text in lines:
         key = fnv(who + '|' + text)
         ex, cfg, fx = direction(who, text)
-        take = fnv(json.dumps([engine, CAST[who], REF_TEXT.get(who), ex, cfg, fx]))
+        take = fnv(json.dumps([engine, 2, CAST[who], REF_TEXT.get(CAST[who].get('same', who)), ex, cfg, fx, spoken(text, False)]))
         dst = cache / f'{key}-{take}.mp3'
         ok = dst.with_suffix('.ok')
         if (ONLY is None or ONLY == who) and not ok.exists():
             best = None
-            for attempt in range(4):
+            for attempt in range(8):
                 cand = dst if attempt == 0 else dst.with_name(f'{dst.stem}.t{attempt}.mp3')
                 if not cand.exists():
-                    e = ex if attempt < 3 else max(0.3, ex - 0.35)
+                    e = ex if attempt < 3 or attempt >= 5 else max(0.3, ex - 0.3)
                     print('render', engine, who, f'ex={e}', f'take {attempt + 1}', '|', text, flush=True)
                     render_take(who, text, cand, engine, e, cfg, fx, seed=attempt)
                 sc, got = take_score(cand, text) if engine != 'kokoro' else (1.0, '')

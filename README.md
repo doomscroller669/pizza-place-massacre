@@ -9,7 +9,7 @@ A first-person PS1-style horror game set in Pepper Toni's Family Pizzeria. This 
 3. Open the download. The first time, Android asks you to allow installs from your browser; allow it.
 4. For updates, download the newest `PizzaPlaceMassacre.apk` and install it over the old one. Your saves stay.
 
-Toni talks through your phone's own text-to-speech voice. If he's silent, check that a text-to-speech engine is installed (Settings → Accessibility → Text-to-speech output).
+Toni's typed lines play in Pepper Toni's recorded cartoon-mascot voice. Only a line with no recording falls back to your phone's own text-to-speech voice.
 
 ## What's in this build
 
@@ -27,26 +27,28 @@ Milestone 1: the table and pizza 1.
 - `tools/assemble.py` stitches `src/` into `game/pizza-place-massacre.html` (the same page as the Claude artifact) and writes the app's offline copy, `app/src/main/assets/index.html`, with three.js bundled.
 - Every push to `main` runs `.github/workflows/build.yml`, which builds the APK and publishes it as a new release, then builds the Windows app and the GitHub Pages web version.
 - Every build is signed with the same key (`app/pizza.keystore`), so updates install over the old app. That key is only suitable for sideloading, not for the Play Store.
-- On Android, `MainActivity` hands Toni's lines to the phone's TextToSpeech engine through `window.AndroidTTS` (with pan and volume, so his voice comes from where he is). In a browser the game uses `speechSynthesis`.
+- Toni's lines are recorded like everyone else's (as `toni`) and play through a small-speaker filter: positional from his phone, or over the PA. A line with no recording falls back to the phone's TextToSpeech engine through `window.AndroidTTS` (`MainActivity`), or `speechSynthesis` in a browser.
 
 After editing anything in `src/`, run `python3 tools/assemble.py` and commit the regenerated files.
 
 ## Voices
 
-Everyone but Toni has recorded lines. `tools/voices.py` finds every `line('who', …)`, `thinkL(…)`, `thinkM(…)` and `SAY_*` choice list in `src/js/`, and records each one with Chatterbox (Resemble AI's open-source voice model), which has an emotion dial per line. Each character's timbre comes from a short reference clip made with Kokoro, so the cast keeps the same voices. Every take is checked by a speech recognizer (faster-whisper): if it can't hear the written words, the line is recorded again with a new seed, up to four takes. The result goes into `src/js/05-vodata.js`.
+Every line is recorded. `tools/voices.py` finds every `line('who', …)`, `thinkL(…)`, `thinkM(…)`, `SAY_*` choice list, `toniSay(…)`, `MINUTES_LINE` and the training tape's captions in `src/js/`, and records each one with Chatterbox (Resemble AI's open-source voice model), which has an emotion dial per line. Each character's reference clip is made in two steps: Kokoro reads a sample in the cast voice, then Chatterbox re-reads it with feeling, and every line clones that second clip. Toni is Pepper Toni's cartoon mascot voice, lifted a little in pitch after recording.
+
+Every take is checked twice. A speech recognizer (faster-whisper) must hear the written words, and a phoneme recognizer (wav2vec2) must hear the names said right: Lucia is loo-SEE-ah, mijo is MEE-ho, mija is MEE-ha. The script respells those names for the voice model (`PRON`), and a take that fails either check is recorded again with a new seed, up to five takes. The result goes into `src/js/05-vodata.js`.
 
 - The casting is `CAST` at the top of the script; the acting direction for each line (how intense, how slow, shaky or shouting) is `DIRECT`.
 - It only records lines whose text or direction changed (cached in `.vo_cache/`, which isn't committed).
 
 ```
-pip install chatterbox-tts kokoro-onnx soundfile faster-whisper   # plus ffmpeg on the PATH
+pip install chatterbox-tts kokoro-onnx soundfile faster-whisper transformers librosa   # plus ffmpeg on the PATH
 # Kokoro's model files: kokoro-v1.0.onnx and voices-v1.0.bin from github.com/thewh1teagle/kokoro-onnx/releases (model-files-v1.0)
-# Chatterbox and the recognizer download their weights from huggingface.co on first use
+# Chatterbox and both recognizers download their weights from huggingface.co on first use
 python3 tools/voices.py /path/to/kokoro-models
 python3 tools/assemble.py
 ```
 
-On a two-core machine a line takes about 30–40 seconds. Toni is never recorded: he talks through the device's own text-to-speech, so the flat phone voice stays his alone.
+On a two-core machine a line takes about 30–40 seconds.
 
 ## Fonts
 

@@ -34,7 +34,9 @@ defTex('arcadeWall',3.4,64,128,(g)=>{g.fillStyle='#09081a';g.fillRect(0,0,64,128
 defTex('funWall',3,64,64,(g)=>{g.fillStyle='#f0c22b';g.fillRect(0,0,64,64);g.fillStyle='#2b6fd6';g.beginPath();g.arc(16,16,9,0,TAU);g.fill();g.fillStyle='#d63b2b';g.beginPath();g.moveTo(40,8);g.lineTo(56,30);g.lineTo(24,30);g.fill();
   g.fillStyle='#3aa84a';g.fillRect(8,40,18,18);g.fillStyle='#e86fd2';g.beginPath();g.arc(48,48,8,0,TAU);g.fill();speck(g,64,64,160,['rgba(0,0,0,.15)'],1,rr);});
 defTex('panel',2.8,64,64,(g)=>{for(let x=0;x<64;x+=8){const k=rr()*14;g.fillStyle=`rgb(${92+k},${62+k*0.7},${36+k*0.5})`;g.fillRect(x,0,8,64);g.fillStyle='rgba(20,10,4,.6)';g.fillRect(x,0,1,64);}speck(g,64,64,120,['rgba(30,15,5,.3)'],1,rr);});
-defTex('steel',1.2,32,32,(g)=>{g.fillStyle='#9ea6a9';g.fillRect(0,0,32,32);for(let y=0;y<32;y++){g.fillStyle=`rgba(255,255,255,${rr()*0.12})`;g.fillRect(0,y,32,1);}g.fillStyle='rgba(40,50,55,.35)';g.fillRect(0,31,32,1);g.fillRect(31,0,1,32);});
+defTex('steel',1.2,64,64,(g)=>{g.fillStyle='#9aa3a6';g.fillRect(0,0,64,64);for(let y=0;y<64;y++){g.fillStyle=`rgba(255,255,255,${rr()*0.14})`;g.fillRect(0,y,64,1);if(rr()<0.3){g.fillStyle=`rgba(30,40,45,${rr()*0.12})`;g.fillRect((rr()*40)|0,y,10+rr()*30,1);}}
+  blot(g,20,40,12,'rgba(60,55,40,.14)');blot(g,48,14,9,'rgba(255,255,255,.1)');g.fillStyle='rgba(30,40,45,.45)';g.fillRect(0,63,64,1);g.fillRect(63,0,1,64);g.fillStyle='rgba(255,255,255,.25)';g.fillRect(0,0,64,1);g.fillRect(0,0,1,64);
+  g.fillStyle='rgba(20,25,28,.5)';[[3,3],[60,3],[3,60],[60,60]].forEach(([x,y])=>g.fillRect(x,y,2,2));});
 defTex('block',1.6,64,64,(g)=>{g.fillStyle='#6f6a62';g.fillRect(0,0,64,64);for(let r=0;r<4;r++){const off=(r%2)*16;for(let c=-1;c<3;c++){const k=rr()*12;g.fillStyle=`rgb(${148+k},${142+k},${130+k})`;g.fillRect(c*32+off+1,r*16+1,30,14);}}speck(g,64,64,300,['rgba(0,0,0,.2)','rgba(255,255,255,.08)'],1,rr);});
 defTex('blockPaint',1.6,64,64,(g)=>{g.fillStyle='#8a8270';g.fillRect(0,0,64,64);for(let r=0;r<4;r++){const off=(r%2)*16;for(let c=-1;c<3;c++){g.fillStyle='#cfc4a6';g.fillRect(c*32+off+1,r*16+1,30,14);}}speck(g,64,64,160,['rgba(0,0,0,.12)'],1,rr);});
 defTex('bathTile',0.8,32,32,(g)=>{g.fillStyle='#a8868a';g.fillRect(0,0,32,32);for(let y=0;y<4;y++)for(let x=0;x<4;x++){g.fillStyle=(x+y)%3?'#e8bfc4':'#d9a9b0';g.fillRect(x*8+1,y*8+1,7,7);}});
@@ -43,15 +45,19 @@ defTex('ceil',1.2,32,32,(g)=>{g.fillStyle='#b9b2a2';g.fillRect(0,0,32,32);speck(
 defTex('ceilDirty',1.2,32,32,(g)=>{g.fillStyle='#9a9384';g.fillRect(0,0,32,32);speck(g,32,32,200,['#8a8373','#ada594','#7f7768'],1,rr);g.fillStyle='#5a5448';g.fillRect(0,0,32,1);g.fillRect(0,0,1,32);blot(g,12,20,12,'rgba(90,60,20,.4)');});
 defTex('ceilDark',2,32,32,(g)=>{g.fillStyle='#17141c';g.fillRect(0,0,32,32);speck(g,32,32,60,['#221e29','#100e14'],1,rr);g.fillStyle='#2c2733';g.fillRect(0,0,32,1);g.fillRect(0,0,1,32);});
 // furniture and fixtures
-defTex('wood',1,32,32,(g)=>{g.fillStyle='#8a5a32';g.fillRect(0,0,32,32);for(let y=0;y<32;y+=2){g.fillStyle=`rgba(60,30,10,${0.1+rr()*0.25})`;g.fillRect(0,y,32,1);}});
+defTex('wood',1,64,64,(g)=>{g.fillStyle='#8a5a32';g.fillRect(0,0,64,64);for(let y=0;y<64;y+=2){g.fillStyle=`rgba(60,30,10,${0.1+rr()*0.25})`;g.beginPath();g.moveTo(0,y);for(let x=0;x<=64;x+=8)g.lineTo(x,y+Math.sin(x*0.15+y)*0.8);g.lineTo(64,y+1);g.lineTo(0,y+1);g.fill();}
+  g.fillStyle='rgba(50,25,8,.45)';g.beginPath();g.ellipse(40,22,4,2,0,0,TAU);g.fill();g.strokeStyle='rgba(50,25,8,.25)';g.beginPath();g.ellipse(40,22,8,4,0,0,TAU);g.stroke();g.fillStyle='rgba(20,10,0,.35)';g.fillRect(0,31,64,1);g.fillRect(0,63,64,1);});
 defTex('formica',1,32,32,(g)=>{g.fillStyle='#c9b48a';g.fillRect(0,0,32,32);speck(g,32,32,90,['#b7a074','#d8c49a','#a38d63'],1,rr);});
 defTex('vinyl',0.6,32,32,(g)=>{g.fillStyle='#a3241a';g.fillRect(0,0,32,32);for(let x=0;x<32;x+=8){g.fillStyle='rgba(0,0,0,.25)';g.fillRect(x,0,1,32);g.fillStyle='rgba(255,180,160,.15)';g.fillRect(x+3,0,2,32);}speck(g,32,32,30,['rgba(0,0,0,.3)'],1,rr);});
-defTex('metal',1,16,16,(g)=>{g.fillStyle='#3c3f42';g.fillRect(0,0,16,16);speck(g,16,16,30,['#46494c','#323538'],1,rr);});
+defTex('metal',1,32,32,(g)=>{g.fillStyle='#3c3f42';g.fillRect(0,0,32,32);for(let y=0;y<32;y+=2){g.fillStyle=`rgba(255,255,255,${rr()*0.06})`;g.fillRect(0,y,32,1);}speck(g,32,32,60,['#4a4d50','#2e3134','rgba(120,70,30,.4)'],1,rr);});
 defTex('red',1,8,8,(g)=>{g.fillStyle='#b8261a';g.fillRect(0,0,8,8);g.fillStyle='rgba(0,0,0,.15)';g.fillRect(0,7,8,1);});
 defTex('yellow',1,8,8,(g)=>{g.fillStyle='#e8ad2c';g.fillRect(0,0,8,8);g.fillStyle='rgba(0,0,0,.12)';g.fillRect(0,7,8,1);});
 defTex('blue',1,8,8,(g)=>{g.fillStyle='#2a5fc4';g.fillRect(0,0,8,8);});
 defTex('green',1,8,8,(g)=>{g.fillStyle='#2f9a44';g.fillRect(0,0,8,8);});
-defTex('white',1,8,8,(g)=>{g.fillStyle='#e6e2d6';g.fillRect(0,0,8,8);});
+defTex('shadowRect',1,64,64,(g)=>{g.clearRect(0,0,64,64);for(let y=0;y<64;y++)for(let x=0;x<64;x++){const e=Math.min(x,63-x,y,63-y)/14;const a=0.5*smooth(clamp(e,0,1));g.fillStyle=`rgba(0,0,0,${a.toFixed(3)})`;g.fillRect(x,y,1,1);}},false);
+defTex('shadowRound',1,64,64,(g)=>{g.clearRect(0,0,64,64);const gr=g.createRadialGradient(32,32,4,32,32,31);gr.addColorStop(0,'rgba(0,0,0,.5)');gr.addColorStop(0.6,'rgba(0,0,0,.38)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,64,64);},false);
+TX.shadowRect.t.magFilter=TX.shadowRect.t.minFilter=TX.shadowRound.t.magFilter=TX.shadowRound.t.minFilter=THREE.LinearFilter;
+defTex('white',1,16,16,(g)=>{g.fillStyle='#e6e2d6';g.fillRect(0,0,16,16);speck(g,16,16,14,['#dcd7ca','#eeeadf'],1,rr);g.fillStyle='rgba(0,0,0,.06)';g.fillRect(0,15,16,1);});
 defTex('black',1,8,8,(g)=>{g.fillStyle='#141210';g.fillRect(0,0,8,8);});
 defTex('cardboard',0.8,32,32,(g)=>{g.fillStyle='#a87a48';g.fillRect(0,0,32,32);g.fillStyle='rgba(60,35,10,.35)';g.fillRect(0,14,32,3);speck(g,32,32,40,['rgba(60,35,10,.2)'],1,rr);});
 defTex('locker',1,32,64,(g)=>{g.fillStyle='#4c5f6e';g.fillRect(0,0,32,64);g.fillStyle='#2b3740';g.fillRect(0,0,1,64);g.fillRect(31,0,1,64);for(let i=0;i<5;i++){g.fillRect(8,6+i*3,16,1);g.fillRect(8,48+i*3,16,1);}g.fillStyle='#9aa7ae';g.fillRect(24,30,3,8);});
@@ -91,7 +97,8 @@ signTex('restroom',128,32,(g,w,h)=>{g.fillStyle='#1d3f6e';g.fillRect(0,0,w,h);g.
 signTex('employee',128,64,(g,w,h)=>{g.fillStyle='#f3ecd9';g.fillRect(0,0,w,h);g.fillStyle='#b8261a';g.fillRect(0,0,w,14);g.fillStyle='#fff';g.font='11px '+FONT_PIX;g.fillText('EMPLOYEE OF THE MONTH',8,11);
   g.fillStyle='#5d4632';g.fillRect(10,20,34,38);g.fillStyle='#c79a72';g.beginPath();g.arc(27,34,10,0,TAU);g.fill();g.fillStyle='#3a2414';g.fillRect(17,24,20,5);g.fillRect(19,40,16,7);g.fillStyle='#b8261a';g.fillRect(14,48,26,10);
   g.fillStyle='#1d1611';g.font='22px '+FONT_HAND;g.fillText('MANNY',54,40);g.font='10px '+FONT_PIX;g.fillText('"Always on time!"',52,54);});
-signTex('wash',96,64,(g,w,h)=>{g.fillStyle='#fff';g.fillRect(0,0,w,h);g.fillStyle='#1d3f6e';g.font='12px '+FONT_PIX;g.fillText('EMPLOYEES MUST',8,16);g.fillText('WASH HANDS',8,30);g.fillText('BEFORE RETURNING',8,44);g.fillText('TO WORK',8,58);});
+signTex('wash',128,84,(g,w,h)=>{g.fillStyle='#f4f1e8';g.fillRect(0,0,w,h);g.fillStyle='#1d3f6e';g.fillRect(0,0,w,18);g.fillStyle='#fff';g.textAlign='center';g.font='15px '+FONT_PIX;g.fillText('NOTICE',w/2,14);
+  g.fillStyle='#1d3f6e';const z=fitText(g,'BEFORE RETURNING',112,14,FONT_PIX);g.font=z+'px '+FONT_PIX;['EMPLOYEES MUST','WASH HANDS','BEFORE RETURNING','TO WORK'].forEach((t,i)=>g.fillText(t,w/2,34+i*14));g.textAlign='left';g.strokeStyle='#1d3f6e';g.lineWidth=2;g.strokeRect(1,1,w-2,h-2);speck(g,w,h,40,['rgba(120,100,60,.18)'],1,mulberry(4));});
 signTex('smile',96,128,(g,w,h)=>{g.fillStyle='#f0b93a';g.fillRect(0,0,w,h);brandMark(g,48,52,1.5);g.fillStyle='#b8261a';g.font='15px '+FONT_BRAND;g.textAlign='center';g.fillText('SMILE!',48,98);g.font='10px '+FONT_PIX;g.fillStyle='#1d1611';g.fillText("You're Pepper Toni!",48,116);g.textAlign='left';});
 signTex('nightcaller',64,48,(g,w,h)=>{g.fillStyle='#000';g.fillRect(0,0,w,h);g.fillStyle='#2a2';g.font='10px '+FONT_PIX;g.textAlign='center';g.fillText('NIGHT',32,14);g.fillText('CALLER',32,24);g.fillStyle='#4f4';g.fillRect(14,30,36,12);g.fillStyle='#000';g.fillRect(16,32,32,8);g.fillStyle='#f22';g.fillRect(30,34,4,4);g.textAlign='left';});
 signTex('screen1',64,48,(g,w,h)=>{g.fillStyle='#000';g.fillRect(0,0,w,h);g.fillStyle='#ff0';g.beginPath();g.arc(20,24,8,0.3,TAU-0.3);g.lineTo(20,24);g.fill();g.fillStyle='#fff';for(let i=0;i<4;i++)g.fillRect(34+i*7,23,2,2);g.fillStyle='#33f';g.fillRect(0,4,64,2);g.fillRect(0,42,64,2);});

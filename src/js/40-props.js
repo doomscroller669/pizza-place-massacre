@@ -43,14 +43,14 @@ function lampsAndAmbient(){
 }
 
 /* furniture helpers */
-function chair(x,z,yaw,opts={}){const s=Math.sin(yaw),c=Math.cos(yaw);const P=(dx,dz)=>[x+dx*c+dz*s,z-dx*s+dz*c];
+function chair(x,z,yaw,opts={}){const s=Math.sin(yaw),c=Math.cos(yaw);const P=(dx,dz)=>[x+dx*c+dz*s,z-dx*s+dz*c];shadowRect(x-0.22,x+0.22,z-0.22,z+0.22,0.1,true);
   const seat=opts.seat||'vinyl';const [a,b]=P(0,0);box(seat,a-0.23,a+0.23,0.44,0.5,b-0.23,b+0.23,{collide:false});
   const [bx,bz]=P(0,-0.21);const bw=Math.abs(c)>0.5;box(seat,bw?bx-0.23:bx-0.04,bw?bx+0.23:bx+0.04,0.5,0.95,bw?bz-0.04:bz-0.23,bw?bz+0.04:bz+0.23,{collide:false});
   [[-0.19,-0.19],[0.19,-0.19],[-0.19,0.19],[0.19,0.19]].forEach(([dx,dz])=>{const [lx,lz]=P(dx,dz);box('metal',lx-0.02,lx+0.02,0,0.44,lz-0.02,lz+0.02,{collide:false});});}
-function table4(x,z){box({d:'formica',t:'formica'},x-0.5,x+0.5,0.7,0.75,z-0.5,z+0.5,{collide:false});cyl('metal',x,z,0,0.7,0.06,6,{top:false});box('metal',x-0.3,x+0.3,0,0.03,z-0.3,z+0.3,{collide:false});
+function table4(x,z){box({d:'formica',t:'formica'},x-0.5,x+0.5,0.7,0.75,z-0.5,z+0.5,{collide:false});shadowRect(x-0.45,x+0.45,z-0.45,z+0.45,0.25,true);cyl('metal',x,z,0,0.7,0.06,6,{top:false});box('metal',x-0.3,x+0.3,0,0.03,z-0.3,z+0.3,{collide:false});
   solid(x-0.55,x+0.55,z-0.55,z+0.55,0.75,'table');chair(x,z-0.72,0);chair(x,z+0.72,Math.PI);chair(x-0.72,z,Math.PI/2);chair(x+0.72,z,-Math.PI/2);
   if(R()<0.5)sign('pizzaOld',x+(R()-0.5)*0.4,0.755,z+(R()-0.5)*0.4,0.36,0.36,'up');}
-function booth(z){const x0=32.5,x1=33.9;box('formica',x0,x1,0.7,0.75,z-0.4,z+0.4,{collide:false});box('metal',x0+0.5,x0+0.62,0,0.7,z-0.06,z+0.06,{collide:false});solid(x0,x1,z-0.42,z+0.42,0.75,'table');
+function booth(z){const x0=32.5,x1=33.9;box('formica',x0,x1,0.7,0.75,z-0.4,z+0.4,{collide:false});shadowRect(x0,x1,z-0.35,z+0.35,0.15);box('metal',x0+0.5,x0+0.62,0,0.7,z-0.06,z+0.06,{collide:false});solid(x0,x1,z-0.42,z+0.42,0.75,'table');
   for(const s of [-1,1]){const zs=z+s*0.7;box('vinyl',x0-0.05,x1,0,0.46,zs-0.25,zs+0.25,{collide:false});box('vinyl',x0-0.05,x1,0.46,1.2,zs+s*0.22-0.06,zs+s*0.22+0.06,{collide:false});solid(x0-0.05,x1,zs-0.28,zs+0.28,1.2,'booth');}}
 function shelfUnit(x0,x1,z0,z1,h,levels,stuff,face){box('metal',x0,x0+0.04,0,h,z0,z0+0.04,{collide:false});box('metal',x1-0.04,x1,0,h,z0,z0+0.04,{collide:false});box('metal',x0,x0+0.04,0,h,z1-0.04,z1,{collide:false});box('metal',x1-0.04,x1,0,h,z1-0.04,z1,{collide:false});
   for(let i=0;i<levels;i++){const y=0.15+i*(h-0.2)/(levels-1);box('metal',x0,x1,y,y+0.03,z0,z1,{collide:false,faces:'nsewtb'});
@@ -90,7 +90,7 @@ function buildProps(){
   cyl('steel',15.9,2.4,0,1.1,0.32,8,{collide:true});box('metal',15.7,16.1,1.1,1.35,2.2,2.6,{collide:false});
   box(STEEL,15.6,18.6,0,0.92,0.15,0.85);box('white',15.8,16.4,0.92,1.25,0.25,0.65,{collide:false,tint:[0.9,0.85,0.7]});box('white',16.6,17.2,0.92,1.25,0.25,0.65,{collide:false,tint:[0.9,0.85,0.7]});
   // conveyor oven: in at the west end, out at the east end
-  box(STEEL,19.4,24.6,0.75,1.55,0.3,1.9);sign('ovenFront',22,0.85,1.91,4.6,0.66,'s');box(STEEL,19.4,24.6,1.6,2.4,0.3,1.9,{collide:false});sign('ovenFront',22,1.68,1.91,4.6,0.66,'s');
+  box(STEEL,19.4,24.6,0.75,1.55,0.3,1.9);shadowRect(19.4,24.6,0.3,1.9,0.2);sign('ovenFront',22,0.85,1.91,4.6,0.66,'s');box(STEEL,19.4,24.6,1.6,2.4,0.3,1.9,{collide:false});sign('ovenFront',22,1.68,1.91,4.6,0.66,'s');
   [19.5,24.4].forEach(x=>[0.4,1.8].forEach(z=>box('metal',x-0.05,x+0.05,0,0.75,z-0.05,z+0.05,{collide:false})));
   box('black',18.1,25.9,0.92,0.95,0.5,1.7,{collide:false,faces:'nsewtb'});box('steel',18.1,19.4,0.6,0.92,0.48,1.72,{collide:false});box('steel',24.6,25.9,0.6,0.92,0.48,1.72,{collide:false});solid(18.1,25.9,0.3,1.9,1.55,'oven');
   PT.ovenIn=[18.6,1.0,1.1];PT.ovenOut=[25.45,1.0,1.1];
@@ -111,9 +111,9 @@ function buildProps(){
   box(STEEL,10.4,13.4,0,0.9,9.2,9.9);[10.9,11.9,12.9].forEach(x=>box('black',x-0.4,x+0.4,0.86,0.905,9.3,9.8,{collide:false,faces:'t'}));
   shelfUnit(12.2,13.9,6.15,6.6,2.0,4,['cans','shelfStuff'],'s');
   cyl('black',15.0,8.4,0,0.75,0.28,8,{collide:true,topKey:'black'});
-  speakerBox(14.6,2.98,5.5);speakerBox(27.4,2.98,8);sign('wash',14.12,1.4,7.5,0.6,0.4,'e');
+  speakerBox(14.6,2.98,5.5);speakerBox(27.4,2.98,8);sign('wash',11.9,1.2,9.89,0.62,0.4,'n');
   /* ---------------- OFFICE ---------------- */
-  box({d:'wood',t:'wood'},31,33.6,0.72,0.77,2.4,3.4,{collide:false});box('wood',31.05,31.45,0,0.72,2.45,3.35,{collide:false});box('wood',33.15,33.55,0,0.72,2.45,3.35,{collide:false});solid(31,33.6,2.4,3.4,0.77,'desk');
+  box({d:'wood',t:'wood'},31,33.6,0.72,0.77,2.4,3.4,{collide:false});shadowRect(31.1,33.5,2.5,3.3,0.18);box('wood',31.05,31.45,0,0.72,2.45,3.35,{collide:false});box('wood',33.15,33.55,0,0.72,2.45,3.35,{collide:false});solid(31,33.6,2.4,3.4,0.77,'desk');
   chair(32.3,3.95,Math.PI,{seat:'black'});
   box('black',28.35,29.25,0,0.8,0.55,1.45);box('black',28.4,29.2,0.8,1.4,0.6,1.4,{collide:false});sign('tvToni',29.21,0.86,1.0,0.66,0.48,'e');box('black',28.45,29.15,0.62,0.74,0.62,1.38,{collide:false});PT.tv=[29.5,1.1,1.0];
   box('steel',34.8,35.8,0,1.4,0.2,0.8);box('steel',33.7,34.7,0,1.4,0.2,0.8);
@@ -125,8 +125,8 @@ function buildProps(){
   lockers(36.4,18,0.15,0.65,'s');
   sign('ticket',41.13,1.3,0.66,0.2,0.08,'s');box('metal',41.05,41.2,1.0,1.12,0.66,0.7,{collide:false});PT.toniLocker=[41.13,1.2,0.8];
   HIDES.push({id:'lockerE1',kind:'locker',x:36.65,z:0.74,yaw:Math.PI,ex:36.65,ez:1.25,eye:1.55},{id:'lockerE2',kind:'locker',x:45.15,z:0.74,yaw:Math.PI,ex:45.15,ez:1.25,eye:1.55});
-  box('wood',37.5,44.5,0.4,0.46,1.7,2.1);[38,41,44].forEach(x=>box('metal',x-0.04,x+0.04,0,0.4,1.75,2.05,{collide:false}));PT.sketch1=[39.4,0.5,1.9];
-  box('formica',42,44,0.72,0.76,4.5,6);cyl('metal',43,5.25,0,0.72,0.06,6,{top:false});solid(42,44,4.5,6,0.76);chair(42.5,6.6,Math.PI,{seat:'blue'});chair(43.5,3.9,0,{seat:'blue'});
+  box('wood',37.5,44.5,0.4,0.46,1.7,2.1);shadowRect(37.5,44.5,1.7,2.1,0.12);[38,41,44].forEach(x=>box('metal',x-0.04,x+0.04,0,0.4,1.75,2.05,{collide:false}));PT.sketch1=[39.4,0.5,1.9];
+  box('formica',42,44,0.72,0.76,4.5,6);shadowRect(42.1,43.9,4.6,5.9,0.2);cyl('metal',43,5.25,0,0.72,0.06,6,{top:false});solid(42,44,4.5,6,0.76);chair(42.5,6.6,Math.PI,{seat:'blue'});chair(43.5,3.9,0,{seat:'blue'});
   box(STEEL,36.3,39,0,0.92,7.15,7.85);box('black',36.5,37.1,0.92,1.25,7.25,7.75,{collide:false});box('black',37.6,37.9,0.92,1.2,7.3,7.6,{collide:false});
   box('steel',44.9,45.8,0,1.7,6.6,7.8);
   sign('employee',45.89,1.2,6.4,0.9,0.45,'w');sign('smile',36.11,1.0,3.0,0.6,0.8,'e');box('black',36.1,36.3,1.2,1.6,4.8,5.2,{collide:false});
@@ -143,11 +143,11 @@ function buildProps(){
   box({d:'red',t:'formica'},11,14.2,0,1.05,23.6,24.6);box('black',12,12.6,1.05,1.35,23.8,24.3,{collide:false});cyl('glass',13.6,24.1,1.05,1.3,0.1,8,{tint:[1,1,1]});
   quad('sign:standee',[23.0,0.02,26.9],[0.75,0,-0.45],[0,1.75,0],{fit:true,nu:1,nv:1});solid(22.9,23.8,26.4,26.95,1.8,'standee');
   sign('party',33.89,2.35,12.7,1.5,0.28,'w');sign('restroom',28.1,2.45,27.89,1.3,0.33,'n');sign('exit',21,2.68,27.89,0.6,0.2,'n');
-  quad('sign:fun',[10.7,2.35,21.75],[0,0,-4],[0,1,0],{fit:true,nu:1,nv:1});box('black',10.68,10.72,3.35,3.4,19.6,19.9,{collide:false});
-  quad('sign:arcade',[33.5,2.5,23.5],[0,0,2.5],[0,0.47,0],{fit:true,nu:1,nv:1});
+  quad('sign:fun',[10.7,2.35,21.75],[0,0,-4],[0,1,0],{fit:true,nu:1,nv:1});[18.1,21.4].forEach(z=>box('black',10.68,10.73,3.33,3.4,z-0.03,z+0.03,{collide:false}));
+  quad('sign:arcade',[33.5,2.5,23.5],[0,0,2.5],[0,0.47,0],{fit:true,nu:1,nv:1});box('black',33.46,33.54,2.47,2.5,23.5,26,{collide:false,faces:'nsewtb'});[23.85,25.65].forEach(z=>box('metal',33.48,33.52,2.97,3.4,z-0.02,z+0.02,{collide:false}));
   speakerBox(10.5,3.38,10.5);speakerBox(33.5,3.38,27.5);
   /* ---------------- PARTY ROOM ---------------- */
-  box({d:'white',t:'white'},37,43,0,0.76,14.6,16.4,{tint:[0.95,0.93,0.9]});
+  box({d:'white',t:'white'},37,43,0,0.76,14.6,16.4,{tint:[0.95,0.93,0.9],shadow:false});shadowRect(37,43,14.6,16.4,0.35);
   chair(36.25,15.5,Math.PI/2);chair(38.8,13.85,0);chair(41.8,13.85,0);chair(38.8,17.15,Math.PI);chair(41.8,17.15,Math.PI);chair(43.75,15.5,-Math.PI/2);
   sign('banner',40,1.95,10.11,3.6,0.9,'s');sign('tvToni',45.89,1.6,11.9,0.9,0.65,'w');speakerBox(34.4,2.98,10.4);
   box('white',44.6,45.8,0,0.8,19.6,20.8);box('white',44.8,45.6,0.8,0.95,19.8,20.6,{collide:false,tint:[0.95,0.6,0.75]});

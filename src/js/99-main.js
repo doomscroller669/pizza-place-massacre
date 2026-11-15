@@ -9,7 +9,7 @@ buildBomb();buildBalloons();buildSpareHead();
 for(const id of FAMILY){seat(CHARS[id],id);CHARS[id].pose='sit';}
 toniHide();setupInteractions();resize();placeIdleJoy();
 // a debug handle for testing; harmless in play
-window.__ppmDebug={G,P,PT,CHARS,TONI,PIZZA,OVEN,DOORS,COOK,startNew,sceneManny,sceneEat,serve,ROOMS,toniSay,INTERACT,SOLIDS,NAV:()=>NAV,startHunt,HIDES,enterHide,stamp,PIE,pathTo,renderer,voPlay,AC:()=>AC,master:()=>master,die,endBuild};
+window.__ppmDebug={G,P,PT,CHARS,TONI,PIZZA,OVEN,DOORS,COOK,startNew,sceneManny,sceneEat,serve,ROOMS,toniSay,INTERACT,SOLIDS,NAV:()=>NAV,startHunt,HIDES,enterHide,stamp,PIE,pathTo,renderer,voPlay,toniPlay,hasVO,playTape,AC:()=>AC,master:()=>master,die,endBuild};
 
 /* the title screen: a slow drift through the dark dining room */
 const TCAM={t:0};

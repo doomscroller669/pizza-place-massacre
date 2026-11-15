@@ -5,3 +5,4 @@ local.properties
 *.iml
 .idea/
 .vo_cache/
+__pycache__/
