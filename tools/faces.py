@@ -19,7 +19,7 @@ from PIL import Image, ImageFilter
 
 root = pathlib.Path(__file__).resolve().parent.parent
 out = root / 'tools' / 'faces'; out.mkdir(exist_ok=True)
-args = [a for a in sys.argv[1:] if not a.startswith('--')]
+args = [a for i, a in enumerate(sys.argv[1:], 1) if not a.startswith('--') and sys.argv[i - 1] not in ('--expr', '--seed')]
 EXPRS = (sys.argv[sys.argv.index('--expr') + 1].split(',') if '--expr' in sys.argv else ['neutral', 'fear', 'angry', 'sad'])
 SEED = int(sys.argv[sys.argv.index('--seed') + 1]) if '--seed' in sys.argv else 0
 
@@ -32,6 +32,12 @@ FACE = {
     'ruben': dict(seed=51, desc='11 year old Mexican-American boy, messy black hair, black rectangular glasses, dark t-shirt'),
     'lucia': dict(seed=61, desc='16 year old Mexican-American girl, long black hair pulled back in a ponytail, dark eyes, black dress'),
     'manny': dict(seed=71, desc='38 year old Mexican-American man, short black hair, full short black beard, red work shirt, pizza cook'),
+    # the staff of Pepper Toni's, for the cold open
+    'manager': dict(seed=81, desc='52 year old white man, thinning combed-over brown hair, thick brown mustache, chubby face, smug, white short-sleeve dress shirt, red tie, restaurant manager'),
+    'bree': dict(seed=91, desc='17 year old white girl, freckles, strawberry blonde hair in a high ponytail, red polo shirt, fast food cashier'),
+    'devon': dict(seed=101, desc='19 year old Black young man, short twists, thin mustache, red polo shirt, dishwasher'),
+    # Lucia's mother, for the framed photo at the wake (a portrait, not a head)
+    'mom': dict(seed=111, only='neutral', prompt='RAW photo, portrait photo of a 44 year old Mexican-American woman, long dark wavy hair, warm gentle smile, small gold earrings, burgundy blouse, head and shoulders, facing the camera, soft warm studio light, plain warm grey background, sharp focus, dslr, film grain'),
     # Toni: the stocking mask from Jordan's reference picture (tools/faces/toni-ref.jpg, kept out of git), cropped from its
     # left half. The detector can't read a mask, so the eyes and smile are marked by hand. His mask never changes, and the
     # back of his head takes the bare stocking at the neck, not the top band (that's his hat).

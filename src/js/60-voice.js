@@ -46,7 +46,7 @@ function chirp(text,pos,channel){if(!AC)return;const dest=pos&&channel!=='pa'?mk
 function taps(dur,pos,channel){if(!AC)return;const dest=channel==='pa'?busFx:mkPanner(pos?pos.x:camera.position.x,1.3,pos?pos.z:camera.position.z,1.6);let t=now()+0.05;const end=t+dur;
   while(t<end){SFX.tap(dest,t);t+=0.07+Math.random()*0.11;if(Math.random()<0.12)t+=0.25;}}
 /* the bubble on screen */
-function bubble(state,text,channel){const ph=$('phone');ph.classList.toggle('pa',channel==='pa');
+function bubble(state,text,channel){if(channel!=='pa'&&channel!=='app'&&typeof phoneScreen==='function')phoneScreen(state,text);const ph=$('phone');ph.classList.toggle('pa',channel==='pa');
   if(state==='off'){ph.hidden=true;ph.innerHTML='';return;}ph.hidden=false;
   const from=channel==='pa'?'Speakers · Toni':channel==='app'?'Pepper Toni’s app':'Toni';
   ph.innerHTML=`<div class="from">${from}</div><div class="bub">${state==='typing'?'<span class="dots" aria-label="typing"><i></i><i></i><i></i></span>':escapeHTML(text)}</div>`;}

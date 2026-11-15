@@ -32,13 +32,13 @@ function toniHide(){const T=CHARS.toni;T.root.visible=false;TONI.state='off';TON
 function toniWalk(x,z,speed=1.5){return new Promise(res=>{const T=CHARS.toni;TONI.path=pathTo(T.x,T.z,x,z);TONI.speed=speed;TONI.state='walk';TONI.onArrive=()=>{TONI.state='idle';res();};});}
 function toniFace(x,z){const T=CHARS.toni;T.yawT=Math.atan2(x-T.x,z-T.z);}
 function toniSees(slack=1){const T=CHARS.toni;if(!T||!T.root.visible||isHidden())return false;const dx=P.x-T.x,dz=P.z-T.z,d=Math.hypot(dx,dz);
-  const range=(P.crouch?6.5:15)*slack;if(d>range)return false;if(d>1.6){const f=angDiff(T.yaw,Math.atan2(dx,dz));if(Math.abs(f)>1.25)return false;}
+  const range=(P.crouch?6.5:15)*slack*(TONI.sightK||1);if(d>range)return false;if(d>1.6){const f=angDiff(T.yaw,Math.atan2(dx,dz));if(Math.abs(f)>1.25)return false;}
   if(segBlocked(T.x,T.z,P.x,P.z,P.crouch?0.72:1.55))return false;return true;}
 function stepToni(dt){const T=CHARS.toni;if(!T||!T.root.visible)return;
   // doors open for him
-  for(const k of ['party','freezer']){const d=DOORS[k];if(!d)continue;const near=Math.hypot(T.x-(d.hx+(d.along==='x'?d.w/2:0)),T.z-(d.hz+(d.along==='z'?d.w/2:0)))<1.6;if(near)d.target=1;else if(d.autoClose&&TONI.state!=='off')d.target=d.locked?0:d.target;}
+  for(const k of TONI.house?['hGarLaun','hLaunKit','hBath','hAlex']:['party','freezer']){const d=DOORS[k];if(!d)continue;const near=Math.hypot(T.x-(d.hx+(d.along==='x'?d.w/2:0)),T.z-(d.hz+(d.along==='z'?d.w/2:0)))<1.6;if(near&&!(k==='freezer'&&d.locked))d.target=1;else if(d.autoClose&&TONI.state!=='off')d.target=d.locked?0:d.target;}
   let moving=false;
-  if(TONI.state==='walk'||TONI.state==='hunt'||TONI.state==='chase'||TONI.state==='return'){
+  if(TONI.state==='walk'||TONI.state==='hunt'||TONI.state==='chase'||TONI.state==='return'||TONI.state==='patrol'||TONI.state==='search'&&TONI.house){
     if(TONI.path.length){const [tx,tz]=TONI.path[0];const dx=tx-T.x,dz=tz-T.z,d=Math.hypot(dx,dz);
       if(d<0.35){TONI.path.shift();if(!TONI.path.length&&TONI.onArrive){const f=TONI.onArrive;TONI.onArrive=null;f();}}
       else{const sp=TONI.speed;const o={x:T.x+dx/d*sp*dt,z:T.z+dz/d*sp*dt};const saved=[];for(const k in DOORS){if(DOORS[k].sol.on&&Math.hypot(T.x-DOORS[k].hx,T.z-DOORS[k].hz)<2.2){saved.push(DOORS[k].sol);DOORS[k].sol.on=false;}}
@@ -46,10 +46,11 @@ function stepToni(dt){const T=CHARS.toni;if(!T||!T.root.visible)return;
     else if(TONI.onArrive){const f=TONI.onArrive;TONI.onArrive=null;f();}}
   if(T.yawT!=null&&!moving){T.yaw+=angDiff(T.yaw,T.yawT)*Math.min(1,dt*5);if(Math.abs(angDiff(T.yaw,T.yawT))<0.02)T.yawT=null;}
   T.speed=moving?TONI.speed:0;if(moving){T.walkPh+=dt*TONI.speed*4.2;TONI.stepT-=dt*TONI.speed;if(TONI.stepT<=0){TONI.stepT=0.72;at3(T.x,0.1,T.z,(p,t)=>SFX.stomp(p,t),2.2);}}
-  T.pose=(TONI.state==='aim'||T.aiming)?'aim':T.typing?(T.tilt?'typeHead':'type'):(T.carrying?'carry':'stand');
-  if(T.extra.screen)T.extra.screen.material.color.setHex(T.typing?0xd8f0ff:0x5f7f9f);
+  T.pose=T.poseOv||((TONI.state==='aim'||T.aiming)?'aim':T.typing?(T.tilt?'typeHead':'type'):(T.carrying?'carry':'stand'));
+  if(T.extra.screen)T.extra.screen.material.color.setHex(T.typing||T.poseOv==='phoneUp'?0xffffff:0x8fa3bf);if(T.extra.phone)T.extra.phone.rotation.y=T.poseOv==='phoneUp'?Math.PI:0;
   if(T.extra.gun)T.extra.gun.visible=!!TONI.armed;
-  if(TONI.state==='hunt'||TONI.state==='chase'||TONI.state==='aim'||TONI.state==='search')huntThink(dt);}
+  if(TONI.house){if(T.extra.glow)T.extra.glow.visible=LIGHTSET==='dark';if(TONI.state==='patrol'||TONI.state==='chase'||TONI.state==='search')houseThink(dt);}
+  else if(TONI.state==='hunt'||TONI.state==='chase'||TONI.state==='aim'||TONI.state==='search')huntThink(dt);}
 
 /* ---------- the hunt ---------- */
 function startHunt(){const T=CHARS.toni;TONI.armed=true;TONI.huntT=0;TONI.lostT=0;TONI.lastSeen=[P.x,P.z];G.flags.hidSeen=false;

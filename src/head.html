@@ -175,6 +175,51 @@ button{font:inherit;color:inherit}
 #hideMask.slats{background:repeating-linear-gradient(180deg,rgba(4,3,2,.97) 0 18px,rgba(4,3,2,.25) 18px 26px)}
 #hideMask.stall{background:linear-gradient(90deg,rgba(4,3,2,.96) 0 44%,rgba(4,3,2,.2) 44% 56%,rgba(4,3,2,.96) 56%)}
 #hideMask.balls{background:radial-gradient(ellipse 50% 30% at 50% 40%,transparent 30%,rgba(4,3,2,.85) 70%)}
+#hideMask.bed{background:linear-gradient(180deg,rgba(4,3,2,.98) 0 52%,rgba(4,3,2,.35) 60%,rgba(4,3,2,.2) 80%,rgba(4,3,2,.9) 92%),linear-gradient(90deg,rgba(60,40,50,.6) 0 3%,transparent 3% 97%,rgba(60,40,50,.6) 97%)}
+#hideMask.curtain{background:repeating-linear-gradient(90deg,rgba(190,205,210,.62) 0 26px,rgba(140,158,166,.74) 26px 52px)}
+/* Lucia's phone: the delivery app, texts, a dead battery */
+#lp{position:fixed;inset:0;z-index:26;display:flex;align-items:center;justify-content:center;pointer-events:none;padding:2vh 0 10vh}
+#lp .lp-dev{pointer-events:auto;width:min(78vw,320px);height:min(76vh,540px);background:#0d0d10;border-radius:34px;padding:10px;box-shadow:0 24px 70px rgba(0,0,0,.85),inset 0 0 0 2px #2a2a30;display:flex;flex-direction:column;animation:lpUp .35s ease-out}
+@keyframes lpUp{from{transform:translateY(45vh)}to{transform:none}}
+#lp .lp-bar{display:flex;justify-content:space-between;align-items:center;color:#eee;font:600 13px var(--f-sys);padding:4px 16px 7px}
+.lp-bat{width:24px;height:11px;border:1.5px solid #ddd;border-radius:3px;position:relative}
+.lp-bat i{position:absolute;left:1px;top:1px;bottom:1px;background:#ddd;border-radius:1px}
+.lp-scr{flex:1;background:#fff;border-radius:24px;overflow:hidden;display:flex;flex-direction:column;color:#1b1b1f;font-family:var(--f-sys)}
+.lp-app{display:flex;align-items:center;gap:10px;padding:16px 16px 10px;font-weight:700;font-size:15px;border-bottom:1px solid #eee}
+.lp-app img{width:30px;height:30px;border-radius:8px;background:#b8261a}
+.lp-body{padding:14px 16px;flex:1;display:flex;flex-direction:column;gap:9px;overflow:auto}
+.lp-h{font-size:20px;font-weight:700;margin:0;line-height:1.2}
+.lp-sub{font-size:14px;color:#66666e;margin:0}
+.lp-row{display:flex;justify-content:space-between;font-size:15px;padding:5px 0;border-bottom:1px solid #f0f0f2}
+.lp-steps{list-style:none;margin:2px 0 0;padding:0}
+.lp-steps li{font-size:15px;padding:5px 0 5px 22px;position:relative;color:#9a9aa2}
+.lp-steps li::before{content:'';position:absolute;left:4px;top:10px;width:9px;height:9px;border-radius:50%;background:#d8d8de}
+.lp-steps li.done{color:#1b1b1f}.lp-steps li.done::before{background:#2fa34a}
+.lp-steps li.now{color:#b8261a;font-weight:700}.lp-steps li.now::before{background:#b8261a;box-shadow:0 0 0 4px rgba(184,38,26,.18)}
+.lp-driver{display:flex;align-items:center;gap:10px;margin-top:auto;padding:10px;border-radius:14px;background:#f4f4f6;font-size:14px}
+.lp-driver b{display:block;font-size:15px}.lp-av{width:36px;height:36px;border-radius:50%;background:#c9c2b6;display:flex;align-items:center;justify-content:center;font-size:18px}
+.lp-stars{display:flex;justify-content:center;gap:4px;margin:4px 0}
+.lp-stars button{font-size:42px;line-height:1;background:none;border:0;color:#dedee3;padding:2px;cursor:pointer;min-width:44px;min-height:44px}
+.lp-stars button.on{color:#f2b01e}
+.lp-box{min-height:72px;border:1.5px solid #ddd;border-radius:12px;padding:10px;font-size:16px;line-height:1.35;color:#2c2c33;cursor:pointer;background:#fff;text-align:left;font-family:var(--f-sys)}
+.lp-box.ph{color:#9a9aa2}.lp-box[disabled]{cursor:default}
+.lp-btn{margin-top:auto;background:#b8261a;color:#fff;border:0;border-radius:14px;padding:14px;font:700 17px var(--f-sys);cursor:pointer;min-height:48px}
+.lp-btn[disabled]{background:#e6c2bd;cursor:default}
+.lp-thread{flex:1;padding:14px;display:flex;flex-direction:column;gap:8px;background:#f4f4f6}
+.lp-who{font-weight:700;font-size:15px;padding:14px 16px 10px;border-bottom:1px solid #e4e4e8;background:#fafafa;display:flex;align-items:center;gap:10px}
+.lp-msg{align-self:flex-start;background:#e5e5ea;border-radius:18px 18px 18px 4px;padding:9px 14px;font-size:17px;max-width:80%}
+.lp-time{align-self:center;font-size:12px;color:#8a8a92;margin-top:auto}
+.lp-dark{flex:1;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#aaa;font-size:15px;text-align:center;padding:20px}
+.lp-bigbat{width:72px;height:32px;border:3px solid #c33;border-radius:6px;position:relative}
+.lp-bigbat::after{content:'';position:absolute;right:-9px;top:9px;width:5px;height:12px;background:#c33;border-radius:0 2px 2px 0}
+.lp-bigbat i{position:absolute;left:3px;top:3px;bottom:3px;width:5px;background:#c33}
+.lp-bigbat.chg{border-color:#4c4}.lp-bigbat.chg::after{background:#4c4}.lp-bigbat.chg i{background:#4c4;animation:chg 1.6s infinite}
+@keyframes chg{from{width:5px}to{width:56px}}
+.lp-bar2{width:70%;height:4px;background:#222;border-radius:2px;overflow:hidden}.lp-bar2 b{display:block;height:100%;width:0;background:#ddd}
+@media (max-height:620px){#lp{padding:1vh 0 14vh}#lp .lp-dev{height:84vh;width:min(70vw,290px);border-radius:26px;padding:7px}.lp-app{padding:8px 12px 6px;font-size:13px}.lp-app img{width:22px;height:22px}
+  .lp-body{padding:8px 12px;gap:5px}.lp-h{font-size:16px}.lp-sub{font-size:12px}.lp-stars button{font-size:30px;min-height:36px;min-width:36px}.lp-box{min-height:44px;padding:6px 8px;font-size:14px}.lp-btn{padding:9px;font-size:15px;min-height:40px}
+  .lp-steps li{font-size:13px;padding:3px 0 3px 20px}.lp-steps li::before{top:7px}.lp-row{font-size:13px;padding:3px 0}.lp-driver{padding:6px;font-size:12px}}
+@media (prefers-reduced-motion: reduce){#lp .lp-dev{animation:none}.lp-bigbat.chg i{animation:none;width:30px}}
 #blur{position:fixed;inset:0;z-index:13;pointer-events:none;backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px)}
 
 /* ---------- dialogue ---------- */
@@ -260,6 +305,7 @@ button{font:inherit;color:inherit}
   </div>
 </div>
 <div id="hideMask" hidden></div>
+<div id="lp" hidden><div class="lp-dev"><div class="lp-bar"><span id="lpClock">10:41</span><span class="lp-bat" id="lpBat"><i></i></span></div><div class="lp-scr" id="lpScr"></div></div></div>
 
 <div id="hud" hidden>
   <div id="reticle"></div>

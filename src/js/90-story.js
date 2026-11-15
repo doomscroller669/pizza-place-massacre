@@ -52,7 +52,7 @@ function setupInteractions(){
   ix('dadTalk',[41.8,1.2,13.85],'Talk to Dad',async()=>{G.flags.freeLook=false;G.flags.talkedDad=true;setMode('cine');await line('lucia','Dad? What do we do?',{name:'Lucia'});await line('dad','I don’t know, mija. I don’t know. We stay calm, we do what he says, and I get you two out. Okay?',{expr:'sad'});setMode('play');G.flags.freeLook=true;},()=>L()&&G.flags.freeLook&&!G.flags.talkedDad,4);
   // Manny, back of house
   ix('freezerDoor',[11,1.2,5.75],'Push the door',()=>{DOORS.freezer.target=1;DOORS.freezer.locked=false;at3(11,1,6,(p,t)=>SFX.door(p,t,true));G.flags.outFreezer=true;setObj('Read the new ticket on the rail above the pass window.','The ticket rail hangs over the pass window, on the dining room side of the kitchen.');},()=>M()&&!G.flags.outFreezer&&G.flags.unlocked,1.8);
-  ix('bodies',[10,0.4,3.4],'Look at them',()=>{thinkM(G.flags.lookedBodies?'Don’t look at them. Don’t.':'They were alive at ten. I watched him do it through that little window. I just… watched.',4.5);G.flags.lookedBodies=true;},()=>M()&&!G.flags.outFreezer,2.4);
+  ix('bodies',[10,0.4,3.4],'Look at them',()=>{thinkM(G.flags.lookedBodies?'Don’t look at them. Don’t.':'They were alive at ten. I watched him do it through that little window. I just… watched.',4.5);G.flags.lookedBodies=true;},()=>M()&&!G.flags.outFreezer&&G.ckpt!=='cold',2.4);
   ix('ticket',PT.ticket,()=>G.flags.ticketRead?'Read the ticket again':'Read the new ticket',()=>readTicket(),()=>M()&&TICKET.visible,1.9);
   ix('recipe',PT.recipe,'Read the recipe binder',()=>openNote('card','Pepper Toni’s recipe binder','<h3>KIDDIE PIE (10")</h3><ol><li>Stretch one dough ball to the ring.</li><li>One ladle of red sauce. Leave a rim.</li><li>Mozzarella, edge to edge.</li><li>Pepperoni smile! (5 to 7 pieces)</li><li>Finish the crust with <span class="star">Toni’s Famous Seeds ★</span></li></ol><p style="margin-top:.6em;font-size:13px;color:#7a5a3a">Bake 1 belt. Cut in 8. “Kids love the seeds!”</p>'),()=>M(),1.8);
   ix('seeds',PT.seeds,'Look at the shaker',()=>thinkM('“Toni’s Famous Seeds.” It’s just sesame. We put it on everything.',3.5),()=>M(),1.6);
@@ -153,23 +153,27 @@ async function serve(){const run=G.run;G.flags.served=true;G.flags.serving=true;
 /* ---------- checkpoints ---------- */
 function saveFlags(){LS.set('save',{ckpt:G.ckpt,flags:G.flags,strikes:G.strikes});}
 function checkpoint(name){G.ckpt=name;LS.set('save',{ckpt:name,flags:JSON.parse(JSON.stringify(G.flags)),strikes:G.strikes});}
-function resetWorld(){G.run++;WAITS.length=0;VOICE.busy=Promise.resolve();hushToni();bubble('off');DS=null;$('dlg').hidden=true;$('note').hidden=true;noteRes=null;$('cook').hidden=true;$('hideMask').hidden=true;$('vhs').hidden=true;VHS.on=false;stopMusic();
+function resetWorld(){G.run++;WAITS.length=0;TWEENS.length=0;MOVERS.length=0;clearDecals();lpClose();G.lpCharge=false;G.noLeave=false;G.onHide=null;SHAKE.t=0;VOICE.busy=Promise.resolve();hushToni();bubble('off');DS=null;$('dlg').hidden=true;$('note').hidden=true;noteRes=null;$('cook').hidden=true;$('hideMask').hidden=true;$('vhs').hidden=true;VHS.on=false;stopMusic();
   P.hidden=null;P.seated=null;P.limitYaw=null;P.crouch=false;P.eyeOverride=null;NUDGE.on=false;G.clock=null;$('timer').hidden=true;$('obj').hidden=true;$('carry').hidden=true;
   PIZZA.reset();OVEN.on=false;OVEN.done=false;PIE.hand.visible=false;PIE.world.visible=false;if(PIE.table.parent!==scene){scene.add(PIE.table);}PIE.table.visible=false;
-  TONI.state='off';TONI.armed=false;TONI.path=[];TONI.note=null;setAmb('hunt',0);setAmb('oven',0);postU.uDanger.value=0;postU.uWake.value=0;postU.uRed.value=0;
-  const T=CHARS.toni;T.carrying=false;T.typing=false;T.tilt=0;T.aiming=false;toniHide();TICKET.visible=false;
+  TONI.state='off';TONI.armed=false;TONI.path=[];TONI.note=null;TONI.house=false;TONI.sightK=1;HAI.sawHide=false;setAmb('hunt',0);setAmb('oven',0);postU.uDanger.value=0;postU.uWake.value=0;postU.uRed.value=0;
+  const T=CHARS.toni;T.carrying=false;T.typing=false;T.tilt=0;T.aiming=false;T.poseOv=null;toniTool(null);T.extra.box.visible=false;T.extra.glow.visible=false;toniHide();TICKET.visible=false;
+  setPower(true);setTarps(true);glassReset();MOZZ.visible=true;BOXHELD.visible=false;TBOX.g.visible=false;GPHONE.visible=false;setAmb('rain',0,0.1);setAmb('house',0,0.1);G.where='pizzeria';
+  for(const id of STAFF){const c=CHARS[id];c.where='none';c.root.rotation.set(0,0,0);c.y=0;}
   DOORS.party.target=0;DOORS.party.ang=0;DOORS.freezer.target=0;DOORS.freezer.ang=0;DOORS.freezer.locked=true;BOMB.n=0;bombDisplay();
-  for(const id of FAMILY){const c=CHARS[id];seat(c,id);c.pose='sit';c.shake=0;c.look=null;c.root.visible=true;setExpr(c,'neutral');}
+  for(const id of FAMILY){const c=CHARS[id];c.where='party';c.root.rotation.set(0,0,0);c.y=0;c.tilt=0;seat(c,id);c.pose='sit';c.shake=0;c.look=null;c.root.visible=true;if(c.extra.hat)c.extra.hat.visible=true;setExpr(c,'neutral');}
   CHARS.alex.pose='sit';$('fade').style.transitionDuration='0s';$('fade').style.opacity='1';}
 function loadCheckpoint(){const sv=LS.get('save',null);$('dead').hidden=true;$('end').hidden=true;if(AC&&AC.state==='suspended')AC.resume();
   if(!sv){startNew();return;}resetWorld();G.flags=sv.flags||{};G.strikes=sv.strikes||0;G.ckpt=sv.ckpt;
-  if(sv.ckpt==='manny1'){G.flags.ticketRead=false;G.flags.outFreezer=false;G.flags.served=false;G.flags.serving=false;sceneManny();}else sceneTable();}
-function startNew(){resetWorld();G.flags={};G.strikes=0;sceneTable();}
+  if(sv.ckpt==='manny1'){G.flags.ticketRead=false;G.flags.outFreezer=false;G.flags.served=false;G.flags.serving=false;sceneManny();}
+  else if(sv.ckpt==='cold')sceneCold();else if(sv.ckpt==='house')sceneHouse();else if(sv.ckpt==='room'){G.flags.shookDad=false;G.flags.locked=false;G.flags.plugged=false;sceneRoom(false);}
+  else if(sv.ckpt==='charge')sceneChargeRetry();else if(sv.ckpt==='escape')sceneEscape(false);else sceneTable();}
+function startNew(){resetWorld();G.flags={};G.strikes=0;sceneCold();}
 
 /* ============================================================
    SCENE: THE TABLE
    ============================================================ */
-async function sceneTable(){const run=G.run;checkpoint('table');G.who='lucia';$('title').hidden=true;
+async function sceneTable(){const run=G.run;pizzeriaReset();checkpoint('table');G.who='lucia';$('title').hidden=true;
   const s=PT.seats.lucia;P.x=s[0]-0.1;P.z=s[1];P.seated=true;P.yaw=Math.PI/2;P.pitch=-0.35;P.limitYaw=[Math.PI/2,1.95];
   for(const id of FAMILY){CHARS[id].pose='sitOut';setExpr(CHARS[id],'out');}
   setAmb('room',0.25);setAmb('hum',0.12);setMode('cine');postU.uWake.value=1;await fadeTo(0,3);if(!alive(run))return;
@@ -224,7 +228,7 @@ async function sceneTable(){const run=G.run;checkpoint('table');G.who='lucia';$(
 /* ============================================================
    SCENE: MANNY, PIZZA 1
    ============================================================ */
-async function sceneManny(){const run=G.run;G.who='manny';checkpoint('manny1');
+async function sceneManny(){const run=G.run;G.who='manny';if(G.where!=='pizzeria'||!TARPS.meshes[0].visible)pizzeriaReset();checkpoint('manny1');
   P.seated=null;P.limitYaw=null;P.x=PT.freezerStart[0];P.z=PT.freezerStart[1];P.yaw=0;P.pitch=-0.15;P.eyeOverride=0.75;
   for(const id of FAMILY){CHARS[id].pose='sit';setExpr(CHARS[id],'fear');}
   setAmb('freezer',0.55,0.5);setAmb('hum',0.18);setMode('cine');await titleCard('Pizza 1 of 12','Kiddie Pie',2.2);if(!alive(run))return;await fadeTo(0,1.6);if(!alive(run))return;
@@ -276,6 +280,8 @@ function endBuild(){setMode('end');LS.del('save');const f=G.flags;const alive_=f
   const how=G.result&&!G.result.ok?(G.result.kind==='allergy'?'Sesame on the crust':'Not what he ordered'):'Made right';
   const items=[['Alex',alive_?'Alive':'Dead'],['The pizza',how],['Late',G.strikes?G.strikes+' of 3':'Never'],['Bracelet',f.sawBand?'You saw it':'You didn’t look'],
     ['Grandpa asked',['You blamed him','"Just a review"','You took the blame','You said nothing'][f.c1===-1||f.c1==null?3:f.c1]]];
+  if(f.h1!=null)items.unshift(['Dad asked',['"I’m fine."','"No. Are you?"','"Mom would’ve hated this."','You said nothing'][f.h1<0?3:f.h1]],
+    ['At the door',['You apologized for Grandpa','"You’re really late."','"I gotta go."','You said nothing'][f.h2==null||f.h2<0?3:f.h2]],['The rating',f.triedStars?'You tried to give more':'One star, like he said']);
   $('sumList').innerHTML=items.map(([a,b])=>`<li><b>${a}</b><i></i><span>${escapeHTML(b)}</span></li>`).join('');
-  $('endNote').textContent='Next build: the cold open in the freezer and the prologue at the Ramirez house.';
+  $('endNote').textContent='Next build: the eating contest, and pizza 2 for Grandpa.';
   $('end').hidden=false;$('fade').style.opacity='0';setTimeout(()=>$('againBtn').focus({preventScroll:true}),40);}

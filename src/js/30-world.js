@@ -107,25 +107,25 @@ function groupAt(x,z){const r=roomAt(x,z);return r?r.g:'out';}
 function buildRoom(r){
   const H=r.h,t=WALL_T/2;
   quad(r.floor,[r.x0,0,r.z1],[r.x1-r.x0,0,0],[0,0,-(r.z1-r.z0)],{step:1});
-  quad(r.ceil,[r.x0,H,r.z0],[r.x1-r.x0,0,0],[0,0,r.z1-r.z0],{step:1.5});
+  quad(r.ceil,[r.x0,H,r.z0],[r.x1-r.x0,0,0],[0,0,r.z1-r.z0],{step:r.ceilStep||1.5});
   const edges=[
-    {ax:'z',c:r.z0,a0:r.x0,a1:r.x1,inward:1},{ax:'z',c:r.z1,a0:r.x0,a1:r.x1,inward:-1},
-    {ax:'x',c:r.x0,a0:r.z0,a1:r.z1,inward:1},{ax:'x',c:r.x1,a0:r.z0,a1:r.z1,inward:-1}];
-  for(const e of edges){
+    {ax:'z',c:r.z0,a0:r.x0,a1:r.x1,inward:1,k:'n'},{ax:'z',c:r.z1,a0:r.x0,a1:r.x1,inward:-1,k:'s'},
+    {ax:'x',c:r.x0,a0:r.z0,a1:r.z1,inward:1,k:'w'},{ax:'x',c:r.x1,a0:r.z0,a1:r.z1,inward:-1,k:'e'}];
+  for(const e of edges){const wallKey=(r.walls&&r.walls[e.k])||r.wall;
     const ops=OPENINGS.filter(o=>o.ax===e.ax&&Math.abs(o.c-e.c)<0.01&&o.a1>e.a0&&o.a0<e.a1).map(o=>({a0:Math.max(o.a0,e.a0),a1:Math.min(o.a1,e.a1),y0:o.y0||0,y1:Math.min(o.y1||2.2,H),o})).sort((p,q)=>p.a0-q.a0);
     const w=e.c+e.inward*t;
     // a face spanning a range along the edge, from y0 to y1
     const face=(a0,a1,y0,y1)=>{if(a1-a0<0.01||y1-y0<0.01)return;
-      if(e.ax==='z'){if(e.inward>0)quad(r.wall,[a0,y0,w],[a1-a0,0,0],[0,y1-y0,0]);else quad(r.wall,[a1,y0,w],[a0-a1,0,0],[0,y1-y0,0]);}
-      else{if(e.inward>0)quad(r.wall,[w,y0,a1],[0,0,a0-a1],[0,y1-y0,0]);else quad(r.wall,[w,y0,a0],[0,0,a1-a0],[0,y1-y0,0]);}};
+      if(e.ax==='z'){if(e.inward>0)quad(wallKey,[a0,y0,w],[a1-a0,0,0],[0,y1-y0,0]);else quad(wallKey,[a1,y0,w],[a0-a1,0,0],[0,y1-y0,0]);}
+      else{if(e.inward>0)quad(wallKey,[w,y0,a1],[0,0,a0-a1],[0,y1-y0,0]);else quad(wallKey,[w,y0,a0],[0,0,a1-a0],[0,y1-y0,0]);}};
     const s0=e.a0+t,s1=e.a1-t;let a=s0;
     for(const p of ops){face(a,p.a0,0,H);face(p.a0,p.a1,0,p.y0);face(p.a0,p.a1,p.y1,H);a=p.a1;
       // half the jambs, sill and lintel, out to the boundary line
       const mid=e.c;
-      if(e.ax==='z'){quad(r.wall,[p.a0,p.y0,w],[0,0,-e.inward*t],[0,p.y1-p.y0,0],{n:[1,0,0],nu:1});quad(r.wall,[p.a1,p.y0,mid],[0,0,e.inward*t],[0,p.y1-p.y0,0],{n:[-1,0,0],nu:1});
-        quad(r.wall,[p.a0,p.y1,w],[p.a1-p.a0,0,0],[0,0,-e.inward*t],{n:[0,-1,0],nv:1});if(p.y0>0)quad(r.wall,[p.a0,p.y0,mid],[p.a1-p.a0,0,0],[0,0,e.inward*t],{n:[0,1,0],nv:1});}
-      else{quad(r.wall,[w,p.y0,p.a0],[-e.inward*t,0,0],[0,p.y1-p.y0,0],{n:[0,0,1],nu:1});quad(r.wall,[mid,p.y0,p.a1],[e.inward*t,0,0],[0,p.y1-p.y0,0],{n:[0,0,-1],nu:1});
-        quad(r.wall,[mid,p.y1,p.a0],[e.inward*t,0,0],[0,0,p.a1-p.a0],{n:[0,-1,0],nu:1});if(p.y0>0)quad(r.wall,[w,p.y0,p.a0],[-e.inward*t,0,0],[0,0,p.a1-p.a0],{n:[0,1,0],nu:1});}
+      if(e.ax==='z'){quad(wallKey,[p.a0,p.y0,w],[0,0,-e.inward*t],[0,p.y1-p.y0,0],{n:[1,0,0],nu:1});quad(wallKey,[p.a1,p.y0,mid],[0,0,e.inward*t],[0,p.y1-p.y0,0],{n:[-1,0,0],nu:1});
+        quad(wallKey,[p.a0,p.y1,w],[p.a1-p.a0,0,0],[0,0,-e.inward*t],{n:[0,-1,0],nv:1});if(p.y0>0)quad(wallKey,[p.a0,p.y0,mid],[p.a1-p.a0,0,0],[0,0,e.inward*t],{n:[0,1,0],nv:1});}
+      else{quad(wallKey,[w,p.y0,p.a0],[-e.inward*t,0,0],[0,p.y1-p.y0,0],{n:[0,0,1],nu:1});quad(wallKey,[mid,p.y0,p.a1],[e.inward*t,0,0],[0,p.y1-p.y0,0],{n:[0,0,-1],nu:1});
+        quad(wallKey,[mid,p.y1,p.a0],[e.inward*t,0,0],[0,0,p.a1-p.a0],{n:[0,-1,0],nu:1});if(p.y0>0)quad(wallKey,[w,p.y0,p.a0],[-e.inward*t,0,0],[0,0,p.a1-p.a0],{n:[0,1,0],nu:1});}
       }
     face(a,s1,0,H);
     // collision along the edge, leaving walkable openings
@@ -135,39 +135,49 @@ function buildRoom(r){
 function addWallSolid(e,a0,a1){if(a1-a0<0.01)return;if(e.ax==='z')solid(a0,a1,e.c-WALL_T/2,e.c+WALL_T/2,4,'wall');else solid(e.c-WALL_T/2,e.c+WALL_T/2,a0,a1,4,'wall');}
 /* windows: a grate and the night outside. Fit UVs run left to right as seen from inside. */
 function buildWindows(){for(const o of OPENINGS){if(!o.win)continue;const y0=o.y0||0,y1=o.y1||2.2,w=o.a1-o.a0,h=y1-y0,am=(o.a0+o.a1)/2;
-  const inside=o.ax==='x'?(roomAt(o.c+0.3,am)?1:-1):(roomAt(am,o.c+0.3)?1:-1);const out=o.c-inside*0.45,gr=o.c-inside*0.05;
+  const inside=o.ax==='x'?(roomAt(o.c+0.3,am)?1:-1):(roomAt(am,o.c+0.3)?1:-1);const out=o.c-inside*(o.view?0.3:0.45),gr=o.c-inside*0.05;
+  const view=o.view?'!sign:'+o.view:'!night',sash=o.view?'sign:sash':'grate',sopt=o.view?{fit:true,nu:1,nv:1}:{};
   if(o.ax==='x'){const z0=inside>0?o.a1:o.a0,dz=inside>0?-w:w;
-    quad('!night',[out,y0-0.25,z0],[0,0,dz],[0,h+0.5,0],{fit:true,nu:1,nv:1,n:[inside,0,0],tint:[0.85,0.85,0.9]});
-    quad('grate',[gr,y0,z0],[0,0,dz],[0,h,0],{n:[inside,0,0]});solid(o.c-0.12,o.c+0.12,o.a0,o.a1,4,'wall');}
+    quad(view,[out,y0-0.25,z0],[0,0,dz],[0,h+0.5,0],{fit:true,nu:1,nv:1,n:[inside,0,0],tint:[0.85,0.85,0.9]});
+    quad(sash,[gr,y0,z0],[0,0,dz],[0,h,0],Object.assign({n:[inside,0,0]},sopt));solid(o.c-0.12,o.c+0.12,o.a0,o.a1,4,'wall');}
   else{const x0=inside>0?o.a0:o.a1,dx=inside>0?w:-w;
-    quad('!night',[x0,y0-0.25,out],[dx,0,0],[0,h+0.5,0],{fit:true,nu:1,nv:1,n:[0,0,inside],tint:[0.85,0.85,0.9]});
-    quad('grate',[x0,y0,gr],[dx,0,0],[0,h,0],{n:[0,0,inside]});solid(o.a0,o.a1,o.c-0.12,o.c+0.12,4,'wall');}}}
+    quad(view,[x0,y0-0.25,out],[dx,0,0],[0,h+0.5,0],{fit:true,nu:1,nv:1,n:[0,0,inside],tint:[0.85,0.85,0.9]});
+    quad(sash,[x0,y0,gr],[dx,0,0],[0,h,0],Object.assign({n:[0,0,inside]},sopt));solid(o.a0,o.a1,o.c-0.12,o.c+0.12,4,'wall');}}}
 
 /* ---------- lamps and baked light ---------- */
-const LAMPS=[];const AMB={};
-function lamp(x,y,z,col,range,g,opts={}){LAMPS.push({x,y,z,c:col,r:range,g:Array.isArray(g)?g:[g],down:opts.down||0});
+const LAMPS=[];const AMB={};const AMB_DARK={};
+/* house power: 'on' while the lights work, 'dark' once Toni cuts it. A lamp with set:'on' only lights the first, set:'dark' only the second. */
+let LIGHTSET='on';
+function lamp(x,y,z,col,range,g,opts={}){LAMPS.push({x,y,z,c:col,r:range,g:Array.isArray(g)?g:[g],down:opts.down||0,set:opts.set||null});
   if(opts.panel){const w=opts.panel[0],d=opts.panel[1];quad('!white',[x-w/2,y-0.01,z-d/2],[w,0,0],[0,0,d],{fit:true,nu:1,nv:1,tint:opts.ptint||[1.15,1.15,1.05]});}}
-function lightAt(x,y,z,n,grp){const g=grp||groupAt(x+(n?n[0]*0.25:0),z+(n?n[2]*0.25:0));const a=AMB[g]||[0.12,0.1,0.09];let r=a[0],gg=a[1],b=a[2];
-  for(const L of LAMPS){if(!L.g.includes(g))continue;const dx=L.x-x,dy=L.y-y,dz=L.z-z,d=Math.hypot(dx,dy,dz);if(d>=L.r)continue;let att=1-d/L.r;att*=att;
+function lightAt(x,y,z,n,grp){const g=grp||groupAt(x+(n?n[0]*0.25:0),z+(n?n[2]*0.25:0));const a=(LIGHTSET==='dark'&&AMB_DARK[g])||AMB[g]||[0.12,0.1,0.09];let r=a[0],gg=a[1],b=a[2];
+  for(const L of LAMPS){if(!L.g.includes(g)||(L.set&&L.set!==LIGHTSET))continue;const dx=L.x-x,dy=L.y-y,dz=L.z-z,d=Math.hypot(dx,dy,dz);if(d>=L.r)continue;let att=1-d/L.r;att*=att;
     let lam=1;if(n){const ndl=(n[0]*dx+n[1]*dy+n[2]*dz)/(d||1);lam=Math.max(0,ndl)*0.72+0.28;}
     if(L.down){const cosd=-dy/(d||1);att*=lerp(1,clamp(cosd*1.4,0.15,1),L.down);}
     r+=L.c[0]*att*lam;gg+=L.c[1]*att*lam;b+=L.c[2]*att*lam;}
   const k=(0.82+0.18*clamp(y/1.4,0,1))*LIGHT_GAIN;return [r*k,gg*k,b*k];}
 const LIGHT_GAIN=1.6;
+const BAKED=[];
 function bake(){const meshes=[];
-  for(const [key,b] of SB){const unlit=key[0]==='!';const name=key.replace(/^!/,'');const n=b.pos.length/3;const col=new Float32Array(n*3);
+  for(const [key,b] of SB){const unlit=key[0]==='!';const name=key.replace(/^!/,'');const n=b.pos.length/3;const col=new Float32Array(n*3);let dark=null;
     for(let i=0;i<n;i++){const p=[b.pos[i*3],b.pos[i*3+1],b.pos[i*3+2]],nn=[b.nrm[i*3],b.nrm[i*3+1],b.nrm[i*3+2]];
       let L=unlit?[1,1,1]:lightAt(p[0],p[1],p[2],nn);let h=unlit?1:0.95+((Math.sin(p[0]*12.99+p[1]*78.2+p[2]*37.7)*43758.5)%1+1)%1*0.08;
       if(!unlit)h*=occlusion(p,nn);
-      col[i*3]=Math.min(1.25,L[0]*b.tint[i*3]*h);col[i*3+1]=Math.min(1.25,L[1]*b.tint[i*3+1]*h);col[i*3+2]=Math.min(1.25,L[2]*b.tint[i*3+2]*h);}
+      col[i*3]=Math.min(1.25,L[0]*b.tint[i*3]*h);col[i*3+1]=Math.min(1.25,L[1]*b.tint[i*3+1]*h);col[i*3+2]=Math.min(1.25,L[2]*b.tint[i*3+2]*h);
+      if(unlit&&name==='white'&&p[0]>HOUSE_X0&&p[0]<181){if(!dark)dark=col.slice();dark[i*3]=col[i*3]*0.07;dark[i*3+1]=col[i*3+1]*0.07;dark[i*3+2]=col[i*3+2]*0.08;}
+      if(!unlit&&p[0]>HOUSE_X0){if(!dark)dark=col.slice();LIGHTSET='dark';const D=lightAt(p[0],p[1],p[2],nn);LIGHTSET='on';
+        dark[i*3]=Math.min(1.25,D[0]*b.tint[i*3]*h);dark[i*3+1]=Math.min(1.25,D[1]*b.tint[i*3+1]*h);dark[i*3+2]=Math.min(1.25,D[2]*b.tint[i*3+2]*h);}}
+    if(dark)for(let i=0;i<n;i++){if(!(b.pos[i*3]>HOUSE_X0)){dark[i*3]=col[i*3];dark[i*3+1]=col[i*3+1];dark[i*3+2]=col[i*3+2];}}
     const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(b.pos,3));geo.setAttribute('uv',new THREE.Float32BufferAttribute(b.uv,2));geo.setAttribute('color',new THREE.BufferAttribute(col,3));
     const map=name.startsWith('sign:')?SIGN[name.slice(5)]:(TX[name]&&TX[name].t);
     const cut=['grate','blood','night','plush','ballpit'].includes(name)||name.startsWith('sign:');const shade=name.startsWith('shadow');
     const m=basic({map,vertexColors:true,transparent:name==='glass'||shade,opacity:1,alphaTest:cut?0.4:0,side:THREE.DoubleSide,depthWrite:name!=='glass'&&!shade});
     if(shade){m.polygonOffset=true;m.polygonOffsetFactor=-2;m.polygonOffsetUnits=-2;}
-    if(name==='night'||name==='white')m.fog=false;
-    const mesh=new THREE.Mesh(geo,m);mesh.matrixAutoUpdate=false;scene.add(mesh);meshes.push(mesh);}
+    if(name==='night'||name==='white'||name==='sky'||name.startsWith('sign:yard')||name==='sign:vanTop'||name==='flame')m.fog=false;
+    const mesh=new THREE.Mesh(geo,m);mesh.matrixAutoUpdate=false;scene.add(mesh);meshes.push(mesh);if(dark){mesh.userData.cols={on:col,dark};BAKED.push(mesh);}}
   SB.clear();return meshes;}
+/* the house's lights: on, or cut at the breaker */
+function setPower(on){LIGHTSET=on?'on':'dark';for(const m of BAKED){const a=m.geometry.attributes.color;a.array.set(m.userData.cols[LIGHTSET]);a.needsUpdate=true;}}
 
 /* soft occlusion baked into the vertex light: the bottom of a wall, the edge of a floor, the corners of a ceiling */
 function occlusion(p,n){const r=roomAt(p[0],p[2]);let k=1;

@@ -44,17 +44,19 @@ function scanFocus(){focus=null;if(G.mode!=='play')return;camera.getWorldDirecti
   if(P.hidden){focus={id:'unhide',label:'Get out',use:()=>leaveHide()};return showPrompt();}
   for(const k in INTERACT){const it=INTERACT[k];if(!it.on())continue;const p=it.pos;_d.set(p[0]-camera.position.x,p[1]-camera.position.y,p[2]-camera.position.z);const d=_d.length();if(d>it.r)continue;
     _d.normalize();const dot=_d.dot(_f);const sc=dot-d*0.02;if(dot>0.72&&sc>best-0.02&&(!focus||sc>best)){best=sc;focus=it;}}
-  for(const h of HIDES){if(!canHide())break;const d=Math.hypot(h.ex-P.x,h.ez-P.z);if(d>1.3)continue;_d.set(h.x-camera.position.x,1.2-camera.position.y,h.z-camera.position.z).normalize();const dot=_d.dot(_f);
-    if(dot>0.6&&(!focus||dot>best)){best=dot;focus={id:h.id,label:h.kind==='stall'?'Hide in the stall':'Hide in the locker',use:()=>enterHide(h)};}}
+  for(const h of HIDES){if(!canHide())break;if(!!h.house!==(G.where==='house'))continue;const d=Math.hypot(h.ex-P.x,h.ez-P.z);if(d>1.3)continue;_d.set(h.x-camera.position.x,(h.kind==='bed'?0.4:1.2)-camera.position.y,h.z-camera.position.z).normalize();const dot=_d.dot(_f);
+    if(dot>0.6&&(!focus||dot>best)){best=dot;focus={id:h.id,label:HIDE_LABEL[h.kind]||'Hide in the locker',use:()=>enterHide(h)};}}
   showPrompt();}
 function showPrompt(){const pr=$('prompt');if(!focus){pr.hidden=true;$('reticle').classList.remove('hot');$('bUse').classList.remove('ready');return;}
   $('pKey').textContent=touchMode?'USE':'E';$('pText').textContent=typeof focus.label==='function'?focus.label():focus.label;pr.hidden=false;$('reticle').classList.add('hot');$('bUse').classList.add('ready');}
 function tryUse(){if(G.mode!=='play')return;if(focus&&focus.use){SFX.ui();focus.use();}}
-function canHide(){return G.who==='manny'&&!P.seated;}
+const HIDE_LABEL={stall:'Hide in the stall',locker:'Hide in the locker',closet:'Hide in the closet',bed:'Hide under the bed',curtain:'Hide behind the shower curtain'};
+function canHide(){return (G.who==='manny'||G.flags.canHide)&&!P.seated;}
 /* hiding: lockers and stalls. The ball pit and anything you duck behind work without a button. */
-function enterHide(h){P.hidden=h;P.x=h.x;P.z=h.z;P.yaw=h.yaw;P.pitch=0;P.limitYaw=[h.yaw,0.7];const m=$('hideMask');m.className=h.kind==='stall'?'stall':'slats';m.hidden=false;
-  at3(h.x,1,h.z,(p,t)=>h.kind==='stall'?SFX.door(p,t):SFX.locker(p,t));G.flags.hidSeen=CHARS.toni&&TONI.state==='chase'&&toniSees(0.0);}
-function leaveHide(){const h=P.hidden;if(!h)return;P.hidden=null;P.limitYaw=null;P.x=h.ex;P.z=h.ez;$('hideMask').hidden=true;at3(h.x,1,h.z,(p,t)=>SFX.locker(p,t));}
+function enterHide(h){const seen=!!(CHARS.toni&&CHARS.toni.root.visible&&toniSees(1));
+  P.hidden=h;P.x=h.x;P.z=h.z;P.yaw=h.yaw;P.pitch=h.kind==='bed'?0.05:0;P.limitYaw=[h.yaw,h.kind==='bed'?0.5:0.7];P.crouch=false;const m=$('hideMask');m.className=h.kind==='stall'?'stall':h.kind==='bed'?'bed':h.kind==='curtain'?'curtain':'slats';m.hidden=false;
+  at3(h.x,1,h.z,(p,t)=>h.kind==='stall'||h.kind==='closet'?SFX.door(p,t):h.kind==='bed'||h.kind==='curtain'?SFX.drag(p,t,0.5):SFX.locker(p,t));G.flags.hidSeen=TONI.state==='chase'&&seen;if(TONI.house)HAI.sawHide=seen;if(G.onHide)G.onHide(h);}
+function leaveHide(){const h=P.hidden;if(!h)return;if(G.noLeave)return;P.hidden=null;P.limitYaw=null;P.x=h.ex;P.z=h.ez;$('hideMask').hidden=true;at3(h.x,1,h.z,(p,t)=>h.kind==='closet'?SFX.door(p,t):h.kind==='bed'||h.kind==='curtain'?SFX.drag(p,t,0.4):SFX.locker(p,t));}
 function isHidden(){if(P.hidden)return true;if(P.inPit&&P.crouch)return true;return false;}
 
 /* ---------- HUD bits ---------- */

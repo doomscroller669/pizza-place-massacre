@@ -90,6 +90,987 @@
   "take": "c465b73b-4a78c9b4.mp3"
  },
  {
+  "key": "fd0fae4b",
+  "who": "grandpa",
+  "text": "Five? For cold pizza? One. Star.",
+  "exaggeration": 1.0,
+  "cfg": 0.38,
+  "fx": null,
+  "take": "fd0fae4b-79d255f2.mp3"
+ },
+ {
+  "key": "99b378ee",
+  "who": "grandpa",
+  "text": "One. Star.",
+  "exaggeration": 0.9,
+  "cfg": 0.4,
+  "fx": null,
+  "take": "99b378ee-5381c166.mp3"
+ },
+ {
+  "key": "25933926",
+  "who": "grandpa",
+  "text": "Now write: late and cold. Driver didn’t say a word.",
+  "exaggeration": 0.6,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "25933926-fe98da58.mp3"
+ },
+ {
+  "key": "514b74f8",
+  "who": "manny",
+  "text": "Hey! Hey, open up! That’s not funny, man!",
+  "exaggeration": 1.3,
+  "cfg": 0.32,
+  "fx": "shout",
+  "take": "514b74f8-c8d51d54.mp3"
+ },
+ {
+  "key": "6b3e300e",
+  "who": "manny",
+  "text": "It won’t move. He dropped the pin on the latch.",
+  "exaggeration": 0.9,
+  "cfg": 0.38,
+  "fx": null,
+  "take": "6b3e300e-2859f207.mp3"
+ },
+ {
+  "key": "bede33b2",
+  "who": "manny",
+  "text": "Devon! DEVON! Behind you!",
+  "exaggeration": 1.8,
+  "cfg": 0.25,
+  "fx": "shout",
+  "take": "bede33b2-acda367b.mp3"
+ },
+ {
+  "key": "ce25e461",
+  "who": "manny",
+  "text": "No. No, no, no, no—",
+  "exaggeration": 1.4,
+  "cfg": 0.3,
+  "fx": null,
+  "take": "ce25e461-e10a6916.mp3"
+ },
+ {
+  "key": "3b1f6232",
+  "who": "bree",
+  "text": "Devon? DEVON! Oh my God—",
+  "exaggeration": 1.8,
+  "cfg": 0.25,
+  "fx": "shout",
+  "take": "3b1f6232-e610d20b.mp3"
+ },
+ {
+  "key": "9be93710",
+  "who": "bree",
+  "text": "Manny?! Why won’t it open? Why won’t it OPEN?",
+  "exaggeration": 1.7,
+  "cfg": 0.25,
+  "fx": "shout",
+  "take": "9be93710-0f0b4f3b.mp3"
+ },
+ {
+  "key": "6e470cc8",
+  "who": "manny",
+  "text": "The pin! There’s a pin in the latch, pull it out!",
+  "exaggeration": 1.6,
+  "cfg": 0.28,
+  "fx": "shout",
+  "take": "6e470cc8-8f0f4550.mp3"
+ },
+ {
+  "key": "41b13adf",
+  "who": "bree",
+  "text": "I can’t find it, I can’t—",
+  "exaggeration": 1.6,
+  "cfg": 0.28,
+  "fx": null,
+  "take": "41b13adf-b3c3e6ec.mp3"
+ },
+ {
+  "key": "81b63c8f",
+  "who": "manny",
+  "text": "Bree… oh God. Bree.",
+  "exaggeration": 1.0,
+  "cfg": 0.32,
+  "fx": null,
+  "take": "81b63c8f-e812367a.mp3"
+ },
+ {
+  "key": "be40dd16",
+  "who": "manager",
+  "text": "—sir. Sir. I know it’s late. Your driver is on his way. Thank you for choosing Pepper Toni’s.",
+  "exaggeration": 0.6,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "be40dd16-b513c149.mp3"
+ },
+ {
+  "key": "03400996",
+  "who": "manager",
+  "text": "Cheap old bastard. Six bucks and he wants a parade.",
+  "exaggeration": 0.5,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "03400996-66a7b408.mp3"
+ },
+ {
+  "key": "3e11e88c",
+  "who": "manager",
+  "text": "Devon? Oh, Jesus. Oh, Jesus Christ.",
+  "exaggeration": 1.3,
+  "cfg": 0.3,
+  "fx": null,
+  "take": "3e11e88c-479f064d.mp3"
+ },
+ {
+  "key": "15842333",
+  "who": "manager",
+  "text": "Okay. Okay, buddy. Easy. Is this about the write-up? The drawing? Nobody’s mad about the drawing—",
+  "exaggeration": 1.3,
+  "cfg": 0.3,
+  "fx": null,
+  "take": "15842333-a1313c76.mp3"
+ },
+ {
+  "key": "4741e4a4",
+  "who": "manager",
+  "text": "Wait— WAIT—",
+  "exaggeration": 1.9,
+  "cfg": 0.25,
+  "fx": "shout",
+  "take": "4741e4a4-dfdc20f3.mp3"
+ },
+ {
+  "key": "e8097656",
+  "who": "manny",
+  "text": "Kid… what did you do?",
+  "exaggeration": 1.0,
+  "cfg": 0.3,
+  "fx": null,
+  "take": "e8097656-80b5c747.mp3"
+ },
+ {
+  "key": "a25cc4a9",
+  "who": "grandpa",
+  "text": "Forty minutes. Forty minutes for a six-dollar pizza.",
+  "exaggeration": 0.8,
+  "cfg": 0.4,
+  "fx": null,
+  "take": "a25cc4a9-d1cbbdf2.mp3"
+ },
+ {
+  "key": "71bb01e1",
+  "who": "uncle",
+  "text": "You could’ve let me cater, Pop. I offered.",
+  "exaggeration": 0.6,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "71bb01e1-7fc0858c.mp3"
+ },
+ {
+  "key": "4ec43399",
+  "who": "grandpa",
+  "text": "With what money?",
+  "exaggeration": 0.8,
+  "cfg": 0.4,
+  "fx": null,
+  "take": "4ec43399-5717afe6.mp3"
+ },
+ {
+  "key": "1c4f36b1",
+  "who": "uncle",
+  "text": "Wow. Okay.",
+  "exaggeration": 0.5,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "1c4f36b1-36f7a71d.mp3"
+ },
+ {
+  "key": "a931ecfa",
+  "who": "dad",
+  "text": "Can we not do this tonight? Please. Not tonight.",
+  "exaggeration": 0.85,
+  "cfg": 0.38,
+  "fx": null,
+  "take": "a931ecfa-5234974d.mp3"
+ },
+ {
+  "key": "c3b88282",
+  "who": "ruben",
+  "text": "Is your grandpa always like this?",
+  "exaggeration": 0.6,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "c3b88282-30a3dc7d.mp3"
+ },
+ {
+  "key": "225a151b",
+  "who": "alex",
+  "text": "Yeah. He’s nicer when he’s asleep.",
+  "exaggeration": 0.55,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "225a151b-b4a3d1a7.mp3"
+ },
+ {
+  "key": "92eca1f6",
+  "who": "dad",
+  "text": "Hey. You doing okay, mija?",
+  "exaggeration": 0.6,
+  "cfg": 0.42,
+  "fx": null,
+  "take": "92eca1f6-ae3544a4.mp3"
+ },
+ {
+  "key": "18b5a5d7",
+  "who": "dad",
+  "text": "Yeah. Me too.",
+  "exaggeration": 0.55,
+  "cfg": 0.42,
+  "fx": null,
+  "take": "18b5a5d7-b4ff9dac.mp3"
+ },
+ {
+  "key": "c3bec621",
+  "who": "dad",
+  "text": "No. But I’ve got you and your brother. That’s enough for tonight.",
+  "exaggeration": 0.8,
+  "cfg": 0.38,
+  "fx": null,
+  "take": "c3bec621-db1fa6d3.mp3"
+ },
+ {
+  "key": "91fa96c1",
+  "who": "dad",
+  "text": "Pizza at her own wake? Yeah. She’d have ordered from the good place.",
+  "exaggeration": 0.65,
+  "cfg": 0.42,
+  "fx": null,
+  "take": "91fa96c1-e90ed409.mp3"
+ },
+ {
+  "key": "2e0409e3",
+  "who": "grandpa",
+  "text": "The good place is twenty dollars.",
+  "exaggeration": 0.6,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "2e0409e3-fcd20a7f.mp3"
+ },
+ {
+  "key": "fee38f9d",
+  "who": "dad",
+  "text": "That’s okay. You don’t have to talk.",
+  "exaggeration": 0.6,
+  "cfg": 0.42,
+  "fx": null,
+  "take": "fee38f9d-6b16d978.mp3"
+ },
+ {
+  "key": "cb68f65d",
+  "who": "lucia",
+  "text": "He’s running a few minutes late.",
+  "exaggeration": 0.5,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "cb68f65d-7321a724.mp3"
+ },
+ {
+  "key": "bf96d8a6",
+  "who": "grandpa",
+  "text": "A few minutes! It’s been forty! I called that place. Some manager. Very rude.",
+  "exaggeration": 1.0,
+  "cfg": 0.38,
+  "fx": null,
+  "take": "bf96d8a6-a32979d5.mp3"
+ },
+ {
+  "key": "6e60e6a6",
+  "who": "uncle",
+  "text": "Bet he loved you, Pop.",
+  "exaggeration": 0.55,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "6e60e6a6-efa9ebed.mp3"
+ },
+ {
+  "key": "fc64e7d3",
+  "who": "dad",
+  "text": "Lucia, can you get that? Please.",
+  "exaggeration": 0.55,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "fc64e7d3-ec31b16f.mp3"
+ },
+ {
+  "key": "9f42a45f",
+  "who": "grandpa",
+  "text": "And don’t you tip him. The tip’s already in the app. Two dollars.",
+  "exaggeration": 0.8,
+  "cfg": 0.42,
+  "fx": null,
+  "take": "9f42a45f-50dfde2c.mp3"
+ },
+ {
+  "key": "2950a7cf",
+  "who": "lucia",
+  "text": "Two dollars? Grandpa, that’s—",
+  "exaggeration": 0.85,
+  "cfg": 0.4,
+  "fx": null,
+  "take": "2950a7cf-8473ad85.mp3"
+ },
+ {
+  "key": "34630030",
+  "who": "grandpa",
+  "text": "Plenty. Go.",
+  "exaggeration": 0.7,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "34630030-1e3a0457.mp3"
+ },
+ {
+  "key": "02c19382",
+  "who": "lucia",
+  "text": "Um. Hi.",
+  "exaggeration": 0.4,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "02c19382-dc960602.mp3"
+ },
+ {
+  "key": "6fc91e83",
+  "who": "lucia",
+  "text": "…Thanks?",
+  "exaggeration": 0.45,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "6fc91e83-b8b0fa10.mp3"
+ },
+ {
+  "key": "6444ede9",
+  "who": "grandpa",
+  "text": "Is that him? Tell him he’s late!",
+  "exaggeration": 1.0,
+  "cfg": 0.38,
+  "fx": "shout",
+  "take": "6444ede9-0a98991a.mp3"
+ },
+ {
+  "key": "51224f84",
+  "who": "grandpa",
+  "text": "Give it here.",
+  "exaggeration": 0.6,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "51224f84-9c158bec.mp3"
+ },
+ {
+  "key": "f7be7d11",
+  "who": "grandpa",
+  "text": "Cold. Of course it’s cold.",
+  "exaggeration": 0.7,
+  "cfg": 0.42,
+  "fx": null,
+  "take": "f7be7d11-84ebf397.mp3"
+ },
+ {
+  "key": "49b40307",
+  "who": "grandpa",
+  "text": "Lucia. Give him one star.",
+  "exaggeration": 0.7,
+  "cfg": 0.42,
+  "fx": null,
+  "take": "49b40307-f8399fb5.mp3"
+ },
+ {
+  "key": "66c2caad",
+  "who": "lucia",
+  "text": "Grandpa, he was just late. He looked… I don’t know. Sad.",
+  "exaggeration": 0.7,
+  "cfg": 0.42,
+  "fx": null,
+  "take": "66c2caad-dc60c109.mp3"
+ },
+ {
+  "key": "a5309e6e",
+  "who": "lucia",
+  "text": "Grandpa, he was just late.",
+  "exaggeration": 0.7,
+  "cfg": 0.42,
+  "fx": null,
+  "take": "a5309e6e-56d734bc.mp3"
+ },
+ {
+  "key": "0be67e8c",
+  "who": "grandpa",
+  "text": "One star. Bad ratings keep them hungry, and hungry drivers hustle. And next time, the tip is smaller.",
+  "exaggeration": 0.75,
+  "cfg": 0.42,
+  "fx": null,
+  "take": "0be67e8c-2dbd5f6d.mp3"
+ },
+ {
+  "key": "dabe0aca",
+  "who": "dad",
+  "text": "Pop. Come on.",
+  "exaggeration": 0.6,
+  "cfg": 0.42,
+  "fx": null,
+  "take": "dabe0aca-24e79cb3.mp3"
+ },
+ {
+  "key": "595baf78",
+  "who": "grandpa",
+  "text": "My money. Do it, Lucia.",
+  "exaggeration": 0.8,
+  "cfg": 0.42,
+  "fx": null,
+  "take": "595baf78-f78f6501.mp3"
+ },
+ {
+  "key": "68be0b9d",
+  "who": "lucia",
+  "text": "Sorry, whoever you are.",
+  "exaggeration": 0.45,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "68be0b9d-bf61bb3e.mp3"
+ },
+ {
+  "key": "8ec12fc5",
+  "who": "dad",
+  "text": "Okay. Eat, everybody. Mija, you too.",
+  "exaggeration": 0.55,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "8ec12fc5-990b53b0.mp3"
+ },
+ {
+  "key": "e0c2426f",
+  "who": "grandpa",
+  "text": "Princess. More for us.",
+  "exaggeration": 0.6,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "e0c2426f-5e841905.mp3"
+ },
+ {
+  "key": "45a023ea",
+  "who": "grandpa",
+  "text": "More for us.",
+  "exaggeration": 0.6,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "45a023ea-e98b71c0.mp3"
+ },
+ {
+  "key": "c34643f2",
+  "who": "lucia",
+  "text": "He texted me. “Sorry it was late.” All lowercase.",
+  "exaggeration": 0.6,
+  "cfg": 0.42,
+  "fx": null,
+  "take": "c34643f2-4e6f2a76.mp3"
+ },
+ {
+  "key": "a62f6cd6",
+  "who": "uncle",
+  "text": "Creepy.",
+  "exaggeration": 0.5,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "a62f6cd6-16f78110.mp3"
+ },
+ {
+  "key": "6ca6a75f",
+  "who": "grandpa",
+  "text": "Good. He should be sorry.",
+  "exaggeration": 0.6,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "6ca6a75f-2d536acf.mp3"
+ },
+ {
+  "key": "7c62f496",
+  "who": "alex",
+  "text": "It tastes kind of weird.",
+  "exaggeration": 0.55,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "7c62f496-d7e450b2.mp3"
+ },
+ {
+  "key": "246955f2",
+  "who": "ruben",
+  "text": "That’s how you know it’s cheap.",
+  "exaggeration": 0.6,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "246955f2-5bc9b795.mp3"
+ },
+ {
+  "key": "9cb6a3c2",
+  "who": "ruben",
+  "text": "In horror movies, this is the part where the pizza’s poisoned.",
+  "exaggeration": 0.75,
+  "cfg": 0.42,
+  "fx": null,
+  "take": "9cb6a3c2-d7538f9c.mp3"
+ },
+ {
+  "key": "c3c6b8aa",
+  "who": "alex",
+  "text": "Shut up, Ruben.",
+  "exaggeration": 0.6,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "c3c6b8aa-b4af2d74.mp3"
+ },
+ {
+  "key": "8d13c355",
+  "who": "uncle",
+  "text": "Man, I’m wiped. Somebody spike the—",
+  "exaggeration": 0.45,
+  "cfg": 0.5,
+  "fx": null,
+  "take": "8d13c355-74a1d39d.mp3"
+ },
+ {
+  "key": "35bcd204",
+  "who": "grandpa",
+  "text": "Hey. HEY. Sit up. What’s wrong with… with my…",
+  "exaggeration": 1.1,
+  "cfg": 0.35,
+  "fx": null,
+  "take": "35bcd204-12b80937.mp3"
+ },
+ {
+  "key": "7f3c4042",
+  "who": "alex",
+  "text": "Lucia? I feel… weird…",
+  "exaggeration": 1.0,
+  "cfg": 0.35,
+  "fx": null,
+  "take": "7f3c4042-49ec6cac.mp3"
+ },
+ {
+  "key": "b59caead",
+  "who": "ruben",
+  "text": "Guys? Guys, this isn’t funny—",
+  "exaggeration": 1.1,
+  "cfg": 0.35,
+  "fx": null,
+  "take": "b59caead-299fd54f.mp3"
+ },
+ {
+  "key": "2cc4c758",
+  "who": "dad",
+  "text": "Something’s in the… Lucia. Lucia, call…",
+  "exaggeration": 1.0,
+  "cfg": 0.35,
+  "fx": null,
+  "take": "2cc4c758-f7e55760.mp3"
+ },
+ {
+  "key": "975964bf",
+  "who": "lucia",
+  "text": "Dad? DAD!",
+  "exaggeration": 1.8,
+  "cfg": 0.25,
+  "fx": "shout",
+  "take": "975964bf-b3b96bec.mp3"
+ },
+ {
+  "key": "8641a249",
+  "who": "lucia",
+  "text": "Dad. Dad, wake up. Please wake up.",
+  "exaggeration": 1.3,
+  "cfg": 0.3,
+  "fx": null,
+  "take": "8641a249-6dfad7ef.mp3"
+ },
+ {
+  "key": "c3790d27",
+  "who": "lucia",
+  "text": "No. No, no, no. Not now. Not NOW.",
+  "exaggeration": 1.4,
+  "cfg": 0.3,
+  "fx": null,
+  "take": "c3790d27-db301f54.mp3"
+ },
+ {
+  "key": "e1467e23",
+  "who": "lucia",
+  "text": "No, no, no, no…",
+  "exaggeration": 1.0,
+  "cfg": 0.32,
+  "fx": null,
+  "take": "e1467e23-9ed810f6.mp3"
+ },
+ {
+  "key": "e60ee727",
+  "who": "uncle",
+  "text": "Mmh… Pop? What… what happened…",
+  "exaggeration": 0.5,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "e60ee727-c54c82af.mp3"
+ },
+ {
+  "key": "074dd827",
+  "who": "lucia",
+  "text": "Dad…?",
+  "exaggeration": 1.0,
+  "cfg": 0.35,
+  "fx": null,
+  "take": "074dd827-0fe8d25b.mp3"
+ },
+ {
+  "key": "9b1a6147",
+  "who": "manny",
+  "text": "Last case of mozz, mop the line, and I’m home by eleven.",
+  "exaggeration": 0.55,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "9b1a6147-4a6499c7.mp3"
+ },
+ {
+  "key": "c4034574",
+  "who": "manny",
+  "text": "Earbuds. He can’t hear me. He never hears anything.",
+  "exaggeration": 0.9,
+  "cfg": 0.38,
+  "fx": null,
+  "take": "c4034574-c73fe8f5.mp3"
+ },
+ {
+  "key": "c603c266",
+  "who": "manny",
+  "text": "No bars. There’s never any bars in the walk-in. Somebody call. Somebody, please.",
+  "exaggeration": 0.9,
+  "cfg": 0.35,
+  "fx": null,
+  "take": "c603c266-ce6ab522.mp3"
+ },
+ {
+  "key": "f7d12929",
+  "who": "lucia",
+  "text": "He’s breathing. They’re all breathing. They’re just… out.",
+  "exaggeration": 0.9,
+  "cfg": 0.35,
+  "fx": null,
+  "take": "f7d12929-9dd5e76b.mp3"
+ },
+ {
+  "key": "26a88f6c",
+  "who": "lucia",
+  "text": "The garage door. Somebody’s in the garage.",
+  "exaggeration": 0.85,
+  "cfg": 0.38,
+  "fx": null,
+  "take": "26a88f6c-edc69f31.mp3"
+ },
+ {
+  "key": "5f918941",
+  "who": "lucia",
+  "text": "Is that… a card? He’s opening the lock.",
+  "exaggeration": 0.9,
+  "cfg": 0.35,
+  "fx": null,
+  "take": "5f918941-8301d6cf.mp3"
+ },
+ {
+  "key": "a924fdf3",
+  "who": "lucia",
+  "text": "He’s going back for them. I have to get out. I have to get help.",
+  "exaggeration": 1.0,
+  "cfg": 0.35,
+  "fx": null,
+  "take": "a924fdf3-f558c597.mp3"
+ },
+ {
+  "key": "b14b5cbc",
+  "who": "lucia",
+  "text": "Dad picked the one where she’s smiling. She hated this picture. Said it made her look tired.",
+  "exaggeration": 0.55,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "b14b5cbc-a2fbea96.mp3"
+ },
+ {
+  "key": "8a0d77a0",
+  "who": "lucia",
+  "text": "He keeps touching his allergy bracelet. He’s done that since the hospital.",
+  "exaggeration": 0.6,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "8a0d77a0-f7b5abf2.mp3"
+ },
+ {
+  "key": "9610a2f1",
+  "who": "lucia",
+  "text": "Grandpa keeps flipping his phone face down. Who texts him this late, the night of a funeral?",
+  "exaggeration": 0.6,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "9610a2f1-718ef2d5.mp3"
+ },
+ {
+  "key": "178b5333",
+  "who": "lucia",
+  "text": "New watch. Gold. Last month he was begging Mom for money.",
+  "exaggeration": 0.6,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "178b5333-2746dfad.mp3"
+ },
+ {
+  "key": "5058dbfb",
+  "who": "lucia",
+  "text": "Forty people signed it. I didn’t know half of them.",
+  "exaggeration": 0.6,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "5058dbfb-13f683c7.mp3"
+ },
+ {
+  "key": "60851fdc",
+  "who": "lucia",
+  "text": "I can’t leave them like this. I need my phone. I need help.",
+  "exaggeration": 0.8,
+  "cfg": 0.38,
+  "fx": null,
+  "take": "60851fdc-ddd95aca.mp3"
+ },
+ {
+  "key": "5872b106",
+  "who": "lucia",
+  "text": "Dead. No dial tone. He cut it.",
+  "exaggeration": 0.6,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "5872b106-7255a1da.mp3"
+ },
+ {
+  "key": "fcef735a",
+  "who": "lucia",
+  "text": "Grandpa’s old landline. Nobody uses it.",
+  "exaggeration": 0.6,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "fcef735a-053a4fe6.mp3"
+ },
+ {
+  "key": "9f2c8e0f",
+  "who": "lucia",
+  "text": "Every switch is off, and the handle’s snapped. He broke it.",
+  "exaggeration": 0.6,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "9f2c8e0f-25427d6f.mp3"
+ },
+ {
+  "key": "3526df09",
+  "who": "lucia",
+  "text": "The breaker box. Dad’s always flipping these.",
+  "exaggeration": 0.6,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "3526df09-68c518bd.mp3"
+ },
+ {
+  "key": "5b6e9d44",
+  "who": "lucia",
+  "text": "Alex’s drawing from third grade. And the funeral program, under the magnets. Somebody put it there like it was a report card.",
+  "exaggeration": 0.6,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "5b6e9d44-de5ce1d8.mp3"
+ },
+ {
+  "key": "a69d7e52",
+  "who": "lucia",
+  "text": "I’m fine.",
+  "exaggeration": 0.45,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "a69d7e52-93c1471b.mp3"
+ },
+ {
+  "key": "d409e6c4",
+  "who": "lucia",
+  "text": "No. Are you?",
+  "exaggeration": 0.6,
+  "cfg": 0.42,
+  "fx": null,
+  "take": "d409e6c4-b2a5b9c7.mp3"
+ },
+ {
+  "key": "a4122e65",
+  "who": "lucia",
+  "text": "Mom would’ve hated this.",
+  "exaggeration": 0.55,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "a4122e65-5678f4a7.mp3"
+ },
+ {
+  "key": "272c6a05",
+  "who": "lucia",
+  "text": "Sorry. My grandpa’s… a lot.",
+  "exaggeration": 0.5,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "272c6a05-96d3bdd0.mp3"
+ },
+ {
+  "key": "69eaaee3",
+  "who": "lucia",
+  "text": "You’re really late, you know.",
+  "exaggeration": 0.6,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "69eaaee3-9af835a3.mp3"
+ },
+ {
+  "key": "fff0948b",
+  "who": "lucia",
+  "text": "I gotta go.",
+  "exaggeration": 0.5,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "fff0948b-6bc98498.mp3"
+ },
+ {
+  "key": "54898be2",
+  "who": "lucia",
+  "text": "I’m not eating six-dollar pizza.",
+  "exaggeration": 0.7,
+  "cfg": 0.42,
+  "fx": null,
+  "take": "54898be2-f932bed2.mp3"
+ },
+ {
+  "key": "3edab7f0",
+  "who": "lucia",
+  "text": "I’m not hungry.",
+  "exaggeration": 0.45,
+  "cfg": 0.45,
+  "fx": null,
+  "take": "3edab7f0-1e7a2b8d.mp3"
+ },
+ {
+  "key": "7810ed31",
+  "who": "toni",
+  "text": "Take your break, Manny.",
+  "exaggeration": 1.05,
+  "cfg": 0.42,
+  "fx": "toon",
+  "take": "7810ed31-4d42946a.mp3"
+ },
+ {
+  "key": "44416e08",
+  "who": "toni",
+  "text": "Time for your performance review.",
+  "exaggeration": 1.1,
+  "cfg": 0.4,
+  "fx": "toon",
+  "take": "44416e08-32cf8537.mp3"
+ },
+ {
+  "key": "8ac206e5",
+  "who": "toni",
+  "text": "Keep the ovens on. Got a party coming.",
+  "exaggeration": 1.1,
+  "cfg": 0.4,
+  "fx": "toon",
+  "take": "8ac206e5-b1d3949e.mp3"
+ },
+ {
+  "key": "ef3c7d0d",
+  "who": "toni",
+  "text": "Hi. I’m inside.",
+  "exaggeration": 1.05,
+  "cfg": 0.42,
+  "fx": "toon",
+  "take": "ef3c7d0d-373bf1f4.mp3"
+ },
+ {
+  "key": "9901de64",
+  "who": "toni",
+  "text": "You wrote: late and cold. Driver didn’t say a word.",
+  "exaggeration": 0.9,
+  "cfg": 0.42,
+  "fx": "toon",
+  "take": "9901de64-b8fe0dca.mp3"
+ },
+ {
+  "key": "edbd20ed",
+  "who": "toni",
+  "text": "I’m saying a lot now.",
+  "exaggeration": 0.75,
+  "cfg": 0.45,
+  "fx": "toon",
+  "take": "edbd20ed-42746b8f.mp3"
+ },
+ {
+  "key": "2cce2709",
+  "who": "toni",
+  "text": "Please tell us what went wrong.",
+  "exaggeration": 1.05,
+  "cfg": 0.42,
+  "fx": "toon",
+  "take": "2cce2709-f5bd7612.mp3"
+ },
+ {
+  "key": "969ae73e",
+  "who": "toni",
+  "text": "There you are, Lucia.",
+  "exaggeration": 1.05,
+  "cfg": 0.42,
+  "fx": "toon",
+  "take": "969ae73e-6b09f0f3.mp3"
+ },
+ {
+  "key": "8db4993d",
+  "who": "toni",
+  "text": "Knock knock.",
+  "exaggeration": 1.05,
+  "cfg": 0.42,
+  "fx": "toon",
+  "take": "8db4993d-0c607702.mp3"
+ },
+ {
+  "key": "e0df446f",
+  "who": "toni",
+  "text": "I found your house. I’ll find you.",
+  "exaggeration": 1.05,
+  "cfg": 0.42,
+  "fx": "toon",
+  "take": "e0df446f-d6d1dec2.mp3"
+ },
+ {
+  "key": "a061c243",
+  "who": "toni",
+  "text": "Ding dong.",
+  "exaggeration": 1.05,
+  "cfg": 0.42,
+  "fx": "toon",
+  "take": "a061c243-6ff78010.mp3"
+ },
+ {
+  "key": "84b8856e",
+  "who": "toni",
+  "text": "Your order is on its way.",
+  "exaggeration": 1.0,
+  "cfg": 0.42,
+  "fx": "toon",
+  "take": "84b8856e-4f2a6896.mp3"
+ },
+ {
   "key": "d0fb72fc",
   "who": "lucia",
   "text": "Dad? What do we do?",

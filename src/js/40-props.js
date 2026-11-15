@@ -80,11 +80,8 @@ function buildProps(){
   /* ---------------- FREEZER ---------------- */
   shelfUnit(8.3,13.7,0.2,0.75,2.0,4,['shelfStuff','cans'],'s');
   shelfUnit(13.25,13.8,1,5.6,2.0,4,['shelfStuff','cans'],'w');
-  // the staff, under tarps. Feet show; the rest doesn't.
-  [[8.55,9.6,2.0,3.6],[8.55,9.6,4.0,5.5],[11.6,12.7,2.6,4.2]].forEach(([x0,x1,z0,z1],i)=>{box('tarp',x0,x1,0,0.34+i*0.04,z0,z1,{collide:true});box('tarp',x0+0.1,x1-0.1,0.34,0.5,z0+0.25,z0+0.8,{collide:false});
-    const fz=i===2?z1+0.02:z1;box('black',x0+0.2,x0+0.4,0,0.14,fz,fz+0.24,{collide:false});box('black',x1-0.4,x1-0.2,0,0.14,fz,fz+0.24,{collide:false});
-    quad('blood',[x0-0.3,0.012,z1+0.7],[x1-x0+0.6,0,0],[0,0,-1.2],{fit:true,nu:1,nv:1});});
-  PT.freezerStart=[10.6,4.7];
+  // the staff go under tarps later in the night (buildTarps, baked on their own so the cold open can hide them)
+  PT.freezerStart=[10.6,4.7];PT.mozz=[13.3,1.0,3.0];
   /* ---------------- KITCHEN ---------------- */
   box(STEEL,14.15,15.15,0,1.9,0.15,1.35);sign('fridge',15.16,0.1,0.75,1.1,1.75,'e');PT.dough=[15.3,1.2,0.75];
   cyl('steel',15.9,2.4,0,1.1,0.32,8,{collide:true});box('metal',15.7,16.1,1.1,1.35,2.2,2.6,{collide:false});
@@ -198,6 +195,43 @@ function buildProps(){
   DOORS.office=mkDoor('officeKitchen','sign:door',28,5,1.4,'z',1,{open:1});DOORS.store=mkDoor('storeDoor','sign:door',8,7.4,1.4,'z',-1,{open:1});
   DOORS.employee=mkDoor('employeeHall','sign:door',39,8,1.4,'x',-1,{open:1});DOORS.officeHall=mkDoor('officeHall','sign:door',33,8,1.4,'x',-1,{open:1});
 }
+/* the staff, under tarps. Feet show; the rest doesn't. Baked apart from the rest, so the cold open (before he drags them in) can hide them. */
+const TARPS={meshes:[],solids:[]};
+function buildTarps(){[[8.55,9.6,2.0,3.6],[8.55,9.6,4.0,5.5],[11.6,12.7,2.6,4.2]].forEach(([x0,x1,z0,z1],i)=>{const n=SOLIDS.length;box('tarp',x0,x1,0,0.34+i*0.04,z0,z1,{collide:true});TARPS.solids.push(...SOLIDS.slice(n));box('tarp',x0+0.1,x1-0.1,0.34,0.5,z0+0.25,z0+0.8,{collide:false});
+    const fz=i===2?z1+0.02:z1;box('black',x0+0.2,x0+0.4,0,0.14,fz,fz+0.24,{collide:false});box('black',x1-0.4,x1-0.2,0,0.14,fz,fz+0.24,{collide:false});
+    quad('blood',[x0-0.3,0.012,z1+0.7],[x1-x0+0.6,0,0],[0,0,-1.2],{fit:true,nu:1,nv:1});});
+  TARPS.meshes=bake();}
+function setTarps(on){TARPS.meshes.forEach(m=>m.visible=on);TARPS.solids.forEach(s=>s.on=on);}
+/* the freezer door's window: real glass you can see the kitchen through, painted on a canvas as the night goes on
+   (frost at the edges, then cracks, blood, extinguisher powder, a handprint, the wipe). Canvas y=0 is the top of the window. */
+const FZ={cv:canvas(128,100),tex:null,mesh:null,powder:0,layers:[]};
+function glassPaint(){const g=FZ.cv.getContext('2d'),W=128,H=100;g.clearRect(0,0,W,H);
+  // condensation and frost creeping in from the edges
+  g.fillStyle='rgba(200,225,235,.08)';g.fillRect(0,0,W,H);const fr=mulberry(5);
+  for(let i=0;i<260;i++){const e=fr();const side=(fr()*4)|0;const d=Math.pow(fr(),2.2)*22;const t=fr();const x=side===0?t*W:side===1?t*W:side===2?d:W-d,y=side===0?d:side===1?H-d:t*H;g.fillStyle=`rgba(225,240,248,${0.18+e*0.3})`;g.fillRect(x,y,1+(e*2|0),1);}
+  for(const L of FZ.layers)L(g,W,H);
+  if(FZ.powder>0){g.fillStyle=`rgba(236,238,236,${Math.min(0.97,FZ.powder)})`;g.fillRect(0,0,W,H);const pr=mulberry(9);for(let i=0;i<120;i++){g.fillStyle=`rgba(255,255,255,${0.2*FZ.powder})`;g.beginPath();g.arc(pr()*W,pr()*H,2+pr()*6,0,TAU);g.fill();}}
+  FZ.tex.needsUpdate=true;}
+function glassAdd(fn){FZ.layers.push(fn);glassPaint();}
+function glassReset(){FZ.layers.length=0;FZ.powder=0;if(FZ.tex)glassPaint();}
+function glassCrack(cx,cy,n,seed){glassAdd((g)=>{const r=mulberry(seed);g.strokeStyle='rgba(235,245,250,.85)';g.lineWidth=0.8;for(let i=0;i<n;i++){let x=cx,y=cy,a=r()*TAU;g.beginPath();g.moveTo(x,y);
+  for(let k=0;k<5;k++){a+=(r()-0.5)*0.9;const l=4+r()*10;x+=Math.cos(a)*l;y+=Math.sin(a)*l;g.lineTo(x,y);}g.stroke();}g.strokeStyle='rgba(235,245,250,.6)';for(let k=1;k<3;k++){g.beginPath();g.arc(cx,cy,5*k+r()*3,0,TAU);g.stroke();}});}
+function glassBlood(cx,cy,rad,n,seed){glassAdd((g)=>{const r=mulberry(seed);for(let i=0;i<n;i++){const a=r()*TAU,d=Math.pow(r(),0.7)*rad,x=cx+Math.cos(a)*d,y=cy+Math.sin(a)*d*0.8,s=0.6+r()*2.6*(1-d/rad/1.4);
+  g.fillStyle=r()<0.5?'rgba(120,8,6,.92)':'rgba(150,14,10,.85)';g.beginPath();g.arc(x,y,s,0,TAU);g.fill();if(r()<0.4){g.fillRect(x-0.5,y,1,2+r()*9);}}});}
+function glassSmear(x0,y0,x1,y1,w){glassAdd((g)=>{g.strokeStyle='rgba(110,8,6,.8)';g.lineCap='round';g.lineWidth=w;g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.stroke();g.lineWidth=w*0.4;g.strokeStyle='rgba(150,20,14,.7)';g.beginPath();g.moveTo(x0+2,y0);g.lineTo(x1+1,y1);g.stroke();});}
+function glassHand(x,y,slide){glassAdd((g)=>{g.fillStyle='rgba(130,10,8,.85)';g.beginPath();g.ellipse(x,y+6,6,7,0,0,TAU);g.fill();[-5,-2,1.5,5].forEach((dx,i)=>{g.beginPath();g.ellipse(x+dx,y-4-(i===1||i===2?3:0),1.6,5,0,0,TAU);g.fill();});
+  g.beginPath();g.ellipse(x+8,y+4,1.6,4,-0.6,0,TAU);g.fill();if(slide){g.fillRect(x-6,y+6,12,slide);for(let i=0;i<5;i++)g.fillRect(x-5+i*2.5,y+6+slide,1,3+i%3*3);}});}
+function glassWipe(){glassAdd((g)=>{g.save();g.globalCompositeOperation='destination-out';g.lineCap='round';g.lineWidth=11;for(let k=0;k<3;k++){g.strokeStyle=`rgba(0,0,0,${0.75-k*0.15})`;g.beginPath();g.arc(64,96+k*6,52-k*12,Math.PI*1.08,Math.PI*1.92);g.stroke();}g.restore();
+  g.strokeStyle='rgba(120,10,8,.35)';g.lineWidth=1;for(let k=0;k<6;k++){g.beginPath();g.arc(64,98,50-k*7,Math.PI*1.1,Math.PI*1.9);g.stroke();}});}
+function buildFreezerGlass(){FZ.tex=texFrom(FZ.cv,false);FZ.tex.magFilter=THREE.LinearFilter;FZ.tex.minFilter=THREE.LinearFilter;
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(0.525,0.41),psx(new THREE.MeshBasicMaterial({map:FZ.tex,transparent:true,depthWrite:false,side:THREE.DoubleSide})));
+  m.position.set(0.7,1.533,0);DOORS.freezer.g.add(m);FZ.mesh=m;
+  // a hole in the steel door where the window is, and the door's thin edges kept solid steel
+  const d=DOORS.freezer;d.mat.alphaTest=0.5;d.mat.needsUpdate=true;const uv=d.g.children[0].geometry.attributes.uv;for(let i=0;i<16;i++)uv.setXY(i,0.05,0.5);uv.needsUpdate=true;
+  glassPaint();}
+/* a case of mozzarella on the freezer shelf, for Manny's last errand */
+const MOZZ=new THREE.Mesh(new THREE.BoxGeometry(0.42,0.26,0.32),[0,1,2,3,4,5].map(i=>basic({map:i===1?SIGN.mozzCase:TX.cardboard.t})));MOZZ.position.set(13.4,0.91,3.0);scene.add(MOZZ);
+function lightMozz(){const c=tintAt(12.8,1.1,3,1.2);MOZZ.material.forEach(m=>m.color.copy(c));}
 /* a door leaf hinged at (hx,hz). along: the axis the closed leaf runs along. dir: which way it swings open (+1/-1 on the other axis) */
 const DOORS={};
 function mkDoor(id,key,hx,hz,w,along,dir,opts={}){const g=new THREE.Group();g.position.set(hx,0,hz);const name=key.replace('sign:','');

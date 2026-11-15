@@ -153,6 +153,10 @@ const CAST={
   lucia:  {name:'Lucia',h:1.63,build:0.88,skin:'#b47c55',hair:'#120c09',pony:1,shirt:'#121214',dress:1,pants:'#111114',shoe:'#0c0c0c',eye:'#2a1a0e',blush:1,lashes:1},
   manny:  {name:'Manny',h:1.83,build:1.12,skin:'#a87550',hair:'#16100c',beard:'#1f150e',shirt:'#b8261a',apron:'#1a1a1a',pants:'#22242a',shoe:'#0e0e0e',cap:1,eye:'#2a1a0e'},
   toni:   {name:'Toni',h:1.9,build:1.02,toni:1,skin:'#9a8068',shirt:'#9a8068',pants:'#9a8068',shoe:'#c41e1a',eye:'#000'},
+  // the closing crew at Pepper Toni's, for the cold open
+  manager:{name:'Rick',h:1.76,build:1.2,skin:'#d9a88a',hair:'#5a4030',shirt:'#e8e4da',tie:'#a01a1a',pants:'#18181c',shoe:'#0c0c0c',eye:'#2a1a0e'},
+  bree:   {name:'Bree',h:1.62,build:0.86,skin:'#e3b49a',hair:'#b5652e',pony:1,shirt:'#b8261a',pants:'#111114',shoe:'#e8e6e0',eye:'#3a4a2a'},
+  devon:  {name:'Devon',h:1.8,build:0.98,skin:'#5e3a28',hair:'#120c09',shirt:'#b8261a',apron:'#1a1a1a',pants:'#22242a',shoe:'#e8e6e0',eye:'#1a120c'},
 };
 const CHARS={};
 /* ============================================================
@@ -201,6 +205,9 @@ const OUTFIT={
   lucia:  {shirt:'jersey_black',shirtCol:'#121214',pants:'jersey_black',pantsCol:'#111114',dress:1,short:1},
   manny:  {shirt:'shirt_red',shirtCol:'#b8261a',pants:'denim_dark',pantsCol:'#22242a',short:1,placket:1},
   toni:   {shirt:'stocking',shirtCol:'#9a8068',pants:'stocking',pantsCol:'#9a8068',bare:1},
+  manager:{shirt:'shirt_white',shirtCol:'#e8e4da',tie:'#a01a1a',pants:'suit_black',pantsCol:'#18181c',short:1},
+  bree:   {shirt:'shirt_red',shirtCol:'#b8261a',pants:'jersey_black',pantsCol:'#111114',short:1,placket:1},
+  devon:  {shirt:'shirt_red',shirtCol:'#b8261a',pants:'denim_dark',pantsCol:'#22242a',short:1,placket:1},
 };
 function vHalf(y,o){return o.v==='wide'?lerp(14,9,y/100):o.v==='open'?lerp(11,3,y/80):lerp(8.5,1.5,y/72);}
 function vBottom(o){return o.v==='wide'?128:o.v==='open'?80:72;}
@@ -378,11 +385,39 @@ function buildChar(id){const s=CAST[id];const ch={id,s,mats:[],j:{},pose:'stand'
       const hi=part(ch,GEO.box(0.095*b*S,0.1*S,0.11*S),s.shoe,{ink:0,map:clothTex('knit')});hi.position.set(0,0.07*S,0.0);ft.add(hi);
       const lace=part(ch,GEO.box(0.03*S,0.012,0.13*S),'#f4f0e8',{ink:0});lace.position.set(0,0.042*S,0.06*S);lace.rotation.x=-0.25;ft.add(lace);}}
   if(s.toni){// the phone, always in his right hand, and the gun he holds in his left once he's hunting
-    const ph=new THREE.Group();const body=part(ch,GEO.box(0.075,0.15,0.012),'#111',{ink:0.004});ph.add(body);const scr=new THREE.Mesh(new THREE.PlaneGeometry(0.064,0.13),new THREE.MeshBasicMaterial({color:0x9fd0ff}));scr.position.z=0.007;ph.add(scr);ch.extra.screen=scr;
+    const ph=new THREE.Group();const body=part(ch,GEO.box(0.075,0.15,0.012),'#111',{ink:0.004});ph.add(body);const scr=new THREE.Mesh(new THREE.PlaneGeometry(0.064,0.13),new THREE.MeshBasicMaterial({color:0x9fd0ff,map:PHONE_SCR.tex}));scr.position.z=0.007;ph.add(scr);ch.extra.screen=scr;
     ph.position.set(0,-0.1,0.04);ph.rotation.x=-0.3;ch.j.handR.add(ph);ch.extra.phone=ph;
     const gun=new THREE.Group();const gb=part(ch,GEO.box(0.035,0.11,0.17),'#1a1a1a',{ink:0.004});gb.position.set(0,0,0.04);gun.add(gb);const gg=part(ch,GEO.box(0.03,0.11,0.04),'#2a2018',{ink:0.004});gg.position.set(0,-0.08,-0.02);gun.add(gg);
-    gun.position.set(0,-0.12,0.02);gun.rotation.x=-1.3;gun.visible=false;ch.j.handL.add(gun);ch.extra.gun=gun;}
+    gun.position.set(0,-0.12,0.02);gun.rotation.x=-1.3;gun.visible=false;ch.j.handL.add(gun);ch.extra.gun=gun;
+    const tools={};const T0=(name,build)=>{const g=new THREE.Group();build(g);g.visible=false;ch.j.handL.add(g);tools[name]=g;};
+    // the dough pin: a long hardwood rolling pin, gripped by one handle
+    T0('pin',g=>{const b=part(ch,GEO.cyl(0.04,0.04,0.42,10),'#b58a5a',{ink:0,map:TX.wood.t,smooth:true});b.position.y=-0.3;g.add(b);const h=part(ch,GEO.cyl(0.018,0.018,0.12,6),'#8a6038',{ink:0});h.position.y=-0.05;g.add(h);});
+    // the kitchen's fire extinguisher, held by its handle
+    T0('ext',g=>{const b=part(ch,GEO.cyl(0.075,0.075,0.44,10),'#c41e1a',{ink:0,smooth:true});b.position.set(0,-0.3,0.02);g.add(b);const t=part(ch,GEO.cyl(0.03,0.04,0.06,8),'#1a1a1a',{ink:0});t.position.set(0,-0.06,0.02);g.add(t);
+      const n=part(ch,GEO.cyl(0.012,0.02,0.14,6),'#111',{ink:0});n.rotation.x=1.3;n.position.set(0,-0.06,0.1);g.add(n);});
+    // the pizza rocker: a long curved blade with a handle at each end
+    T0('rocker',g=>{const sh=new THREE.Shape();sh.moveTo(-0.26,0);sh.quadraticCurveTo(0,-0.16,0.26,0);sh.lineTo(0.26,0.035);sh.quadraticCurveTo(0,-0.11,-0.26,0.035);sh.closePath();
+      const geo=new THREE.ExtrudeGeometry(sh,{depth:0.006,bevelEnabled:false});const b=new THREE.Mesh(geo,psx(new THREE.MeshBasicMaterial({color:0xeef2f6,side:THREE.DoubleSide})));b.material.userData.base=new THREE.Color(0xf4f8fc);ch.mats.push(b.material);b.position.set(-0.26,-0.06,0);b.rotation.z=Math.PI/2;g.add(b);
+      [-1,1].forEach(k=>{const h=part(ch,GEO.cyl(0.02,0.02,0.1,6),'#1a1a1a',{ink:0});h.position.set(0,-0.06+k*0.26,0);g.add(h);});});
+    // a kitchen rag
+    T0('rag',g=>{const b=part(ch,GEO.box(0.16,0.2,0.03),'#d8d2c4',{ink:0});b.position.y=-0.12;g.add(b);});
+    // the pizza box for the Ramirez delivery, held in both hands
+    const box=new THREE.Group();const lid=new THREE.Mesh(new THREE.BoxGeometry(0.42,0.05,0.42),[0,1,2,3,4,5].map(i=>basic({map:i===2?SIGN.pizzaBox:TX.cardboard.t})));lid.material.forEach(m=>{m.userData.base=new THREE.Color(0xffffff);ch.mats.push(m);});box.add(lid);
+    box.position.set(0,0.18,0.36);box.visible=false;spine.add(box);ch.extra.box=box;
+    // the glow of his phone in a dark house
+    const glow=new THREE.Mesh(new THREE.PlaneGeometry(0.5,0.5),new THREE.MeshBasicMaterial({map:GLOW_TEX,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,color:0x6f9fd8}));glow.position.z=0.03;glow.visible=false;ph.add(glow);ch.extra.glow=glow;
+    ch.extra.tools=tools;}
   scene.add(ch.root);CHARS[id]=ch;setExpr(ch,'neutral');return ch;}
+/* Toni's phone screen: what he's typing, readable when he holds it up to the glass */
+const PHONE_SCR={cv:canvas(64,128),tex:null};PHONE_SCR.tex=texFrom(PHONE_SCR.cv,false);PHONE_SCR.tex.magFilter=THREE.LinearFilter;PHONE_SCR.tex.minFilter=THREE.LinearFilter;
+function phoneScreen(state,text){const g=PHONE_SCR.cv.getContext('2d');g.fillStyle='#0b1220';g.fillRect(0,0,64,128);g.fillStyle='#e8ecf2';g.fillRect(0,0,64,10);g.fillStyle='#333';g.font='6px '+FONT_PIX;g.fillText('Pepper Toni',4,7);
+  if(state==='text'&&text){g.font='9px "Helvetica Neue", Arial, sans-serif';const words=text.split(' ');const lines=[];let ln='';for(const w of words){const t=ln?ln+' '+w:w;if(g.measureText(t).width>48){lines.push(ln);ln=w;}else ln=t;}if(ln)lines.push(ln);
+    const h=lines.length*10+8,y0=Math.max(14,96-h);g.fillStyle='#2f7cf6';g.beginPath();g.roundRect?g.roundRect(6,y0,54,h,6):g.rect(6,y0,54,h);g.fill();g.fillStyle='#fff';lines.forEach((l,i)=>g.fillText(l,10,y0+12+i*10));}
+  else if(state==='typing'){g.fillStyle='#3a4458';g.beginPath();g.ellipse(18,92,10,6,0,0,TAU);g.fill();g.fillStyle='#cfd6e2';[13,18,23].forEach(x=>{g.beginPath();g.arc(x,92,1.6,0,TAU);g.fill();});}
+  g.fillStyle='#d8dde6';g.fillRect(0,104,64,24);g.fillStyle='#9aa3b2';for(let r=0;r<3;r++)for(let c=0;c<8;c++)g.fillRect(3+c*7.6,106+r*7,6,5);PHONE_SCR.tex.needsUpdate=true;}
+phoneScreen('off');
+const GLOW_TEX=tex(32,32,(g)=>{const gr=g.createRadialGradient(16,16,0,16,16,16);gr.addColorStop(0,'rgba(255,255,255,.9)');gr.addColorStop(0.3,'rgba(255,255,255,.35)');gr.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=gr;g.fillRect(0,0,32,32);},false);
+function toniTool(name){const t=CHARS.toni.extra.tools;for(const k in t)t[k].visible=k===name;}
 signTex('apron',48,72,(g,w,h)=>{g.fillStyle='#fff';g.fillRect(0,0,w,h);const r=mulberry(12);speck(g,w,h,80,['rgba(0,0,0,.05)','rgba(120,90,60,.08)'],1,r);
   for(let i=0;i<26;i++){const x=6+r()*36,y=18+r()*50,rr=0.6+r()*2.4;g.fillStyle=r()<0.5?'rgba(170,40,15,.75)':'rgba(200,80,25,.6)';g.beginPath();g.arc(x,y,rr,0,TAU);g.fill();if(r()<0.35){g.fillRect(x-0.4,y,0.8,2+r()*4);}}
   blot(g,24,44,6,'rgba(180,60,20,.35)');blot(g,18,52,4,'rgba(160,45,15,.4)');g.fillStyle='rgba(0,0,0,.08)';g.fillRect(0,0,2,h);g.fillRect(w-2,0,2,h);});
@@ -409,6 +444,28 @@ const POSES={
   aim:{shL:-1.45,elL:-0.05,shR:-0.95,elR:-1.15,armIn:0.2},
   carry:{shL:-0.75,elL:-1.0,shR:-0.75,elR:-1.0,armIn:0.25},
   crouchHug:{hipL:-1.9,hipR:-1.9,kneeL:2.4,kneeR:2.4,spine:0.5,shL:-1.0,shR:-1.0,elL:-1.6,elR:-1.6,hipsY:-0.62,neck:0.3},
+  // the cold open
+  wash:{shL:-0.75,shR:-0.75,elL:-0.9,elR:-0.9,neck:0.45,spine:0.15,armIn:0.25},
+  crumple:{hipL:-1.3,hipR:-1.5,kneeL:2.3,kneeR:2.3,spine:0.9,neck:0.6,head:0.4,shL:-0.3,shR:-0.2,elL:-0.2,elR:-0.4,hipsY:-0.55,headZ:0.3},
+  limp:{shL:-0.4,shR:0.2,elL:-0.6,elR:-0.2,hipL:-0.3,hipR:0.1,kneeL:0.6,kneeR:0.2,neck:0.2,headZ:0.5},
+  bang:{shL:-1.45,shR:-1.45,elL:-0.95,elR:-0.95,armOut:0.42,neck:-0.05},
+  phoneEar:{shR:-1.15,elR:-2.4,armIn:0.2,shL:-0.3,elL:-0.4},
+  plead:{shL:-1.3,shR:-1.3,elL:-1.7,elR:-1.7,armOut:0.25,spine:-0.08},
+  pinned:{spine:0.35,neck:-0.15,shL:-1.0,shR:-1.0,elL:-0.6,elR:-0.6,armOut:0.3},
+  swingUp:{shL:-2.9,elL:-0.6,shR:-0.6,elR:-0.9,spine:-0.12},
+  swingDown:{shL:-0.5,elL:-0.15,shR:-0.6,elR:-0.9,spine:0.35,neck:0.2},
+  spray:{shL:-1.3,elL:-0.2,shR:-1.2,elR:-0.5,armIn:0.3},
+  grab:{shL:-1.25,shR:-1.25,elL:-0.75,elR:-0.75,armIn:0.35,spine:0.1},
+  chopUp:{hipL:-0.5,hipR:-0.5,kneeL:0.9,kneeR:0.9,hipsY:-0.18,spine:0.45,shL:-2.7,elL:-0.6,shR:-0.6,elR:-0.9},
+  chopDown:{hipL:-0.5,hipR:-0.5,kneeL:0.9,kneeR:0.9,hipsY:-0.18,spine:0.85,neck:0.3,shL:-0.6,elL:-0.1,shR:-0.6,elR:-0.9},
+  wipe:{shL:-1.6,elL:-0.6,armIn:0.2,shR:-0.6,elR:-0.9},
+  phoneUp:{shR:-1.45,elR:-0.35,armIn:0.25,shL:-0.4,elL:-0.3},
+  // the wake
+  slumpTable:{hipL:-1.5,hipR:-1.5,kneeL:1.5,kneeR:1.5,spine:1.0,neck:0.5,head:0.3,shL:-1.0,shR:-1.1,elL:-1.2,elR:-1.0,hipsY:-0.47,headZ:0.3},
+  slumpBack:{hipL:-1.5,hipR:-1.5,kneeL:1.5,kneeR:1.5,spine:-0.25,neck:-0.4,head:-0.2,shL:0.15,shR:0.15,elL:-0.1,elR:-0.1,hipsY:-0.47,armOut:0.2,headZ:-0.2},
+  sitFloor:{hipL:-1.45,hipR:-1.5,kneeL:0.25,kneeR:0.4,hipsY:-0.82,spine:0.35,neck:0.55,head:0.3,headZ:0.35,shL:-0.2,shR:-0.15,elL:-0.3,elR:-0.2,armOut:0.1},
+  sitPhone:{hipL:-1.5,hipR:-1.5,kneeL:1.5,kneeR:1.5,shL:-0.35,elL:-0.9,shR:-0.7,elR:-1.6,hipsY:-0.47,neck:0.35},
+  standUp:{hipL:-0.7,hipR:-0.7,kneeL:0.8,kneeR:0.8,hipsY:-0.25,spine:0.35,shL:-0.6,shR:-0.6,elL:-0.4,elR:-0.4},
 };
 function animChar(ch,dt){ch.t+=dt;const P=POSES[ch.pose]||POSES.stand,j=ch.j,k=10;
   const tgt=(n,v)=>{if(j[n])j[n].rotation.x=damp(j[n].rotation.x,v||0,k,dt);};

@@ -21,7 +21,7 @@ Usage: python3 tools/voices.py /path/to/kokoro-models [--kokoro] [--only who]
   Renders only lines whose text or direction changed (cached in .vo_cache/)."""
 import sys, re, json, base64, pathlib, subprocess, tempfile, os
 root = pathlib.Path(__file__).resolve().parent.parent
-args = [a for a in sys.argv[1:] if not a.startswith('--')]
+args = [a for i, a in enumerate(sys.argv[1:], 1) if not a.startswith('--') and sys.argv[i - 1] not in ('--only', '--max')]
 models = pathlib.Path(args[0] if args else '/home/claude/models')
 KOKORO_ONLY = '--kokoro' in sys.argv
 ONLY = sys.argv[sys.argv.index('--only') + 1] if '--only' in sys.argv else None
@@ -40,6 +40,9 @@ CAST = {
     # Pepper Toni, the mascot: a bouncy cartoon voice, pitched up after recording (fx 'toon')
     'toni':      dict(voice='am_puck',    speed=1.12, pitch=1.16, ex=1.05, fx='toon'),
     'announcer': dict(voice='am_puck',    speed=1.12, pitch=1.16, ex=1.1,  fx='toon', same='toni'),
+    # the closing crew, for the cold open
+    'manager':   dict(voice='am_eric',    speed=1.0,  pitch=0.96, ex=0.55),
+    'bree':      dict(voice='af_bella',   speed=1.06, pitch=1.06, ex=0.75),
 }
 # what each reference clip says: varied sentences, so the clone hears a range
 REF_TEXT = {
@@ -52,6 +55,8 @@ REF_TEXT = {
     'manny': "Twelve years in this kitchen, man. Twelve years! I know every oven, every timer, every busted tile. And tonight? Tonight I just want to get home. That's it. Just breathe, Manny. Get home.",
     'toni': "Hiya, pals! It's me, Pepper Toni! Who's hungry? Ha ha! Extra cheese, extra pepperoni, and extra fun for the whole family! Come on down, I saved you a seat!",
     'announcer': "Hiya, pals! It's me, Pepper Toni! Who's hungry? Ha ha! Extra cheese, extra pepperoni, and extra fun for the whole family! Come on down, I saved you a seat!",
+    'manager': "Listen, I run a tight ship here. You clock in on time, you smile at the customers, and you do not eat the breadsticks. That's it. That's the whole job. Got it?",
+    'bree': "Oh my gosh, okay, so I have a calc test tomorrow and I'm closing again tonight. I'm so tired. Can somebody else please do the bathrooms this time?",
 }
 # how hard the second step of each reference clip acts
 BOOT_EX = {'toni': 1.15, 'announcer': 1.15}
@@ -123,6 +128,100 @@ DIRECT = [
     ('toni', 'Kids LOVE', 1.2, 0.35, 'toon'),
     ('toni', 'Remember: FAMILY', 1.2, 0.35, 'toon'),
     ('announcer', 'Pepper Toni', 1.2, 0.35, 'toon'),
+    # ---- the cold open ----
+    ('manny', 'Last case of mozz', 0.55, 0.45, None),
+    ('manny', 'Hey! Hey, open up', 1.3, 0.32, 'shout'),
+    ('manny', 'It won\u2019t move', 0.9, 0.38, None),
+    ('manny', 'Devon! DEVON!', 1.8, 0.25, 'shout'),
+    ('manny', 'Earbuds', 0.9, 0.38, None),
+    ('manny', 'No. No, no, no, no', 1.4, 0.3, None),
+    ('bree', 'Devon? DEVON!', 1.8, 0.25, 'shout'),
+    ('bree', 'Manny?! Why won\u2019t', 1.7, 0.25, 'shout'),
+    ('manny', 'The pin!', 1.6, 0.28, 'shout'),
+    ('bree', 'I can\u2019t find it', 1.6, 0.28, None),
+    ('manny', 'Bree\u2026 oh God', 1.0, 0.32, None),
+    ('manny', 'No bars', 0.9, 0.35, None),
+    ('manager', '\u2014sir. Sir.', 0.6, 0.45, None),
+    ('manager', 'Cheap old bastard', 0.5, 0.45, None),
+    ('manager', 'Devon? Oh, Jesus', 1.3, 0.3, None),
+    ('manager', 'Okay. Okay, buddy', 1.3, 0.3, None),
+    ('manager', 'Wait\u2014 WAIT', 1.9, 0.25, 'shout'),
+    ('manny', 'Kid\u2026 what did you do', 1.0, 0.3, None),
+    ('toni', 'Time for your performance', 1.1, 0.4, 'toon'),
+    ('toni', 'Keep the ovens on', 1.1, 0.4, 'toon'),
+    # ---- the wake ----
+    ('grandpa', 'Forty minutes. Forty', 0.8, 0.4, None),
+    ('uncle', 'You could\u2019ve let me cater', 0.6, 0.45, None),
+    ('grandpa', 'With what money', 0.8, 0.4, None),
+    ('uncle', 'Wow. Okay.', 0.5, 0.45, None),
+    ('dad', 'Can we not do this', 0.85, 0.38, None),
+    ('ruben', 'Is your grandpa', 0.6, 0.45, None),
+    ('alex', 'Yeah. He\u2019s nicer', 0.55, 0.45, None),
+    ('dad', 'Hey. You doing okay', 0.6, 0.42, None),
+    ('dad', 'Yeah. Me too.', 0.55, 0.42, None),
+    ('dad', 'No. But I\u2019ve got you', 0.8, 0.38, None),
+    ('dad', 'Pizza at her own wake', 0.65, 0.42, None),
+    ('grandpa', 'The good place', 0.6, 0.45, None),
+    ('dad', 'That\u2019s okay. You don\u2019t', 0.6, 0.42, None),
+    ('lucia', 'He\u2019s running a few', 0.5, 0.45, None),
+    ('grandpa', 'A few minutes!', 1.0, 0.38, None),
+    ('uncle', 'Bet he loved you', 0.55, 0.45, None),
+    ('dad', 'Lucia, can you get that', 0.55, 0.45, None),
+    ('grandpa', 'And don\u2019t you tip', 0.8, 0.42, None),
+    ('lucia', 'Two dollars? Grandpa', 0.85, 0.4, None),
+    ('grandpa', 'Plenty. Go.', 0.7, 0.45, None),
+    ('lucia', 'Um. Hi.', 0.4, 0.45, None),
+    ('lucia', '\u2026Thanks?', 0.45, 0.45, None),
+    ('grandpa', 'Is that him?', 1.0, 0.38, 'shout'),
+    ('grandpa', 'Give it here', 0.6, 0.45, None),
+    ('grandpa', 'Cold. Of course', 0.7, 0.42, None),
+    ('grandpa', 'Lucia. Give him one star', 0.7, 0.42, None),
+    ('lucia', 'Grandpa, he was just late', 0.7, 0.42, None),
+    ('grandpa', 'One star. Bad ratings', 0.75, 0.42, None),
+    ('dad', 'Pop. Come on.', 0.6, 0.42, None),
+    ('grandpa', 'My money. Do it', 0.8, 0.42, None),
+    ('grandpa', 'Five? For cold pizza', 1.0, 0.38, None),
+    ('grandpa', 'One. Star.', 0.9, 0.4, None),
+    ('grandpa', 'Now write', 0.6, 0.45, None),
+    ('lucia', 'Sorry, whoever you are', 0.45, 0.45, None),
+    ('dad', 'Okay. Eat, everybody', 0.55, 0.45, None),
+    ('grandpa', 'Princess. More for us', 0.6, 0.45, None),
+    ('grandpa', 'More for us', 0.6, 0.45, None),
+    ('lucia', 'He texted me', 0.6, 0.42, None),
+    ('uncle', 'Creepy.', 0.5, 0.45, None),
+    ('grandpa', 'Good. He should be sorry', 0.6, 0.45, None),
+    ('alex', 'It tastes kind of weird', 0.55, 0.45, None),
+    ('ruben', 'That\u2019s how you know', 0.6, 0.45, None),
+    ('ruben', 'In horror movies', 0.75, 0.42, None),
+    ('alex', 'Shut up, Ruben', 0.6, 0.45, None),
+    ('uncle', 'Man, I\u2019m wiped', 0.45, 0.5, None),
+    ('grandpa', 'Hey. HEY. Sit up', 1.1, 0.35, None),
+    ('alex', 'Lucia? I feel', 0.6, 0.4, None),
+    ('ruben', 'Guys? Guys, this isn\u2019t', 1.1, 0.35, None),
+    ('dad', 'Something\u2019s in the', 1.0, 0.35, None),
+    ('lucia', 'Dad? DAD!', 1.8, 0.25, 'shout'),
+    ('lucia', 'Dad. Dad, wake up', 1.3, 0.3, None),
+    ('lucia', 'No. No, no, no. Not now', 1.4, 0.3, None),
+    ('lucia', 'No, no, no, no\u2026', 1.0, 0.32, None),
+    ('uncle', 'Mmh\u2026 Pop?', 0.5, 0.45, None),
+    ('lucia', 'Dad\u2026?', 1.0, 0.35, None),
+    ('lucia', 'He\u2019s breathing', 0.9, 0.35, None),
+    ('lucia', 'The garage door', 0.85, 0.38, None),
+    ('lucia', 'Is that\u2026 a card', 0.9, 0.35, None),
+    ('lucia', 'He\u2019s going back', 1.0, 0.35, None),
+    ('lucia', 'Dad picked the one', 0.55, 0.45, None),
+    ('lucia', 'I\u2019m fine.', 0.45, 0.45, None),
+    ('lucia', 'No. Are you?', 0.6, 0.42, None),
+    ('lucia', 'Mom would\u2019ve hated', 0.55, 0.45, None),
+    ('lucia', 'Sorry. My grandpa', 0.5, 0.45, None),
+    ('lucia', 'You\u2019re really late', 0.6, 0.45, None),
+    ('lucia', 'I gotta go', 0.5, 0.45, None),
+    ('lucia', 'I\u2019m not eating six', 0.7, 0.42, None),
+    ('lucia', 'I\u2019m not hungry', 0.45, 0.45, None),
+    ('lucia', 'I can\u2019t leave them', 0.8, 0.38, None),
+    ('toni', 'You wrote: late and cold', 0.9, 0.42, 'toon'),
+    ('toni', 'I\u2019m saying a lot now', 0.75, 0.45, 'toon'),
+    ('toni', 'Your order is on its way', 1.0, 0.42, 'toon'),
 ]
 def direction(who, text):
     for w, start, ex, cfg, fx in DIRECT:
@@ -227,10 +326,34 @@ def kokoro_ref(who):
     if not ref.exists():
         print('reference clip', who, flush=True); kokoro(who, REF_TEXT[who], ref)
     return ref
+def line_ref(who):
+    """a reference clip cut from lines this character already has in the game (the longest ones, about ten seconds),
+    so a line recorded today sounds like the lines recorded before. Toni's lines have the cartoon lift undone first."""
+    if not OLD: return None
+    mine = sorted([m for m in OLD_MANIFEST if m['who'] == who and m['key'] in OLD], key=lambda m: -len(m['text']))
+    if len(mine) < 3: return None
+    ref = cache / f'ref3-{who}-{fnv("".join(m["key"] for m in mine[:8]))}.wav'
+    if ref.exists(): return ref
+    with tempfile.TemporaryDirectory() as td:
+        parts, total = [], 0.0
+        for m in mine[:8]:
+            mp3 = pathlib.Path(td) / f'{m["key"]}.mp3'; mp3.write_bytes(base64.b64decode(OLD[m['key']]))
+            wav = pathlib.Path(td) / f'{m["key"]}.wav'
+            af = [f'asetrate={int(22050 / TOON)}', 'aresample=22050', f'atempo={TOON:.4f}'] if who == 'toni' else ['anull']
+            subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', str(mp3), '-af', ','.join(af + ['apad=pad_dur=0.35']), '-ar', '24000', '-ac', '1', str(wav)], check=True)
+            parts.append(wav); total += float(subprocess.run(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', str(wav)], capture_output=True, text=True).stdout or 0)
+            if total >= 10: break
+        lst = pathlib.Path(td) / 'list.txt'; lst.write_text(''.join(f"file '{p}'\n" for p in parts))
+        subprocess.run(['ffmpeg', '-v', 'error', '-y', '-f', 'concat', '-safe', '0', '-i', str(lst), '-c', 'copy', str(ref)], check=True)
+    print('reference clip from recorded lines', who, f'{total:.1f}s', flush=True)
+    return ref
 def reference(who):
-    """the clip every line clones: Chatterbox re-reading REF_TEXT with feeling, from the Kokoro clip. Best of three takes."""
+    """the clip every line clones: for the established cast, their own recorded lines (line_ref); for anyone new,
+    Chatterbox re-reading REF_TEXT with feeling from the Kokoro clip, best of three takes."""
     who = CAST[who].get('same', who)
     if KOKORO_ONLY: return kokoro_ref(who)
+    lr = line_ref(who)
+    if lr: return lr
     ex = BOOT_EX.get(who, 0.8)
     ref = cache / f'ref2-{who}-{fnv(json.dumps(CAST[who]) + REF_TEXT[who] + str(ex))}.wav'
     if not ref.exists():
@@ -287,12 +410,14 @@ def leveled(src):
 
 # ---------- checking each take: a speech recognizer must hear the words that were written ----------
 _w = None
+# names the recognizer spells its own way: heard as these, they count as said right
+HOMO = {'brie': 'bree', 'devin': 'devon', 'reuben': 'ruben', 'toney': 'toni', 'tony': 'toni', 'mozzarella': 'mozz', 'moz': 'mozz', 'mots': 'mozz'}
 NUM = 'zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty'.split()
 def words(t):
     out = []
     for w in re.findall(r"[a-z0-9']+", t.lower().replace('\u2019', "'")):
         if w.isdigit() and int(w) <= 20: w = NUM[int(w)]
-        out.append(w.strip("'"))
+        w = w.strip("'"); out.append(HOMO.get(w, w))
     return [w for w in out if w]
 def heard(path):
     global _w
@@ -348,17 +473,34 @@ def render_take(who, text, dst, engine, ex, cfg, fx, seed=0):
         else: chatterbox(who, text, wav, ex, cfg, seed)
         finish(wav, dst, fx)
 
+OLD, OLD_MANIFEST = {}, []
+MAX_NEW = int(sys.argv[sys.argv.index('--max') + 1]) if '--max' in sys.argv else 0
+RENDERED = [0]
+def load_old():
+    """what 05-vodata.js and voices.json already hold"""
+    f = root / 'src/js/05-vodata.js'
+    if f.exists():
+        t = f.read_text(); i = t.index('const VO_DATA=') + len('const VO_DATA='); OLD.update(json.loads(t[i:t.rindex(';')]))
+    mf = root / 'tools/voices.json'
+    if mf.exists(): OLD_MANIFEST.extend(json.loads(mf.read_text()))
 def main():
+    load_old()
+    old_dir = {m['key']: (m['exaggeration'], m['cfg'], m['fx']) for m in OLD_MANIFEST}
     lines = extract()
     data, manifest = {}, []
     engine = 'kokoro' if KOKORO_ONLY else 'chatterbox'
     for who, text in lines:
         key = fnv(who + '|' + text)
         ex, cfg, fx = direction(who, text)
+        if key in OLD and old_dir.get(key) == (ex, cfg, fx) and '--redo' not in sys.argv:
+            data[key] = OLD[key]; manifest.append(next(m for m in OLD_MANIFEST if m['key'] == key)); continue
         take = fnv(json.dumps([engine, 2, CAST[who], REF_TEXT.get(CAST[who].get('same', who)), ex, cfg, fx, spoken(text, False)]))
         dst = cache / f'{key}-{take}.mp3'
         ok = dst.with_suffix('.ok')
         if (ONLY is None or ONLY == who) and not ok.exists():
+            # --max N: stop (exit 3) after N new lines, so a long session can restart the process before memory runs out
+            RENDERED[0] += 1
+            if MAX_NEW and RENDERED[0] > MAX_NEW: print('stopping after', MAX_NEW, 'new lines', flush=True); sys.exit(3)
             best = None
             for attempt in range(8):
                 cand = dst if attempt == 0 else dst.with_name(f'{dst.stem}.t{attempt}.mp3')

@@ -13,8 +13,11 @@ Toni's typed lines play in Pepper Toni's recorded cartoon-mascot voice. Only a l
 
 ## What's in this build
 
-Milestone 1: the table and pizza 1.
+Milestone 2: the prologue, the table and pizza 1.
 
+- **Cold open, 10:04 PM.** Manny is latched in the walk-in and watches Toni kill the closing crew through the door window: Devon at the dish pit, Bree at the freezer door, and the manager, Rick, against the glass. The window keeps what happened (frost, cracks, blood, the wipe) for the rest of the night.
+- **The Ramirez house, 10:41 PM.** Lucia at her mother's wake. The late delivery and Toni, in the suit, silent on the porch. Grandpa's two-dollar tip and the one-star rating on Lucia's phone, the "sorry it was late" text, and the drugged pizza.
+- **Chase 1.** Lucia's dead phone, her locked bedroom, the power cut, the card in the lock, then out through the dark house while Toni searches it. She can duck behind furniture or hide in closets, under beds and behind the shower curtain. Out the front door, his van is at the curb.
 - The whole restaurant: party room, kitchen, walk-in freezer, storeroom, office, employee room, back hall, dining room and buffet, game zone, fun zone and ball pit, storage closet, front entrance and restrooms.
 - Lucia wakes at the rigged party table; Toni's rules speech over the speakers; the first Telltale-style choice; Alex's medical bracelet.
 - Manny cooks pizza 1 (Alex's Kiddie Pie, the tutorial): the ticket, the timer, gathering ingredients, the hands-on prep minigame, the conveyor oven, cutting and serving.
@@ -38,7 +41,8 @@ Every line is recorded. `tools/voices.py` finds every `line('who', …)`, `think
 Every take is checked twice. A speech recognizer (faster-whisper) must hear the written words, and a phoneme recognizer (wav2vec2) must hear the names said right: Lucia is loo-SEE-ah, mijo is MEE-ho, mija is MEE-ha. The script respells those names for the voice model (`PRON`), and a take that fails either check is recorded again with a new seed, up to five takes. The result goes into `src/js/05-vodata.js`.
 
 - The casting is `CAST` at the top of the script; the acting direction for each line (how intense, how slow, shaky or shouting) is `DIRECT`.
-- It only records lines whose text or direction changed (cached in `.vo_cache/`, which isn't committed).
+- It only records lines whose text or direction changed. Lines already in `05-vodata.js` with the same text and direction are kept as they are (`--redo` records everything again), and takes are cached in `.vo_cache/`, which isn't committed.
+- New lines for the established cast clone from that character's own lines already in the game, so they match. A new character (the closing crew) gets a Kokoro-then-Chatterbox reference clip as described above.
 
 ```
 pip install chatterbox-tts kokoro-onnx soundfile faster-whisper transformers librosa pyloudnorm   # plus ffmpeg on the PATH
@@ -55,6 +59,7 @@ On a two-core machine a line takes about 30–40 seconds.
 The cast has photo faces in the Puppet Combo style: a low-poly blocky head with a photo projected onto its front, and faceted bodies with no outlines. The people in the photos are not real. `tools/faces.py` generates each one with Realistic Vision 5.1 (a photoreal Stable Diffusion 1.5 model, CreativeML OpenRAIL-M) plus the LCM LoRA, so a face takes about a minute and a half on a CPU. Each character gets a neutral portrait and fear, angry and sad versions made from it, so they stay the same person. Each image is lined up on the eyes (OpenCV's YuNet detector), the backdrop is cut out (rembg) and replaced with the head's own hair and skin, and the result is saved in `tools/faces/`. `tools/faces_pack.py` packs them into `src/js/06-facedata.js` at 128×128 with the eye and mouth positions. The game draws blinks and the moving jaw onto the photo from those positions.
 
 - Who each person is (age, hair, clothes) is `FACE` at the top of `tools/faces.py`; the expressions are `EXPR`.
+- The closing crew (Rick the manager, Bree and Devon) are generated the same way. Mom's framed photo at the wake is `tools/faces/portrait-mom.jpg`, cropped from her generated portrait; `faces_pack.py` packs it as `PORTRAIT_DATA`.
 - Toni's mask is cut from Jordan's reference picture (`tools/faces/toni-ref.jpg`, kept out of git) with the eyes and smile marked by hand in `FACE`; his body (tan stocking suit, stained white apron, chef's hat, red Converse) is built to match it in `50-chars.js`.
 - Bodies are built to match the faces: one smooth torso lofted from cross-sections (no separate shoulder pads or boards on the chest), rounded shoulders, elbows and knees, and hands and necks in skin sampled from each face photo. Clothes are drawn over woven fabric textures (`tools/fabrics.py`: twill, shirting, jersey, denim, nylon), with lapels, collars, ties, buttons and cuffs painted into the cloth. What each person wears is `OUTFIT` in `50-chars.js`.
 - `PUPPET` in `src/js/50-chars.js` switches the whole look back to the painted faces and outlined bodies.
