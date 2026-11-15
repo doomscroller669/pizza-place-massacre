@@ -123,7 +123,8 @@ def atlas(who, expr, img, M):
         if yy != y: f[y] = row
         f[y, :l] = row[l]; f[y, r + 1:] = row[r]
         if yy != y: f[y, l:r + 1] = row[l:r + 1]
-    soft = cv2.GaussianBlur(f, (7, 7), 0)
+    # smear the fill up and down too, so the sides of the head (which show the atlas edge) shade smoothly, not in stripes
+    soft = cv2.GaussianBlur(f.astype(np.float32), (0, 0), sigmaX=2, sigmaY=9)
     w = cv2.GaussianBlur(keep.astype(np.float32), (5, 5), 0)[..., None]
     a = (a * w + soft * (1 - w)).astype(np.uint8)
     res = Image.fromarray(a)

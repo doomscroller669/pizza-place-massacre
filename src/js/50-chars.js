@@ -18,8 +18,8 @@ function smooth01(t){return t*t*(3-2*t);}
 const INK=new THREE.MeshBasicMaterial({color:0x0a0605,side:THREE.BackSide});
 function inkHull(geo,w){const g=geo.clone();const p=g.attributes.position,n=g.attributes.normal;for(let i=0;i<p.count;i++)p.setXYZ(i,p.getX(i)+n.getX(i)*w,p.getY(i)+n.getY(i)*w,p.getZ(i)+n.getZ(i)*w);g.deleteAttribute('color');return g;}
 /* a part: geometry + flat color or texture, with an ink outline */
-/* In the Puppet Combo style (PUPPET) bodies are low-poly and faceted, with no ink outline; heads stay smooth. */
-function part(ch,geo,col,opts={}){geo=shadeGeo(geo,opts.top,opts.bottom,opts.smooth!==undefined?opts.smooth:opts.flat||PUPPET?false:!(geo.type==='BoxGeometry'));const mat=psx(new THREE.MeshBasicMaterial({color:0xffffff,vertexColors:true,map:opts.map||null}));mat.userData.base=new THREE.Color(col);
+/* In the Puppet Combo style (PUPPET) there's no ink outline. */
+function part(ch,geo,col,opts={}){geo=shadeGeo(geo,opts.top,opts.bottom,opts.smooth!==undefined?opts.smooth:opts.flat?false:!(geo.type==='BoxGeometry'));const mat=psx(new THREE.MeshBasicMaterial({color:0xffffff,vertexColors:true,map:opts.map||null}));mat.userData.base=new THREE.Color(col);
   const m=new THREE.Mesh(geo,mat);ch.mats.push(mat);if(opts.ink!==0&&!PUPPET){const o=new THREE.Mesh(inkHull(geo,opts.ink||0.012),INK);m.add(o);}return m;}
 const LOWP=n=>PUPPET?Math.max(5,Math.round(n*0.67)):n;
 const GEO={box:(w,h,d)=>new THREE.BoxGeometry(w,h,d),cyl:(rt,rb,h,s=9)=>new THREE.CylinderGeometry(rt,rb,h,LOWP(s)),sph:(r,w=12,h=9)=>new THREE.SphereGeometry(r,LOWP(w),Math.max(4,LOWP(h)))};
@@ -70,7 +70,9 @@ function drawPhotoFace(g,id,e,blink,talk){const P=PHOTO[id],W=g.canvas.width,k=W
 /* the blocky head: a box pulled most of the way to an egg, the jaw narrowed. The photo is projected straight onto the
    front at one scale both ways (crown to chin = the texture's height); the back third takes the hair band from the
    top of the photo. Each triangle picks one or the other, so nothing smears across the seam. */
-function photoHeadGeo(hr,back){const bv=back||[0.8,0.95];const H=hr*2.2,W=hr*1.5,D=hr*1.78;let g=new THREE.BoxGeometry(W,H,D,4,6,4);const p=g.attributes.position;
+/* chin: how far down the photo the head ends (0..1). Below the chin the photo shows neck and collar, which the body has. */
+function photoChin(id){const m=FACE_MARKS[id];if(!m||id==='toni')return 1;const ey=(m.eyeR[1]+m.eyeL[1])/2,my=(m.mouthR[1]+m.mouthL[1])/2;return clamp((my+(my-ey)*0.34+2)/128,0.8,1);}
+function photoHeadGeo(hr,back,chin=1){const bv=back||[0.8,0.95];const H=hr*2.2,W=hr*1.5,D=hr*1.78;let g=new THREE.BoxGeometry(W,H,D,4,6,4);const p=g.attributes.position;
   for(let i=0;i<p.count;i++){let nx=p.getX(i)/(W/2),ny=p.getY(i)/(H/2),nz=p.getZ(i)/(D/2);const l=Math.hypot(nx,ny,nz)||1;
     nx=lerp(nx,nx/l*1.12,0.62);ny=lerp(ny,ny/l*1.08,0.55);nz=lerp(nz,nz/l*1.12,0.62);
     const jaw=clamp((-0.15-ny)/0.85,0,1);nx*=1-0.24*jaw;nz*=1-0.12*jaw;if(nz>0)nz*=1-0.06*clamp(1-Math.abs(ny),0,1);
@@ -78,7 +80,7 @@ function photoHeadGeo(hr,back){const bv=back||[0.8,0.95];const H=hr*2.2,W=hr*1.5
   g.computeVertexNormals();g=g.toNonIndexed();const P=g.attributes.position,uv=new Float32Array(P.count*2);
   for(let t=0;t<P.count;t+=3){const cz=(P.getZ(t)+P.getZ(t+1)+P.getZ(t+2))/3,back=cz<-D*0.16;
     for(let j=t;j<t+3;j++){const x=P.getX(j),y=P.getY(j),vy=(y+H/2)/H;
-      uv[j*2]=back?0.5+x/H*0.5:0.5+x/H;uv[j*2+1]=back?bv[0]+(bv[1]-bv[0])*vy:vy;}}
+      uv[j*2]=back?0.5+x/H*0.5:0.5+x/H*chin;uv[j*2+1]=back?bv[0]+(bv[1]-bv[0])*vy:1-(1-vy)*chin;}}
   g.setAttribute('uv',new THREE.BufferAttribute(uv,2));return g;}
 
 /* ---------- faces ---------- */
@@ -153,6 +155,141 @@ const CAST={
   toni:   {name:'Toni',h:1.9,build:1.02,toni:1,skin:'#9a8068',shirt:'#9a8068',pants:'#9a8068',shoe:'#c41e1a',eye:'#000'},
 };
 const CHARS={};
+/* ============================================================
+   HUMAN BODIES (Puppet Combo style). One smooth, continuous torso and pelvis lofted from cross-sections, smooth limbs
+   with rounded shoulders, elbows and knees, and clothes painted over photo fabrics (06-facedata.js, made by
+   tools/fabrics.py): collars, ties, lapels, buttons and cuffs are part of the cloth, not boards stuck on the chest.
+   Necks and hands wear skin cut from the character's own face photo, so the body matches the head.
+   The joints (and their names) are the same as the classic body's, so every pose and animation still fits.
+   ============================================================ */
+const FAB={};
+function fabImg(name){if(FAB[name])return FAB[name];const im=new Image();im.cbs=[];im.onload=()=>{im.cbs.forEach(f=>f());im.cbs=[];};
+  if(typeof FABRIC_DATA!=='undefined'&&FABRIC_DATA[name])im.src=FABRIC_DATA[name];FAB[name]=im;return im;}
+function whenLoaded(im,fn){if(im.complete&&im.naturalWidth)fn();else im.cbs.push(fn);}
+/* a 128x128 cloth: the fabric photo tiled (tile px wide), then paint(g) on top. Repainted once the photo arrives. */
+function clothCanvas(fab,fallback,paint,tile=64){const cv=canvas(128,128),t=texFrom(cv,false);t.magFilter=THREE.LinearFilter;t.minFilter=THREE.LinearFilter;
+  const draw=()=>{const g=cv.getContext('2d');g.setTransform(1,0,0,1,0,0);g.fillStyle=fallback;g.fillRect(0,0,128,128);const im=fab&&fabImg(fab);
+    if(im&&im.complete&&im.naturalWidth)for(let y=0;y<128;y+=tile)for(let x=0;x<128;x+=tile)g.drawImage(im,x,y,tile,tile);if(paint)paint(g);t.needsUpdate=true;};
+  draw();if(fab){const im=fabImg(fab);if(!(im.complete&&im.naturalWidth))whenLoaded(im,draw);}return t;}
+/* skin: a patch of cheek from the face photo, tiled */
+function skinCanvas(id,fallback){const cv=canvas(32,32),t=texFrom(cv,true);t.magFilter=THREE.LinearFilter;t.minFilter=THREE.LinearFilter;const g=cv.getContext('2d');g.fillStyle=fallback;g.fillRect(0,0,32,32);
+  const P=PHOTO[id];if(P&&P.img.neutral){const im=P.img.neutral,m=P.mk;const go=()=>{const w=im.naturalWidth/128;
+    const sw=canvas(8,8),sg=sw.getContext('2d');sg.imageSmoothingEnabled=true;
+    if(id==='toni')sg.drawImage(im,56*w,48*w,14*w,10*w,0,0,8,8);else{sg.drawImage(im,(m.eyeR[0]-5)*w,(m.eyeR[1]+11)*w,10*w,10*w,0,0,4,8);sg.drawImage(im,(m.eyeL[0]-5)*w,(m.eyeL[1]+11)*w,10*w,10*w,4,0,4,8);}
+    g.imageSmoothingEnabled=true;g.filter='blur(3px)';g.drawImage(sw,-4,-4,40,40);g.filter='none';
+    const rs=mulberry(id.length*7);for(let i=0;i<60;i++){g.fillStyle=i%2?'rgba(90,40,30,.06)':'rgba(255,230,210,.05)';g.fillRect(rs()*32,rs()*32,1,1);}
+    g.fillStyle='rgba(70,30,15,.14)';g.fillRect(0,0,32,32);t.needsUpdate=true;};
+    if(im.complete&&im.naturalWidth)go();else im.addEventListener('load',go);}return t;}
+/* a lofted tube: rings [{y,w,d,z}] bottom to top, superellipse sections (n: 2 = ellipse, higher = squarer).
+   u runs round the body with the front at u=0.5; v runs bottom to top. Capped at both ends. */
+function loftGeo(rings,seg=16,n=2.4,capBottom=true){const pos=[],uv=[],idx=[];const R=rings.length;
+  // v follows the distance along the front of the body, so cloth isn't squashed where the shoulders slope in to the neck
+  const L=[0];for(let r=1;r<R;r++){const a=rings[r-1],c=rings[r];L.push(L[r-1]+Math.hypot(c.y-a.y,(c.d+(c.z||0))-(a.d+(a.z||0))));}const LT=L[R-1]||1;
+  for(let r=0;r<R;r++){const g=rings[r];for(let i=0;i<=seg;i++){const u=i/seg,th=TAU*(u-0.5),sn=Math.sin(th),cs=Math.cos(th);
+      const x=g.w*Math.sign(sn)*Math.pow(Math.abs(sn),2/n),z=(g.z||0)+(cs>0?g.d:(g.db||g.d))*Math.sign(cs)*Math.pow(Math.abs(cs),2/n);pos.push(x,g.y,z);uv.push(u,L[r]/LT);}}
+  for(let r=0;r<R-1;r++)for(let i=0;i<seg;i++){const a=r*(seg+1)+i,b2=a+seg+1;idx.push(a,a+1,b2,a+1,b2+1,b2);}
+  const cap=(r,up)=>{const c=pos.length/3;const g=rings[r];pos.push(0,g.y,g.z||0);uv.push(0.5,L[r]/LT);for(let i=0;i<seg;i++){const a=r*(seg+1)+i;up?idx.push(c,a+1,a):idx.push(c,a,a+1);}};
+  if(capBottom)cap(0,false);cap(R-1,true);
+  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));geo.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));geo.setIndex(idx);geo.computeVertexNormals();return geo;}
+/* what each character wears: fabric photo per garment, and the details painted over it */
+const OUTFIT={
+  dad:    {coat:'suit_black',coatCol:'#1b1c22',shirt:'shirt_white',shirtCol:'#e8e4da',tie:'#2a1630',pants:'suit_black',pantsCol:'#18181c',v:'suit'},
+  grandpa:{coat:'suit_grey',coatCol:'#3a3a3e',shirt:'shirt_white',shirtCol:'#d8d2c0',tie:'#5a1a1a',pants:'suit_grey',pantsCol:'#2c2c30',v:'suit'},
+  uncle:  {coat:'suit_dark',coatCol:'#2a2a30',shirt:'jersey_black',shirtCol:'#0e0e10',pants:'suit_dark',pantsCol:'#1c1c22',v:'open',chain:1},
+  alex:   {shirt:'shirt_white',shirtCol:'#ecebe6',tie:'#141418',pants:'suit_black',pantsCol:'#1a1a20',short:1},
+  ruben:  {coat:'suit_dark',coatCol:'#24242a',shirt:'jersey_black',shirtCol:'#222224',pants:'denim_dark',pantsCol:'#2a2a32',v:'wide',print:1},
+  lucia:  {shirt:'jersey_black',shirtCol:'#121214',pants:'jersey_black',pantsCol:'#111114',dress:1,short:1},
+  manny:  {shirt:'shirt_red',shirtCol:'#b8261a',pants:'denim_dark',pantsCol:'#22242a',short:1,placket:1},
+  toni:   {shirt:'stocking',shirtCol:'#9a8068',pants:'stocking',pantsCol:'#9a8068',bare:1},
+};
+function vHalf(y,o){return o.v==='wide'?lerp(14,9,y/100):o.v==='open'?lerp(11,3,y/80):lerp(8.5,1.5,y/72);}
+function vBottom(o){return o.v==='wide'?128:o.v==='open'?80:72;}
+/* the torso cloth: canvas x=64 is the middle of the chest, y=0 the base of the neck, y=128 the waist */
+function torsoCloth(o){const main=o.coat||o.shirt,mainCol=o.coatCol||o.shirtCol;
+  return clothCanvas(main,mainCol,(g)=>{const inner=o.coat&&fabImg(o.shirt);
+    if(o.coat){// the opening of the jacket: shirt inside a V, lapels along its edges, buttons below
+      const vb=vBottom(o);g.save();g.beginPath();g.moveTo(64-vHalf(0,o),0);g.lineTo(64-vHalf(vb,o)*0.3,vb);g.lineTo(64+vHalf(vb,o)*0.3,vb);g.lineTo(64+vHalf(0,o),0);g.closePath();g.clip();
+      g.fillStyle=o.shirtCol;g.fillRect(0,0,128,128);if(inner&&inner.complete&&inner.naturalWidth){g.drawImage(inner,0,0,64,64);g.drawImage(inner,64,0,64,64);g.drawImage(inner,0,64,64,64);g.drawImage(inner,64,64,64,64);}
+      if(o.print){g.fillStyle='#b8261a';g.fillRect(56,26,16,14);g.fillStyle='rgba(240,230,210,.8)';g.fillRect(59,29,10,2);g.fillRect(59,33,7,2);}
+      if(o.tie){g.fillStyle=o.tie;g.beginPath();g.moveTo(62.2,5);g.lineTo(65.8,5);g.lineTo(67,128);g.lineTo(61,128);g.closePath();g.fill();g.fillStyle=shadeHex(o.tie,0.65);g.beginPath();g.moveTo(61.2,0);g.lineTo(66.8,0);g.lineTo(65.6,6);g.lineTo(62.4,6);g.closePath();g.fill();g.fillStyle='rgba(255,255,255,.08)';g.fillRect(63,8,1,120);}
+      if(o.chain){g.strokeStyle='#d8b050';g.lineWidth=1.4;g.beginPath();g.arc(64,-6,10,0.3,Math.PI-0.3);g.stroke();}
+      g.fillStyle='rgba(0,0,0,.25)';g.fillRect(0,0,128,3);g.restore();
+      // shirt collar points
+      if(o.shirtCol){g.fillStyle=o.shirtCol;[-1,1].forEach(k=>{g.beginPath();g.moveTo(64+k*vHalf(0,o),0);g.lineTo(64+k*(vHalf(0,o)+5),0);g.lineTo(64+k*3,10);g.closePath();g.fill();});}
+      // lapels: a darker band along each edge of the V, with a notch near the top
+      [-1,1].forEach(k=>{g.strokeStyle='rgba(0,0,0,.45)';g.lineWidth=1.2;g.beginPath();g.moveTo(64+k*vHalf(0,o),0);g.lineTo(64+k*vHalf(vb,o)*0.3,vb);g.stroke();
+        g.strokeStyle='rgba(0,0,0,.28)';g.lineWidth=4;g.beginPath();g.moveTo(64+k*(vHalf(0,o)+4),2);g.lineTo(64+k*(vHalf(vb,o)*0.3+4),vb);g.stroke();
+        g.fillStyle='rgba(0,0,0,.4)';g.fillRect(64+k*(vHalf(14,o)+3)-1,14,3,2);});
+      if(o.v!=='wide')[vb+10,vb+30].forEach(y=>{if(y<126){g.fillStyle='#0b0b0d';g.beginPath();g.arc(64,y,1.6,0,TAU);g.fill();g.fillStyle='rgba(255,255,255,.15)';g.fillRect(63.5,y-1.2,1,1);}});
+      // pocket flaps and the side seams
+      g.fillStyle='rgba(0,0,0,.3)';g.fillRect(36,104,14,1.5);g.fillRect(78,104,14,1.5);g.fillRect(84,40,12,1.2);
+      g.fillStyle='rgba(0,0,0,.18)';g.fillRect(31,0,1.5,128);g.fillRect(95.5,0,1.5,128);g.fillRect(0,0,1.5,128);g.fillRect(126.5,0,1.5,128);}
+    else if(o.dress){// a scoop neckline, skin showing
+      g.fillStyle='rgba(0,0,0,.2)';g.fillRect(31,0,1.5,128);g.fillRect(95.5,0,1.5,128);}
+    else if(o.bare){g.fillStyle='rgba(60,40,25,.15)';g.fillRect(63,0,1.5,128);}
+    else{// a shirt: collar, the button line (under the tie, if there is one)
+      g.fillStyle='rgba(0,0,0,.18)';g.fillRect(66,0,1.2,128);for(let y=12;y<128;y+=20){g.fillStyle='rgba(240,240,235,.9)';g.beginPath();g.arc(64,y,1.4,0,TAU);g.fill();g.fillStyle='rgba(0,0,0,.25)';g.fillRect(63.4,y-0.3,1.2,0.6);}
+      g.fillStyle=shadeHex(o.shirtCol,0.82);[-1,1].forEach(k=>{g.beginPath();g.moveTo(64,6);g.lineTo(64+k*14,0);g.lineTo(64+k*16,4);g.lineTo(64+k*4,11);g.closePath();g.fill();});
+      if(o.tie){g.fillStyle=o.tie;g.beginPath();g.moveTo(61,4);g.lineTo(67,4);g.lineTo(68,96);g.lineTo(64,101);g.lineTo(60,96);g.closePath();g.fill();g.fillStyle=shadeHex(o.tie,0.7);g.fillRect(60,0,8,6);}
+      g.fillStyle='rgba(0,0,0,.15)';g.fillRect(31,0,1.5,128);g.fillRect(95.5,0,1.5,128);}
+  });}
+function sleeveCloth(o,lower){const f=o.coat||o.shirt,c=o.coatCol||o.shirtCol;
+  return clothCanvas(f,c,(g)=>{g.fillStyle='rgba(0,0,0,.2)';g.fillRect(63,0,1.4,128);
+    if(lower&&o.coat){g.fillStyle=o.shirtCol;g.fillRect(0,116,128,12);const im=fabImg(o.shirt);if(im.complete&&im.naturalWidth)g.drawImage(im,0,116,128,12);g.fillStyle='rgba(0,0,0,.35)';g.fillRect(0,115,128,1.5);}
+    if(!lower&&o.short){g.fillStyle='rgba(0,0,0,.35)';g.fillRect(0,124,128,4);}});}
+function pantsCloth(o,pelvis){return clothCanvas(o.pants,o.pantsCol,(g)=>{
+  if(pelvis){if(!o.bare){g.fillStyle='rgba(0,0,0,.3)';g.fillRect(63.5,40,1.2,88);g.fillRect(38,20,1.2,40);g.fillRect(89,20,1.2,40);}}
+  else if(!o.bare&&!o.dress){g.fillStyle='rgba(255,255,255,.08)';g.fillRect(0,0,1.5,128);g.fillRect(126.5,0,1.5,128);g.fillStyle='rgba(0,0,0,.2)';g.fillRect(64,0,1.2,128);}});}
+
+function humanBody(ch,{s,id,S,b,hips,spine,J,skinTex,o}){
+  const W='#ffffff';
+  // torso, waist to the base of the neck: one piece, broad at the shoulders and narrowing into the neck
+  const T=[{y:0.0,w:0.158,d:0.1,db:0.095},{y:0.1,w:0.162,d:0.106,db:0.1},{y:0.22,w:0.172,d:0.118,db:0.105,z:0.006},{y:0.33,w:0.185,d:0.122,db:0.108,z:0.01},
+    {y:0.42,w:0.196,d:0.112,db:0.104,z:0.006},{y:0.47,w:0.192,d:0.094,db:0.094},{y:0.5,w:0.15,d:0.078,db:0.078},{y:0.522,w:0.08,d:0.066}].map(r=>({y:(r.y+0.02)*S,w:r.w*b*S*(s.dress&&r.y>0.15&&r.y<0.4?0.96:1),d:r.d*b*S,db:r.db*b*S,z:(r.z||0)*S}));
+  const torso=part(ch,loftGeo(T,16,2.6,false),W,{map:torsoCloth(o),top:1.04,bottom:0.82,smooth:true,ink:0});spine.add(torso);
+  // the neckline of a dress shows skin: a small collar of skin inside it
+  if(o.dress){const sc=part(ch,GEO.cyl(0.075*S,0.1*S,0.05*S,12),W,{map:skinTex,smooth:true,ink:0});sc.scale.z=0.75;sc.position.set(0,0.52*S,0.008);spine.add(sc);}
+  // pelvis: waist to crotch
+  const P=[{y:-0.12,w:0.14,d:0.085},{y:-0.07,w:0.158,d:0.1},{y:0.0,w:0.165,d:0.108},{y:0.07,w:0.158,d:0.1}].map(r=>({y:r.y*S,w:r.w*b*S,d:r.d*b*S}));
+  const pel=part(ch,loftGeo(P,16,2.4),W,{map:o.dress?torsoCloth(o):pantsCloth(o,true),top:1,bottom:0.7,smooth:true,ink:0});hips.add(pel);
+  if(o.dress){const sk=part(ch,GEO.cyl(0.17*b*S,0.25*b*S,0.42*S,16),W,{map:clothCanvas(o.shirt,o.shirtCol,null),smooth:true,ink:0});sk.scale.z=0.78;sk.position.y=-0.17*S;hips.add(sk);}
+  else if(!o.bare){const belt=part(ch,GEO.cyl(0.161*b*S,0.161*b*S,0.03*S,16),'#16100c',{ink:0,map:clothTex('leather'),smooth:true});belt.scale.z=0.66;belt.position.y=0.055*S;hips.add(belt);
+    const bk=part(ch,GEO.box(0.035*S,0.026*S,0.01),'#b8a060',{ink:0});bk.position.set(0,0.055*S,0.108*b*S);hips.add(bk);}
+  // aprons stay real cloth over the clothes
+  if(s.apron||s.toni){const ap=part(ch,GEO.box(0.3*b*S,0.5*S,0.02),s.toni?'#ece8de':W,{ink:0,map:s.toni?SIGN.apron:clothCanvas('apron_black',s.apron,null)});ap.position.set(0,0.12*S,0.128*b*S);spine.add(ap);ch.extra.apron=ap;
+    if(s.toni){const lo=part(ch,GEO.box(0.32*b*S,0.36*S,0.02),'#ece8de',{ink:0,map:SIGN.apronLow});lo.position.set(0,-0.24*S,0.122*b*S);hips.add(lo);
+      [-1,1].forEach(k=>{const st=part(ch,GEO.box(0.022*S,0.2*S,0.01),'#ece8de',{ink:0});st.position.set(k*0.055*S,0.44*S,0.1*b*S);st.rotation.z=-k*0.35;spine.add(st);});}
+    else{const st=part(ch,GEO.box(0.18*S,0.022*S,0.01),'#1a1a1a',{ink:0});st.position.set(0,0.43*S,0.118*b*S);spine.add(st);
+      const tag=part(ch,GEO.box(0.06*S,0.025*S,0.008),'#e8e2d0',{ink:0});tag.position.set(-0.1*S,0.4*S,0.122*b*S);spine.add(tag);}}
+  const upper=sleeveCloth(o,false),lower=o.short?skinTex:sleeveCloth(o,true),legs=pantsCloth(o,false);
+  // arms: a rounded shoulder that turns with the arm, a tapered upper arm and forearm, a filled-in elbow
+  for(const side of ['L','R']){const k=side==='L'?1:-1;const sh=J('sh'+side);sh.position.set(k*0.205*b*S,0.46*S,0);spine.add(sh);
+    const dl=part(ch,GEO.sph(0.06*b*S,12,9),W,{map:upper,smooth:true,ink:0});dl.scale.set(0.95,1.15,1);dl.position.set(-k*0.008*S,-0.03*S,0);sh.add(dl);
+    const ua=part(ch,limbGeo(0.29*S,0.058*b*S,0.046*b*S,10),W,{map:upper,smooth:true,ink:0});sh.add(ua);
+    const el=J('el'+side);el.position.y=-0.29*S;sh.add(el);
+    const eb=part(ch,GEO.sph(0.046*b*S,10,8),W,{map:o.short?skinTex:upper,smooth:true,ink:0});el.add(eb);
+    const fa=part(ch,limbGeo(0.26*S,0.046*b*S,0.034*b*S,10),W,{map:lower,smooth:true,ink:0});el.add(fa);
+    const hd=J('hand'+side);hd.position.y=-0.27*S;el.add(hd);
+    // a hand: palm, fingers curled a little, a thumb
+    const palm=part(ch,GEO.box(0.072*S,0.08*S,0.03*S),W,{map:skinTex,ink:0});palm.position.y=-0.035*S;hd.add(palm);
+    const fg=part(ch,GEO.box(0.068*S,0.07*S,0.024*S),W,{map:skinTex,ink:0});fg.position.set(0,-0.1*S,0.008*S);fg.rotation.x=0.3;hd.add(fg);
+    const th=part(ch,GEO.box(0.02*S,0.05*S,0.022*S),W,{map:skinTex,ink:0});th.position.set(k*0.04*S,-0.035*S,0.016*S);th.rotation.z=-k*0.5;th.rotation.x=0.3;hd.add(th);
+    if(s.bracelet&&side==='L'){const br=part(ch,GEO.cyl(0.04*S,0.04*S,0.022,10),'#d42a1a',{ink:0,smooth:true});br.position.y=-0.235*S;el.add(br);ch.extra.bracelet=br;}
+    if(s.watch&&side==='L'){const w=part(ch,GEO.cyl(0.04*S,0.04*S,0.026,10),'#d8b050',{ink:0,smooth:true});w.position.y=-0.235*S;el.add(w);}}
+  // legs: thigh, a filled-in knee, shin, shoes
+  for(const side of ['L','R']){const k=side==='L'?1:-1;const hp=J('hip'+side);hp.position.set(k*0.09*b*S,-0.06*S,0);hips.add(hp);
+    const th=part(ch,limbGeo(0.42*S,0.078*b*S,0.056*b*S,10),W,{map:legs,smooth:true,ink:0});hp.add(th);
+    const kn=J('knee'+side);kn.position.y=-0.42*S;hp.add(kn);const kb=part(ch,GEO.sph(0.056*b*S,10,8),W,{map:legs,smooth:true,ink:0});kn.add(kb);
+    const shn=part(ch,limbGeo(0.42*S,0.056*b*S,0.04*b*S,10),W,{map:legs,smooth:true,ink:0});kn.add(shn);
+    const ft=J('foot'+side);ft.position.y=-0.43*S;kn.add(ft);
+    const shoe=part(ch,GEO.box(0.095*b*S,0.075*S,(s.toni?0.27:0.23)*S),s.shoe,{map:s.toni?clothTex('knit'):clothTex('leather')});shoe.position.set(0,0,0.05*S);ft.add(shoe);
+    if(!s.toni){const sole=part(ch,GEO.box(0.1*b*S,0.02*S,0.24*S),s.shoe==='#e8e6e0'?'#c8c4b8':'#241e1a',{ink:0});sole.position.set(0,-0.045*S,0.05*S);ft.add(sole);
+      const toe=part(ch,GEO.cyl(0.048*b*S,0.048*b*S,0.075*S,10),s.shoe,{ink:0,map:clothTex('leather'),smooth:true});toe.scale.set(1,1,0.6);toe.position.set(0,0,0.165*S);ft.add(toe);}
+    else{const toe=part(ch,GEO.box(0.1*b*S,0.05*S,0.07*S),'#f4f0e8',{ink:0});toe.position.set(0,-0.012,0.155*S);ft.add(toe);const sole=part(ch,GEO.box(0.104*b*S,0.025*S,0.28*S),'#f4f0e8',{ink:0});sole.position.set(0,-0.045,0.05*S);ft.add(sole);
+      const hi=part(ch,GEO.box(0.092*b*S,0.1*S,0.11*S),s.shoe,{ink:0,map:clothTex('knit')});hi.position.set(0,0.07*S,0);ft.add(hi);
+      const lace=part(ch,GEO.box(0.03*S,0.012,0.13*S),'#f4f0e8',{ink:0});lace.position.set(0,0.042*S,0.06*S);lace.rotation.x=-0.25;ft.add(lace);}}
+}
+
 function buildChar(id){const s=CAST[id];const ch={id,s,mats:[],j:{},pose:'stand',expr:'neutral',t:R()*10,blinkT:2+R()*3,talkT:0,x:0,z:0,yaw:0,y:0,root:new THREE.Group(),walkPh:0,speed:0,look:null,lookW:0,extra:{}};
   const H=s.h,b=s.build,S=H/1.78;
   const photo=hasPhoto(id);if(photo)loadPhoto(id);
@@ -164,6 +301,9 @@ function buildChar(id){const s=CAST[id];const ch={id,s,mats:[],j:{},pose:'stand'
   const J=n=>{const g=new THREE.Group();ch.j[n]=g;return g;};
   const hips=J('hips');hips.position.y=0.94*S;ch.root.add(hips);
   const spine=J('spine');hips.add(spine);
+  const skinTex=PUPPET?skinCanvas(id,skin):null;
+  if(PUPPET)humanBody(ch,{s,id,S,b,hips,spine,J,skinTex,o:OUTFIT[id]||OUTFIT.dad});
+  else{
   const chestCol=s.jacket||s.shirt;
   const torso=part(ch,GEO.cyl(0.19*b*S,0.17*b*S,0.5*S,12),chestCol,{map:top});torso.scale.z=0.62;torso.position.y=0.27*S;spine.add(torso);
   // rounded shoulders, so the silhouette isn't a tin can
@@ -190,11 +330,12 @@ function buildChar(id){const s=CAST[id];const ch={id,s,mats:[],j:{},pose:'stand'
   else if(!s.toni){// a belt with a buckle
     const belt=part(ch,GEO.cyl(0.172*b*S,0.172*b*S,0.035*S,12),'#16100c',{ink:0,map:clothTex('leather')});belt.scale.z=0.72;belt.position.y=0.06*S;hips.add(belt);
     const bk=part(ch,GEO.box(0.04*S,0.03*S,0.01),'#c8b070',{ink:0});bk.position.set(0,0.06*S,0.125*b*S);hips.add(bk);}
+  }
   const neck=J('neck');neck.position.y=0.52*S;spine.add(neck);
-  const nk=part(ch,photo?GEO.cyl(0.062*S,0.07*S,0.1*S,9):GEO.cyl(0.05*S,0.06*S,0.1*S,9),skin,{ink:0,top:0.75,bottom:0.5});nk.position.y=0.04*S;neck.add(nk);
+  const nk=PUPPET?part(ch,GEO.cyl(0.066*S,0.074*S,0.14*S,12),'#ffffff',{ink:0,top:0.86,bottom:0.72,map:skinTex,smooth:true}):part(ch,photo?GEO.cyl(0.062*S,0.07*S,0.1*S,9):GEO.cyl(0.05*S,0.06*S,0.1*S,9),skin,{ink:0,top:0.75,bottom:0.5});nk.position.y=(PUPPET?0.05:0.04)*S;if(PUPPET)nk.scale.z=0.92;neck.add(nk);
   const head=J('head');head.position.y=(photo?0.075:0.1)*S;neck.add(head);
   const hr=(photo?0.135:s.toni?0.165:0.125)*S;const hg=GEO.sph(hr,16,12);if(s.toni){const p=hg.attributes.position;const rr2=mulberry(41);for(let i=0;i<p.count;i++){const k=1+(rr2()-0.5)*0.12;p.setXYZ(i,p.getX(i)*k,p.getY(i)*k*1.05,p.getZ(i)*k*(p.getZ(i)>0?0.92:1));}}
-  const hm=photo?part(ch,photoHeadGeo(hr,FACE_MARKS[id].back),'#ffffff',{map:ch.faceTex,top:1.02,bottom:0.9,ink:0,smooth:true}):part(ch,hg,'#ffffff',{map:ch.faceTex,top:1.05,bottom:0.85});
+  const hm=photo?part(ch,photoHeadGeo(hr,FACE_MARKS[id].back,photoChin(id)),'#ffffff',{map:ch.faceTex,top:1.02,bottom:0.9,ink:0,smooth:true}):part(ch,hg,'#ffffff',{map:ch.faceTex,top:1.05,bottom:0.85});
   hm.position.y=hr*0.95;if(!photo)hm.scale.set(1,1.08,1);head.add(hm);ch.headMesh=hm;
   if(!s.toni&&!photo){// ears and a nose, so the head has a profile
     [-1,1].forEach(k=>{const e=part(ch,GEO.sph(hr*0.26,8,6),s.skin,{ink:0.005});e.scale.set(0.45,1,0.75);e.position.set(k*hr*0.98,hr*0.88,-hr*0.05);head.add(e);});
@@ -212,8 +353,8 @@ function buildChar(id){const s=CAST[id];const ch={id,s,mats:[],j:{},pose:'stand'
     const band=part(ch,GEO.cyl(hr*0.82,hr*0.8,hr*0.42,10),'#ece6d8',{});band.position.y=hr*2.08;head.add(band);
     const puff=part(ch,GEO.sph(hr*1.08,10,8),'#f2eee4',{map:clothTex('knit')});puff.scale.set(1.05,0.68,1);puff.position.set(0,hr*2.55,-hr*0.05);puff.rotation.z=0.12;head.add(puff);
   }
-  // arms
-  for(const side of ['L','R']){const k=side==='L'?1:-1;const sh=J('sh'+side);sh.position.set(k*0.22*b*S,0.46*S,0);spine.add(sh);
+  // arms (classic body)
+  if(!PUPPET)for(const side of ['L','R']){const k=side==='L'?1:-1;const sh=J('sh'+side);sh.position.set(k*0.22*b*S,0.46*S,0);spine.add(sh);
     const ua=part(ch,limbGeo(0.29*S,0.055*b*S,0.047*b*S),s.jacket||s.shirt,{map:top});sh.add(ua);
     const el=J('el'+side);el.position.y=-0.29*S;sh.add(el);
     const fa=part(ch,limbGeo(0.26*S,0.045*b*S,0.038*b*S),s.jacket||s.shirt,{map:top});el.add(fa);
@@ -225,8 +366,8 @@ function buildChar(id){const s=CAST[id];const ch={id,s,mats:[],j:{},pose:'stand'
     if(s.bracelet&&side==='L'){const br=part(ch,GEO.cyl(0.044*S,0.044*S,0.025,8),'#d42a1a',{ink:0.004});br.position.y=-0.23*S;el.add(br);ch.extra.bracelet=br;}
     if(s.watch&&side==='L'){const w=part(ch,GEO.cyl(0.044*S,0.044*S,0.03,8),'#e8c060',{ink:0.004});w.position.y=-0.23*S;el.add(w);}
   }
-  // legs
-  for(const side of ['L','R']){const k=side==='L'?1:-1;const hp=J('hip'+side);hp.position.set(k*0.095*b*S,-0.06*S,0);hips.add(hp);
+  // legs (classic body)
+  if(!PUPPET)for(const side of ['L','R']){const k=side==='L'?1:-1;const hp=J('hip'+side);hp.position.set(k*0.095*b*S,-0.06*S,0);hips.add(hp);
     const th=part(ch,limbGeo(0.42*S,0.075*b*S,0.06*b*S),s.dress?s.pants:s.pants,{map:legs});hp.add(th);
     const kn=J('knee'+side);kn.position.y=-0.42*S;hp.add(kn);const sh=part(ch,limbGeo(0.42*S,0.057*b*S,0.045*b*S),s.pants,{map:legs});kn.add(sh);
     const ft=J('foot'+side);ft.position.y=-0.43*S;kn.add(ft);

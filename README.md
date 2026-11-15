@@ -56,12 +56,14 @@ The cast has photo faces in the Puppet Combo style: a low-poly blocky head with 
 
 - Who each person is (age, hair, clothes) is `FACE` at the top of `tools/faces.py`; the expressions are `EXPR`.
 - Toni's mask is cut from Jordan's reference picture (`tools/faces/toni-ref.jpg`, kept out of git) with the eyes and smile marked by hand in `FACE`; his body (tan stocking suit, stained white apron, chef's hat, red Converse) is built to match it in `50-chars.js`.
+- Bodies are built to match the faces: one smooth torso lofted from cross-sections (no separate shoulder pads or boards on the chest), rounded shoulders, elbows and knees, and hands and necks in skin sampled from each face photo. Clothes are drawn over woven fabric textures (`tools/fabrics.py`: twill, shirting, jersey, denim, nylon), with lapels, collars, ties, buttons and cuffs painted into the cloth. What each person wears is `OUTFIT` in `50-chars.js`.
 - `PUPPET` in `src/js/50-chars.js` switches the whole look back to the painted faces and outlined bodies.
 
 ```
 pip install diffusers transformers peft opencv-python pillow rembg
 # YuNet's model file: face_detection_yunet_2023mar.onnx from github.com/opencv/opencv_zoo (path in faces.py, YUNET)
 python3 tools/faces.py            # or: python3 tools/faces.py dad lucia --expr neutral,fear
+python3 tools/fabrics.py
 python3 tools/faces_pack.py
 python3 tools/assemble.py
 ```

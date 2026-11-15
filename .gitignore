@@ -8,3 +8,4 @@ local.properties
 __pycache__/
 tools/faces/*.png
 tools/faces/toni-ref.*
+tools/fabrics/*.png
