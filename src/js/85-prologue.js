@@ -137,7 +137,7 @@ async function coldDevon(){const run=G.run;const T=CHARS.toni,D=CHARS.devon;
   await nudge(11.9,1.4,8.75,0.8);if(!alive(run))return;
   await line('manny','Devon! DEVON! Behind you!',{expr:'fear'});if(!alive(run))return;
   for(let i=0;i<3;i++){SFX.knock(busFx,now());shake(0.012,0.15);await gwait(0.22);}if(!alive(run))return;
-  thinkM('Earbuds. He can’t hear me. He never hears anything.',3);
+  await thinkC('Earbuds. He can’t hear me. He never hears anything.','manny');if(!alive(run))return;
   scoreBase('stalk');toniTool('pin');toniShow(7.3,8.1,Math.PI/2);await toniWalk(11.15,8.7,1.6);if(!alive(run))return;toniFace(D.x,D.z);await gwait(0.5);if(!alive(run))return;
   T.poseOv='swingUp';await gwait(0.45);if(!alive(run))return;T.poseOv='swingDown';await gwait(0.08);at3(D.x,1.6,D.z,(p,t)=>{const f=thru(p,3000);SFX.headHit(f,t);smp(f,t,'gaspM',0.9,1,0.07);},1.8);shake(0.01,0.2);
   decal(12.0,1.35,9.87,0.6,0.5,'n',3);D.pose='crumple';setExpr(D,'pain');D.shake=0.5;await tween(0.3,k=>{D.z=lerp(8.75,8.35,easeOut(k));D.yaw=lerp(0,-0.5,k);});if(!alive(run))return;await gwait(0.2);if(!alive(run))return;
@@ -147,7 +147,7 @@ async function coldDevon(){const run=G.run;const T=CHARS.toni,D=CHARS.devon;
   toniWalk(7.3,8.1,1.4).then(()=>{if(alive(run)&&G.flags.coldStage===1){toniHide();}});await gwait(1.6);}
 async function coldBree(){const run=G.run;const T=CHARS.toni,B=CHARS.bree;
   B.where='kitchen';setExpr(B,'fear');place(B,14.9,7.2,-Math.PI/2);B.pose='stand';await gwait(0.3);if(!alive(run))return;
-  line('bree','Devon? DEVON! Oh my God—',{expr:'scream'});at3(B.x,1.6,B.z,(p,t)=>SFX.scream(thru(p,3400),t,'F',1),2.5);await npcMove(B,12.0,7.05,3.3);if(!alive(run))return;await npcMove(B,11.0,6.62,3.0);if(!alive(run))return;B.yaw=Math.PI;B.pose='bang';B.look=[11,1.6,5.5];
+  line('bree','Devon? DEVON! Oh my God—',{expr:'scream',auto:true});at3(B.x,1.6,B.z,(p,t)=>SFX.scream(thru(p,3400),t,'F',1),2.5);await npcMove(B,12.0,7.05,3.3);if(!alive(run))return;await npcMove(B,11.0,6.62,3.0);if(!alive(run))return;B.yaw=Math.PI;B.pose='bang';B.look=[11,1.6,5.5];
   at3(11,1.3,6.05,(p,t)=>{for(let i=0;i<4;i++)smp(p,t+i*0.24,'glassHit',0.55,1.1);},1.6);
   await nudge(11.0,1.45,6.3,0.4);if(!alive(run))return;
   at3(11.4,1.1,6.1,(p,t)=>SFX.rattle(p,t));await line('bree','Manny?! Why won’t it open? Why won’t it OPEN?',{expr:'scream'});if(!alive(run))return;
@@ -171,7 +171,7 @@ async function coldBree(){const run=G.run;const T=CHARS.toni,B=CHARS.bree;
     g.fillStyle='rgba(150,18,12,.6)';for(let i=0;i<3;i++){g.beginPath();g.ellipse(62+i*4,y+12,1,1.6+r()*4,0,0,TAU);g.fill();}};
   await tween(3.6,k=>{FZ.powder=0.96*(1-k);FZ.layers[FZ.layers.length-1]=g=>hand(g,k);glassPaint();});
   if(!alive(run))return;await line('manny','Bree… oh God. Bree.',{expr:'sad'});if(!alive(run))return;
-  thinkM('No bars. There’s never any bars in the walk-in. Somebody call. Somebody, please.',4);await gwait(3.6);}
+  await thinkC('No bars. There’s never any bars in the walk-in. Somebody call. Somebody, please.','manny');}
 async function coldManager(){const run=G.run;const T=CHARS.toni,M=CHARS.manager;G.flags.coldStage=3;
   M.where='kitchen';place(M,14.9,8.6,-Math.PI/2);M.pose='phoneEar';setExpr(M,'neutral');
   line('manager','—sir. Sir. I know it’s late. Your driver is on his way. Thank you for choosing Pepper Toni’s.',{expr:'neutral'});await npcMove(M,12.9,8.35,1.0);if(!alive(run))return;await VOICE.busy;await waitUntil(()=>!DS);if(!alive(run))return;
@@ -183,7 +183,7 @@ async function coldManager(){const run=G.run;const T=CHARS.toni,M=CHARS.manager;
   mv.then(()=>{if(alive(run)){toniFace(M.x,M.z);M.yaw=Math.atan2(T.x-M.x,T.z-M.z);}});
   await line('manager','Okay. Okay, buddy. Easy. Is this about the write-up? The drawing? Nobody’s mad about the drawing—',{expr:'fear'});if(!alive(run))return;
   T.poseOv='type';await toniSay('Time for your performance review.');if(!alive(run))return;T.poseOv=null;
-  line('manager','Wait— WAIT—',{expr:'scream'});at3(M.x,1.6,M.z,(p,t)=>SFX.yell(thru(p,3200),t,1),2);
+  line('manager','Wait— WAIT—',{expr:'scream',auto:true});at3(M.x,1.6,M.z,(p,t)=>SFX.yell(thru(p,3200),t,1),2);
   // he spins him around and puts his face into the glass
   await tween(0.25,k=>{T.x=lerp(10.0,11.1,k);T.z=lerp(7.7,7.2,k);});if(!alive(run))return;T.yaw=Math.PI;M.yaw=Math.PI;M.look=null;M.pose='pinned';T.poseOv='grab';toniTool(null);
   await nudge(11.05,1.5,6.2,0.25);if(!alive(run))return;
@@ -265,7 +265,7 @@ async function sceneHouse(){const run=G.run;checkpoint('house');houseReset();hou
   setMode('cine');await line('lucia','…Thanks?',{name:'Lucia'});if(!alive(run))return;
   // he doesn't leave. He looks past her, at the house, at the photo on the sideboard.
   toniFace(171.5,0.6);await gwait(1.8);if(!alive(run))return;
-  line('grandpa','Is that him? Tell him he’s late!',{expr:'angry'});await gwait(1.8);if(!alive(run))return;toniFace(P.x,P.z);await gwait(0.6);if(!alive(run))return;
+  line('grandpa','Is that him? Tell him he’s late!',{expr:'angry',auto:true});await gwait(1.8);if(!alive(run))return;toniFace(P.x,P.z);await gwait(0.6);if(!alive(run))return;
   const SAY_H2=['Sorry. My grandpa’s… a lot.','You’re really late, you know.','I gotta go.'];const c2=await choose(SAY_H2,{who:'Lucia',timeout:6});if(!alive(run))return;G.flags.h2=c2;
   if(c2>=0){await line('lucia',SAY_H2[c2],{name:'Lucia'});if(!alive(run))return;}
   if(c2===0){T.tilt=0.25;await gwait(1.2);T.tilt=0;remember('Your driver noticed that.');}else if(c2===1){await gwait(1.2);remember('Your driver will remember that.');}
@@ -325,7 +325,7 @@ async function sceneRoom(continuing){const run=G.run;
   P.seated=null;P.limitYaw=null;P.x=174.3;P.z=3.5;setMode('play');setObj('Wake your dad.','He’s on the floor by the head of the table.');G.flags.shookDad=false;
   await waitUntil(()=>G.flags.shookDad);if(!alive(run))return;
   setMode('cine');await line('lucia','Dad. Dad, wake up. Please wake up.',{name:'Lucia'});if(!alive(run))return;
-  thinkL('He’s breathing. They’re all breathing. They’re just… out.',3.5);await gwait(3.4);if(!alive(run))return;
+  await thinkC('He’s breathing. They’re all breathing. They’re just… out.','lucia');if(!alive(run))return;
   lpDead();await gwait(1.1);if(!alive(run))return;SFX.ui();lpBlack();await gwait(0.9);if(!alive(run))return;lpClose();
   await line('lucia','No. No, no, no. Not now. Not NOW.',{name:'Lucia'});if(!alive(run))return;
   setMode('play');setObj('Charge your phone. The charger’s in your room.','Your room is at the far end of the hallway, past the kitchen.');G.flags.inRoom=false;G.flags.heardGarage=false;
@@ -361,7 +361,7 @@ async function sceneCharge(){const run=G.run;checkpoint('charge');
   T.tilt=0.35;await toniSay('You wrote: late and cold. Driver didn’t say a word.');if(!alive(run))return;await gwait(1.2);if(!alive(run))return;
   await toniSay('I’m saying a lot now.');if(!alive(run))return;T.tilt=0;await gwait(1.4);if(!alive(run))return;
   // a crash from the dining room: her uncle, coming round
-  at3(170.5,0.6,2.4,(p,t)=>SFX.crash(p,t),3);await gwait(0.5);line('uncle','Mmh… Pop? What… what happened…',{expr:'out'});await gwait(1.2);if(!alive(run))return;
+  at3(170.5,0.6,2.4,(p,t)=>SFX.crash(p,t),3);await gwait(0.5);line('uncle','Mmh… Pop? What… what happened…',{expr:'out',auto:true});await gwait(1.2);if(!alive(run))return;
   toniFace(153.9,8);await gwait(0.7);if(!alive(run))return;await toniWalk(153.9,8.0,1.5);if(!alive(run))return;toniSay('Please tell us what went wrong.');
   await toniWalk(164.3,7.7,1.6);if(!alive(run))return;toniHide();G.noLeave=false;
   CHARS.uncle.where='none';thinkL('He’s going back for them. I have to get out. I have to get help.',3.5);

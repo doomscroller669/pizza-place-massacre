@@ -249,7 +249,9 @@ button{font:inherit;color:inherit}
 .choice:hover{border-color:var(--cheese);background:rgba(60,42,14,.92)}
 #dlgBar{height:4px;background:rgba(239,226,196,.15);margin-top:10px}
 #dlgBar b{display:block;height:100%;width:100%;background:var(--cheese);transform-origin:left}
-#dlgMore{font:600 12px var(--f-say);letter-spacing:.2em;color:var(--ash);margin-top:6px;text-transform:uppercase;opacity:.7}
+#dlgMore{font:600 12px var(--f-say);letter-spacing:.2em;color:var(--ash);margin-top:6px;text-transform:uppercase;opacity:.85}
+#dlgMore::after{content:' ▸'}
+#dlg.think #dlgText{font-style:italic;color:#e9dfca}
 .blink{animation:blink 1.1s steps(1) infinite}
 @keyframes blink{50%{opacity:0}}
 
@@ -2437,17 +2439,25 @@ async function titleCard(k,t,hold=2.2){$('cardK').textContent=k;$('cardT').textC
 
 /* ---------- dialogue: Telltale-style lines and timed choices ---------- */
 let DS=null;
+/* a line of dialogue. It stays up until the player continues (tap, click, Space, Enter or E), so nobody gets rushed;
+   the "continue" prompt blinks once there's been time to read it. o.auto: a line shouted in the middle of the action,
+   which clears itself on a timer. o.thought: the player character's own thoughts, in italics. */
 function line(who,text,o={}){return new Promise(async res=>{const ch=CHARS[who];const name=o.name||(ch?ch.s.name:who==='lucia'?'Lucia':who==='manny'?'Manny':who);
-  $('dlg').hidden=false;$('dlgWho').textContent=name;$('dlgText').textContent=text;$('dlgChoices').innerHTML='';$('dlgBar').hidden=true;$('dlgMore').hidden=false;
+  $('dlg').hidden=false;$('dlg').classList.toggle('think',!!o.thought);$('dlgWho').textContent=name;$('dlgText').textContent=text;$('dlgChoices').innerHTML='';$('dlgBar').hidden=true;
+  const more=$('dlgMore');more.hidden=!!o.auto;more.textContent=touchMode?'Tap to continue':'Continue  ·  Space';more.classList.remove('blink');
   if(ch&&o.expr)setExpr(ch,o.expr);
   const pos=ch&&ch.root.visible&&who!=='lucia'&&who!=='manny'?{x:ch.x,y:1.3,z:ch.z}:null;
   const run=G.run;let done=false;const t0=Date.now();
-  const fin=()=>{if(done)return;done=true;if(o.dur)voStop(0.12);DS=null;$('dlg').hidden=true;res();};
-  DS={skip:()=>{if(Date.now()-t0>250){voStop();fin();}}};
+  // only the line on screen closes the box: a shouted line's timer running out mustn't hide the line that replaced it
+  const fin=()=>{if(done)return;done=true;if(o.dur)voStop(0.12);if(DS===me){DS=null;$('dlg').hidden=true;$('dlg').classList.remove('think');}res();};
+  const me={line:true,skip:()=>{if(Date.now()-t0>350){voStop();fin();}}};DS=me;
   const vd=await voPlay(who,text,pos);if(!alive(run)||done)return;
-  let dur;if(vd)dur=o.dur?Math.min(o.dur,vd+0.1):vd+0.55;else dur=o.dur||clamp(1.6+text.length*0.065,2.2,8);   // everyone but Toni is silent: the line is read, not heard
-  if(ch)say(ch,vd?Math.min(vd,dur):dur*0.8);
-  gwait(dur).then(()=>{if(alive(run))fin();});});}
+  const read=clamp(1.6+text.length*0.065,2.2,8);let dur;if(vd)dur=o.dur?Math.min(o.dur,vd+0.1):vd+0.55;else dur=o.dur||read;
+  if(ch)say(ch,vd?Math.min(vd,dur):Math.min(dur,read)*0.8);
+  if(o.auto){gwait(dur).then(()=>{if(alive(run))fin();});return;}
+  gwait(Math.min(dur,3)).then(()=>{if(!done)more.classList.add('blink');});});}
+/* a thought the scene stops for: shown in the dialogue box, in italics, until the player continues */
+function thinkC(text,who){who=who||G.who;return line(who,text,{name:who==='manny'?'Manny':'Lucia',thought:true});}
 function choose(opts,o={}){return new Promise(res=>{$('dlg').hidden=false;$('dlgWho').textContent=o.who||'';$('dlgText').textContent=o.prompt||'';$('dlgMore').hidden=true;
   const box=$('dlgChoices');box.innerHTML='';let done=false;const run=G.run;
   const fin=i=>{if(done)return;done=true;DS=null;$('dlg').hidden=true;box.innerHTML='';SFX.ui();res(i);};
@@ -2457,6 +2467,8 @@ function choose(opts,o={}){return new Promise(res=>{$('dlg').hidden=false;$('dlg
   if(o.timeout){const bar=$('dlgBar');bar.hidden=false;const b=bar.firstElementChild;let left=o.timeout;
     const tick=()=>{if(done||!alive(run))return;left-=0.05;b.style.transform=`scaleX(${Math.max(0,left/o.timeout)})`;if(left<=0){fin(-1);return;}gwait(0.05).then(tick);};tick();}});}
 $('dlg').addEventListener('click',()=>{if(DS&&DS.skip)DS.skip();});
+addEventListener('pointerup',e=>{if(!DS||!DS.line||!DS.skip)return;if(G.mode!=='cine'&&G.mode!=='ui')return;
+  if(e.target.closest&&e.target.closest('button,a,input,.choice,#lp .lp-dev,#cook,#pause,#note,#dead'))return;DS.skip();},true);
 
 /* ---------- notes ---------- */
 let noteRes=null;
@@ -2859,7 +2871,7 @@ async function coldDevon(){const run=G.run;const T=CHARS.toni,D=CHARS.devon;
   await nudge(11.9,1.4,8.75,0.8);if(!alive(run))return;
   await line('manny','Devon! DEVON! Behind you!',{expr:'fear'});if(!alive(run))return;
   for(let i=0;i<3;i++){SFX.knock(busFx,now());shake(0.012,0.15);await gwait(0.22);}if(!alive(run))return;
-  thinkM('Earbuds. He can’t hear me. He never hears anything.',3);
+  await thinkC('Earbuds. He can’t hear me. He never hears anything.','manny');if(!alive(run))return;
   scoreBase('stalk');toniTool('pin');toniShow(7.3,8.1,Math.PI/2);await toniWalk(11.15,8.7,1.6);if(!alive(run))return;toniFace(D.x,D.z);await gwait(0.5);if(!alive(run))return;
   T.poseOv='swingUp';await gwait(0.45);if(!alive(run))return;T.poseOv='swingDown';await gwait(0.08);at3(D.x,1.6,D.z,(p,t)=>{const f=thru(p,3000);SFX.headHit(f,t);smp(f,t,'gaspM',0.9,1,0.07);},1.8);shake(0.01,0.2);
   decal(12.0,1.35,9.87,0.6,0.5,'n',3);D.pose='crumple';setExpr(D,'pain');D.shake=0.5;await tween(0.3,k=>{D.z=lerp(8.75,8.35,easeOut(k));D.yaw=lerp(0,-0.5,k);});if(!alive(run))return;await gwait(0.2);if(!alive(run))return;
@@ -2869,7 +2881,7 @@ async function coldDevon(){const run=G.run;const T=CHARS.toni,D=CHARS.devon;
   toniWalk(7.3,8.1,1.4).then(()=>{if(alive(run)&&G.flags.coldStage===1){toniHide();}});await gwait(1.6);}
 async function coldBree(){const run=G.run;const T=CHARS.toni,B=CHARS.bree;
   B.where='kitchen';setExpr(B,'fear');place(B,14.9,7.2,-Math.PI/2);B.pose='stand';await gwait(0.3);if(!alive(run))return;
-  line('bree','Devon? DEVON! Oh my God—',{expr:'scream'});at3(B.x,1.6,B.z,(p,t)=>SFX.scream(thru(p,3400),t,'F',1),2.5);await npcMove(B,12.0,7.05,3.3);if(!alive(run))return;await npcMove(B,11.0,6.62,3.0);if(!alive(run))return;B.yaw=Math.PI;B.pose='bang';B.look=[11,1.6,5.5];
+  line('bree','Devon? DEVON! Oh my God—',{expr:'scream',auto:true});at3(B.x,1.6,B.z,(p,t)=>SFX.scream(thru(p,3400),t,'F',1),2.5);await npcMove(B,12.0,7.05,3.3);if(!alive(run))return;await npcMove(B,11.0,6.62,3.0);if(!alive(run))return;B.yaw=Math.PI;B.pose='bang';B.look=[11,1.6,5.5];
   at3(11,1.3,6.05,(p,t)=>{for(let i=0;i<4;i++)smp(p,t+i*0.24,'glassHit',0.55,1.1);},1.6);
   await nudge(11.0,1.45,6.3,0.4);if(!alive(run))return;
   at3(11.4,1.1,6.1,(p,t)=>SFX.rattle(p,t));await line('bree','Manny?! Why won’t it open? Why won’t it OPEN?',{expr:'scream'});if(!alive(run))return;
@@ -2893,7 +2905,7 @@ async function coldBree(){const run=G.run;const T=CHARS.toni,B=CHARS.bree;
     g.fillStyle='rgba(150,18,12,.6)';for(let i=0;i<3;i++){g.beginPath();g.ellipse(62+i*4,y+12,1,1.6+r()*4,0,0,TAU);g.fill();}};
   await tween(3.6,k=>{FZ.powder=0.96*(1-k);FZ.layers[FZ.layers.length-1]=g=>hand(g,k);glassPaint();});
   if(!alive(run))return;await line('manny','Bree… oh God. Bree.',{expr:'sad'});if(!alive(run))return;
-  thinkM('No bars. There’s never any bars in the walk-in. Somebody call. Somebody, please.',4);await gwait(3.6);}
+  await thinkC('No bars. There’s never any bars in the walk-in. Somebody call. Somebody, please.','manny');}
 async function coldManager(){const run=G.run;const T=CHARS.toni,M=CHARS.manager;G.flags.coldStage=3;
   M.where='kitchen';place(M,14.9,8.6,-Math.PI/2);M.pose='phoneEar';setExpr(M,'neutral');
   line('manager','—sir. Sir. I know it’s late. Your driver is on his way. Thank you for choosing Pepper Toni’s.',{expr:'neutral'});await npcMove(M,12.9,8.35,1.0);if(!alive(run))return;await VOICE.busy;await waitUntil(()=>!DS);if(!alive(run))return;
@@ -2905,7 +2917,7 @@ async function coldManager(){const run=G.run;const T=CHARS.toni,M=CHARS.manager;
   mv.then(()=>{if(alive(run)){toniFace(M.x,M.z);M.yaw=Math.atan2(T.x-M.x,T.z-M.z);}});
   await line('manager','Okay. Okay, buddy. Easy. Is this about the write-up? The drawing? Nobody’s mad about the drawing—',{expr:'fear'});if(!alive(run))return;
   T.poseOv='type';await toniSay('Time for your performance review.');if(!alive(run))return;T.poseOv=null;
-  line('manager','Wait— WAIT—',{expr:'scream'});at3(M.x,1.6,M.z,(p,t)=>SFX.yell(thru(p,3200),t,1),2);
+  line('manager','Wait— WAIT—',{expr:'scream',auto:true});at3(M.x,1.6,M.z,(p,t)=>SFX.yell(thru(p,3200),t,1),2);
   // he spins him around and puts his face into the glass
   await tween(0.25,k=>{T.x=lerp(10.0,11.1,k);T.z=lerp(7.7,7.2,k);});if(!alive(run))return;T.yaw=Math.PI;M.yaw=Math.PI;M.look=null;M.pose='pinned';T.poseOv='grab';toniTool(null);
   await nudge(11.05,1.5,6.2,0.25);if(!alive(run))return;
@@ -2987,7 +2999,7 @@ async function sceneHouse(){const run=G.run;checkpoint('house');houseReset();hou
   setMode('cine');await line('lucia','…Thanks?',{name:'Lucia'});if(!alive(run))return;
   // he doesn't leave. He looks past her, at the house, at the photo on the sideboard.
   toniFace(171.5,0.6);await gwait(1.8);if(!alive(run))return;
-  line('grandpa','Is that him? Tell him he’s late!',{expr:'angry'});await gwait(1.8);if(!alive(run))return;toniFace(P.x,P.z);await gwait(0.6);if(!alive(run))return;
+  line('grandpa','Is that him? Tell him he’s late!',{expr:'angry',auto:true});await gwait(1.8);if(!alive(run))return;toniFace(P.x,P.z);await gwait(0.6);if(!alive(run))return;
   const SAY_H2=['Sorry. My grandpa’s… a lot.','You’re really late, you know.','I gotta go.'];const c2=await choose(SAY_H2,{who:'Lucia',timeout:6});if(!alive(run))return;G.flags.h2=c2;
   if(c2>=0){await line('lucia',SAY_H2[c2],{name:'Lucia'});if(!alive(run))return;}
   if(c2===0){T.tilt=0.25;await gwait(1.2);T.tilt=0;remember('Your driver noticed that.');}else if(c2===1){await gwait(1.2);remember('Your driver will remember that.');}
@@ -3047,7 +3059,7 @@ async function sceneRoom(continuing){const run=G.run;
   P.seated=null;P.limitYaw=null;P.x=174.3;P.z=3.5;setMode('play');setObj('Wake your dad.','He’s on the floor by the head of the table.');G.flags.shookDad=false;
   await waitUntil(()=>G.flags.shookDad);if(!alive(run))return;
   setMode('cine');await line('lucia','Dad. Dad, wake up. Please wake up.',{name:'Lucia'});if(!alive(run))return;
-  thinkL('He’s breathing. They’re all breathing. They’re just… out.',3.5);await gwait(3.4);if(!alive(run))return;
+  await thinkC('He’s breathing. They’re all breathing. They’re just… out.','lucia');if(!alive(run))return;
   lpDead();await gwait(1.1);if(!alive(run))return;SFX.ui();lpBlack();await gwait(0.9);if(!alive(run))return;lpClose();
   await line('lucia','No. No, no, no. Not now. Not NOW.',{name:'Lucia'});if(!alive(run))return;
   setMode('play');setObj('Charge your phone. The charger’s in your room.','Your room is at the far end of the hallway, past the kitchen.');G.flags.inRoom=false;G.flags.heardGarage=false;
@@ -3083,7 +3095,7 @@ async function sceneCharge(){const run=G.run;checkpoint('charge');
   T.tilt=0.35;await toniSay('You wrote: late and cold. Driver didn’t say a word.');if(!alive(run))return;await gwait(1.2);if(!alive(run))return;
   await toniSay('I’m saying a lot now.');if(!alive(run))return;T.tilt=0;await gwait(1.4);if(!alive(run))return;
   // a crash from the dining room: her uncle, coming round
-  at3(170.5,0.6,2.4,(p,t)=>SFX.crash(p,t),3);await gwait(0.5);line('uncle','Mmh… Pop? What… what happened…',{expr:'out'});await gwait(1.2);if(!alive(run))return;
+  at3(170.5,0.6,2.4,(p,t)=>SFX.crash(p,t),3);await gwait(0.5);line('uncle','Mmh… Pop? What… what happened…',{expr:'out',auto:true});await gwait(1.2);if(!alive(run))return;
   toniFace(153.9,8);await gwait(0.7);if(!alive(run))return;await toniWalk(153.9,8.0,1.5);if(!alive(run))return;toniSay('Please tell us what went wrong.');
   await toniWalk(164.3,7.7,1.6);if(!alive(run))return;toniHide();G.noLeave=false;
   CHARS.uncle.where='none';thinkL('He’s going back for them. I have to get out. I have to get help.',3.5);
@@ -3659,7 +3671,7 @@ async function sceneTable(){const run=G.run;pizzeriaReset();checkpoint('table');
   const s=PT.seats.lucia;P.x=s[0]-0.1;P.z=s[1];P.seated=true;P.yaw=Math.PI/2;P.pitch=-0.35;P.limitYaw=[Math.PI/2,1.95];
   for(const id of FAMILY){CHARS[id].pose='sitOut';setExpr(CHARS[id],'out');}
   setAmb('room',0.25);setAmb('hum',0.12);setMode('cine');postU.uWake.value=1;await fadeTo(0,3);if(!alive(run))return;
-  SFX.gasp(busFx,now(),0.5);await gwait(1.2);if(!alive(run))return;thinkL('Mm… where…',2.5);await gwait(2.5);if(!alive(run))return;
+  SFX.gasp(busFx,now(),0.5);await gwait(1.2);if(!alive(run))return;await thinkC('Mm… where…','lucia');if(!alive(run))return;
   await nudge(40,0.9,15.5,1.6);if(!alive(run))return;
   await toniSay('Welcome to Pepper Toni’s Family Pizzeria. Where family comes first.',{pa:true});if(!alive(run))return;
   postU.uWake.value=0.35;setMode('play');
@@ -3714,7 +3726,7 @@ async function sceneManny(){const run=G.run;scoreBase(null);G.who='manny';if(G.w
   P.seated=null;P.limitYaw=null;P.x=PT.freezerStart[0];P.z=PT.freezerStart[1];P.yaw=0;P.pitch=-0.15;P.eyeOverride=0.75;
   for(const id of FAMILY){CHARS[id].pose='sit';setExpr(CHARS[id],'fear');}
   setAmb('freezer',0.55,0.5);setAmb('hum',0.18);setMode('cine');await titleCard('Pizza 1 of 12','Kiddie Pie',2.2);if(!alive(run))return;await fadeTo(0,1.6);if(!alive(run))return;
-  thinkM('Still in the walk-in. I can’t feel my fingers anymore.',3.5);await gwait(3.4);if(!alive(run))return;
+  await thinkC('Still in the walk-in. I can’t feel my fingers anymore.','manny');if(!alive(run))return;
   // he unlocks it and walks off. Squeaking.
   at3(11,1,6,(p,t)=>SFX.clunk(p,t));await gwait(0.5);for(let i=0;i<5;i++){at3(11.5+i*1.2,0.1,7.5+i*0.5,(p,t)=>SFX.stomp(p,t),2);await gwait(0.6);}if(!alive(run))return;
   G.flags.unlocked=true;await toniSay('New order. Ticket’s on the rail.',{pa:true});if(!alive(run))return;
@@ -3748,7 +3760,7 @@ async function sceneEat(){const run=G.run;G.who='lucia';const res=G.result;const
     await toniSay(R()<0.5?'Good job. 👍':'Five stars, Manny.');if(!alive(run))return;G.flags.alex='alive';}
   else{await toniSay('That’s not what they ordered.');if(!alive(run))return;
     if(res.kind==='allergy'){A.pose='choke';A.shake=1;setExpr(A,'choke');at3(A.x,1.2,A.z,(p,t)=>SFX.choke(p,t),2);await gwait(0.9);if(!alive(run))return;
-      D.pose='stand';setExpr(D,'scream');BOMB.fast=3;line('dad','ALEX! His pen! His pen’s in his jacket! Let me get it, PLEASE—',{expr:'scream'});await gwait(1.1);if(!alive(run))return;
+      D.pose='stand';setExpr(D,'scream');BOMB.fast=3;line('dad','ALEX! His pen! His pen’s in his jacket! Let me get it, PLEASE—',{expr:'scream',auto:true});await gwait(1.1);if(!alive(run))return;
       TONI.armed=true;T.aiming=true;T.yaw=Math.atan2(D.x-T.x,D.z-T.z);await gwait(1.2);if(!alive(run))return;D.pose='sitScared';setExpr(D,'fear');await gwait(1.6);if(!alive(run))return;
       A.shake=0;A.pose='slumpDead';setExpr(A,'dead');at3(A.x,1,A.z,(p,t)=>SFX.gasp(p,t,0.3,'M'),2);await gwait(1.6);if(!alive(run))return;}
     else{TONI.armed=true;T.aiming=true;T.yaw=Math.atan2(A.x-T.x,A.z-T.z);await gwait(1.3);if(!alive(run))return;$('fade').style.transitionDuration='0s';$('fade').style.opacity='1';

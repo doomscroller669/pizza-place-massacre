@@ -73,17 +73,25 @@ async function titleCard(k,t,hold=2.2){$('cardK').textContent=k;$('cardT').textC
 
 /* ---------- dialogue: Telltale-style lines and timed choices ---------- */
 let DS=null;
+/* a line of dialogue. It stays up until the player continues (tap, click, Space, Enter or E), so nobody gets rushed;
+   the "continue" prompt blinks once there's been time to read it. o.auto: a line shouted in the middle of the action,
+   which clears itself on a timer. o.thought: the player character's own thoughts, in italics. */
 function line(who,text,o={}){return new Promise(async res=>{const ch=CHARS[who];const name=o.name||(ch?ch.s.name:who==='lucia'?'Lucia':who==='manny'?'Manny':who);
-  $('dlg').hidden=false;$('dlgWho').textContent=name;$('dlgText').textContent=text;$('dlgChoices').innerHTML='';$('dlgBar').hidden=true;$('dlgMore').hidden=false;
+  $('dlg').hidden=false;$('dlg').classList.toggle('think',!!o.thought);$('dlgWho').textContent=name;$('dlgText').textContent=text;$('dlgChoices').innerHTML='';$('dlgBar').hidden=true;
+  const more=$('dlgMore');more.hidden=!!o.auto;more.textContent=touchMode?'Tap to continue':'Continue  ·  Space';more.classList.remove('blink');
   if(ch&&o.expr)setExpr(ch,o.expr);
   const pos=ch&&ch.root.visible&&who!=='lucia'&&who!=='manny'?{x:ch.x,y:1.3,z:ch.z}:null;
   const run=G.run;let done=false;const t0=Date.now();
-  const fin=()=>{if(done)return;done=true;if(o.dur)voStop(0.12);DS=null;$('dlg').hidden=true;res();};
-  DS={skip:()=>{if(Date.now()-t0>250){voStop();fin();}}};
+  // only the line on screen closes the box: a shouted line's timer running out mustn't hide the line that replaced it
+  const fin=()=>{if(done)return;done=true;if(o.dur)voStop(0.12);if(DS===me){DS=null;$('dlg').hidden=true;$('dlg').classList.remove('think');}res();};
+  const me={line:true,skip:()=>{if(Date.now()-t0>350){voStop();fin();}}};DS=me;
   const vd=await voPlay(who,text,pos);if(!alive(run)||done)return;
-  let dur;if(vd)dur=o.dur?Math.min(o.dur,vd+0.1):vd+0.55;else dur=o.dur||clamp(1.6+text.length*0.065,2.2,8);   // everyone but Toni is silent: the line is read, not heard
-  if(ch)say(ch,vd?Math.min(vd,dur):dur*0.8);
-  gwait(dur).then(()=>{if(alive(run))fin();});});}
+  const read=clamp(1.6+text.length*0.065,2.2,8);let dur;if(vd)dur=o.dur?Math.min(o.dur,vd+0.1):vd+0.55;else dur=o.dur||read;
+  if(ch)say(ch,vd?Math.min(vd,dur):Math.min(dur,read)*0.8);
+  if(o.auto){gwait(dur).then(()=>{if(alive(run))fin();});return;}
+  gwait(Math.min(dur,3)).then(()=>{if(!done)more.classList.add('blink');});});}
+/* a thought the scene stops for: shown in the dialogue box, in italics, until the player continues */
+function thinkC(text,who){who=who||G.who;return line(who,text,{name:who==='manny'?'Manny':'Lucia',thought:true});}
 function choose(opts,o={}){return new Promise(res=>{$('dlg').hidden=false;$('dlgWho').textContent=o.who||'';$('dlgText').textContent=o.prompt||'';$('dlgMore').hidden=true;
   const box=$('dlgChoices');box.innerHTML='';let done=false;const run=G.run;
   const fin=i=>{if(done)return;done=true;DS=null;$('dlg').hidden=true;box.innerHTML='';SFX.ui();res(i);};
@@ -93,6 +101,8 @@ function choose(opts,o={}){return new Promise(res=>{$('dlg').hidden=false;$('dlg
   if(o.timeout){const bar=$('dlgBar');bar.hidden=false;const b=bar.firstElementChild;let left=o.timeout;
     const tick=()=>{if(done||!alive(run))return;left-=0.05;b.style.transform=`scaleX(${Math.max(0,left/o.timeout)})`;if(left<=0){fin(-1);return;}gwait(0.05).then(tick);};tick();}});}
 $('dlg').addEventListener('click',()=>{if(DS&&DS.skip)DS.skip();});
+addEventListener('pointerup',e=>{if(!DS||!DS.line||!DS.skip)return;if(G.mode!=='cine'&&G.mode!=='ui')return;
+  if(e.target.closest&&e.target.closest('button,a,input,.choice,#lp .lp-dev,#cook,#pause,#note,#dead'))return;DS.skip();},true);
 
 /* ---------- notes ---------- */
 let noteRes=null;

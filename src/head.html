@@ -235,7 +235,9 @@ button{font:inherit;color:inherit}
 .choice:hover{border-color:var(--cheese);background:rgba(60,42,14,.92)}
 #dlgBar{height:4px;background:rgba(239,226,196,.15);margin-top:10px}
 #dlgBar b{display:block;height:100%;width:100%;background:var(--cheese);transform-origin:left}
-#dlgMore{font:600 12px var(--f-say);letter-spacing:.2em;color:var(--ash);margin-top:6px;text-transform:uppercase;opacity:.7}
+#dlgMore{font:600 12px var(--f-say);letter-spacing:.2em;color:var(--ash);margin-top:6px;text-transform:uppercase;opacity:.85}
+#dlgMore::after{content:' ▸'}
+#dlg.think #dlgText{font-style:italic;color:#e9dfca}
 .blink{animation:blink 1.1s steps(1) infinite}
 @keyframes blink{50%{opacity:0}}
 

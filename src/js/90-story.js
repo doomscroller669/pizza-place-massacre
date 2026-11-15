@@ -177,7 +177,7 @@ async function sceneTable(){const run=G.run;pizzeriaReset();checkpoint('table');
   const s=PT.seats.lucia;P.x=s[0]-0.1;P.z=s[1];P.seated=true;P.yaw=Math.PI/2;P.pitch=-0.35;P.limitYaw=[Math.PI/2,1.95];
   for(const id of FAMILY){CHARS[id].pose='sitOut';setExpr(CHARS[id],'out');}
   setAmb('room',0.25);setAmb('hum',0.12);setMode('cine');postU.uWake.value=1;await fadeTo(0,3);if(!alive(run))return;
-  SFX.gasp(busFx,now(),0.5);await gwait(1.2);if(!alive(run))return;thinkL('Mm… where…',2.5);await gwait(2.5);if(!alive(run))return;
+  SFX.gasp(busFx,now(),0.5);await gwait(1.2);if(!alive(run))return;await thinkC('Mm… where…','lucia');if(!alive(run))return;
   await nudge(40,0.9,15.5,1.6);if(!alive(run))return;
   await toniSay('Welcome to Pepper Toni’s Family Pizzeria. Where family comes first.',{pa:true});if(!alive(run))return;
   postU.uWake.value=0.35;setMode('play');
@@ -232,7 +232,7 @@ async function sceneManny(){const run=G.run;scoreBase(null);G.who='manny';if(G.w
   P.seated=null;P.limitYaw=null;P.x=PT.freezerStart[0];P.z=PT.freezerStart[1];P.yaw=0;P.pitch=-0.15;P.eyeOverride=0.75;
   for(const id of FAMILY){CHARS[id].pose='sit';setExpr(CHARS[id],'fear');}
   setAmb('freezer',0.55,0.5);setAmb('hum',0.18);setMode('cine');await titleCard('Pizza 1 of 12','Kiddie Pie',2.2);if(!alive(run))return;await fadeTo(0,1.6);if(!alive(run))return;
-  thinkM('Still in the walk-in. I can’t feel my fingers anymore.',3.5);await gwait(3.4);if(!alive(run))return;
+  await thinkC('Still in the walk-in. I can’t feel my fingers anymore.','manny');if(!alive(run))return;
   // he unlocks it and walks off. Squeaking.
   at3(11,1,6,(p,t)=>SFX.clunk(p,t));await gwait(0.5);for(let i=0;i<5;i++){at3(11.5+i*1.2,0.1,7.5+i*0.5,(p,t)=>SFX.stomp(p,t),2);await gwait(0.6);}if(!alive(run))return;
   G.flags.unlocked=true;await toniSay('New order. Ticket’s on the rail.',{pa:true});if(!alive(run))return;
@@ -266,7 +266,7 @@ async function sceneEat(){const run=G.run;G.who='lucia';const res=G.result;const
     await toniSay(R()<0.5?'Good job. 👍':'Five stars, Manny.');if(!alive(run))return;G.flags.alex='alive';}
   else{await toniSay('That’s not what they ordered.');if(!alive(run))return;
     if(res.kind==='allergy'){A.pose='choke';A.shake=1;setExpr(A,'choke');at3(A.x,1.2,A.z,(p,t)=>SFX.choke(p,t),2);await gwait(0.9);if(!alive(run))return;
-      D.pose='stand';setExpr(D,'scream');BOMB.fast=3;line('dad','ALEX! His pen! His pen’s in his jacket! Let me get it, PLEASE—',{expr:'scream'});await gwait(1.1);if(!alive(run))return;
+      D.pose='stand';setExpr(D,'scream');BOMB.fast=3;line('dad','ALEX! His pen! His pen’s in his jacket! Let me get it, PLEASE—',{expr:'scream',auto:true});await gwait(1.1);if(!alive(run))return;
       TONI.armed=true;T.aiming=true;T.yaw=Math.atan2(D.x-T.x,D.z-T.z);await gwait(1.2);if(!alive(run))return;D.pose='sitScared';setExpr(D,'fear');await gwait(1.6);if(!alive(run))return;
       A.shake=0;A.pose='slumpDead';setExpr(A,'dead');at3(A.x,1,A.z,(p,t)=>SFX.gasp(p,t,0.3,'M'),2);await gwait(1.6);if(!alive(run))return;}
     else{TONI.armed=true;T.aiming=true;T.yaw=Math.atan2(A.x-T.x,A.z-T.z);await gwait(1.3);if(!alive(run))return;$('fade').style.transitionDuration='0s';$('fade').style.opacity='1';
