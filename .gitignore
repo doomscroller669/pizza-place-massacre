@@ -6,3 +6,4 @@ local.properties
 .idea/
 .vo_cache/
 __pycache__/
+tools/faces/*.png

@@ -18,9 +18,11 @@ function smooth01(t){return t*t*(3-2*t);}
 const INK=new THREE.MeshBasicMaterial({color:0x0a0605,side:THREE.BackSide});
 function inkHull(geo,w){const g=geo.clone();const p=g.attributes.position,n=g.attributes.normal;for(let i=0;i<p.count;i++)p.setXYZ(i,p.getX(i)+n.getX(i)*w,p.getY(i)+n.getY(i)*w,p.getZ(i)+n.getZ(i)*w);g.deleteAttribute('color');return g;}
 /* a part: geometry + flat color or texture, with an ink outline */
-function part(ch,geo,col,opts={}){geo=shadeGeo(geo,opts.top,opts.bottom,opts.flat?false:!(geo.type==='BoxGeometry'));const mat=psx(new THREE.MeshBasicMaterial({color:0xffffff,vertexColors:true,map:opts.map||null}));mat.userData.base=new THREE.Color(col);
-  const m=new THREE.Mesh(geo,mat);ch.mats.push(mat);if(opts.ink!==0){const o=new THREE.Mesh(inkHull(geo,opts.ink||0.012),INK);m.add(o);}return m;}
-const GEO={box:(w,h,d)=>new THREE.BoxGeometry(w,h,d),cyl:(rt,rb,h,s=9)=>new THREE.CylinderGeometry(rt,rb,h,s),sph:(r,w=12,h=9)=>new THREE.SphereGeometry(r,w,h)};
+/* In the Puppet Combo style (PUPPET) bodies are low-poly and faceted, with no ink outline; heads stay smooth. */
+function part(ch,geo,col,opts={}){geo=shadeGeo(geo,opts.top,opts.bottom,opts.smooth!==undefined?opts.smooth:opts.flat||PUPPET?false:!(geo.type==='BoxGeometry'));const mat=psx(new THREE.MeshBasicMaterial({color:0xffffff,vertexColors:true,map:opts.map||null}));mat.userData.base=new THREE.Color(col);
+  const m=new THREE.Mesh(geo,mat);ch.mats.push(mat);if(opts.ink!==0&&!PUPPET){const o=new THREE.Mesh(inkHull(geo,opts.ink||0.012),INK);m.add(o);}return m;}
+const LOWP=n=>PUPPET?Math.max(5,Math.round(n*0.67)):n;
+const GEO={box:(w,h,d)=>new THREE.BoxGeometry(w,h,d),cyl:(rt,rb,h,s=9)=>new THREE.CylinderGeometry(rt,rb,h,LOWP(s)),sph:(r,w=12,h=9)=>new THREE.SphereGeometry(r,LOWP(w),Math.max(4,LOWP(h)))};
 function limbGeo(len,r0,r1,s=9){const g=GEO.cyl(r1,r0,len,s);g.translate(0,-len/2,0);return g;}
 
 /* ---------- surface detail: weave for clothes, strands for hair, the cheese-foam of Toni's suit ---------- */
@@ -38,6 +40,44 @@ function clothTex(kind){if(CLOTH[kind])return CLOTH[kind];const r=mulberry(kind.
 const SHADOW_TEX=tex(64,64,(g)=>{const gr=g.createRadialGradient(32,32,2,32,32,31);gr.addColorStop(0,'rgba(0,0,0,.62)');gr.addColorStop(0.55,'rgba(0,0,0,.4)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,64,64);},false);
 SHADOW_TEX.magFilter=THREE.LinearFilter;SHADOW_TEX.minFilter=THREE.LinearFilter;
 const SHADOW_MAT=new THREE.MeshBasicMaterial({map:SHADOW_TEX,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});
+
+/* ---------- photo faces (Puppet Combo style) ----------
+   A character with an entry in FACE_DATA (06-facedata.js, made by tools/faces.py) gets a blocky low-poly head with a
+   photo of a generated, fictional face projected onto its front. Blinks and the moving jaw are painted onto the photo
+   from its landmarks, so one photo per expression is enough. Everyone else keeps the painted face below. */
+const PUPPET=true;
+const PHOTO={};
+function hasPhoto(id){return PUPPET&&typeof FACE_DATA!=='undefined'&&!!FACE_DATA[id];}
+function loadPhoto(id){const P={img:{},mk:FACE_MARKS[id]};for(const k in FACE_DATA[id]){const im=new Image();im.onload=()=>{const ch=typeof CHARS!=='undefined'&&CHARS[id];if(ch&&ch.faceCv)paintFace(ch);};im.src=FACE_DATA[id][k];P.img[k]=im;}PHOTO[id]=P;return P;}
+const PHOTO_EXPR={fear:'fear',scream:'fear',shock:'fear',pain:'fear',angry:'angry',sad:'sad',dead:'neutral',out:'neutral'};
+function drawPhotoFace(g,id,e,blink,talk){const P=PHOTO[id],W=g.canvas.width,k=W/128,m=P.mk;g.setTransform(1,0,0,1,0,0);
+  const im=P.img[PHOTO_EXPR[e]]||P.img.neutral;if(!im||!im.complete||!im.naturalWidth){g.fillStyle=CAST[id].skin;g.fillRect(0,0,W,W);return;}
+  g.imageSmoothingEnabled=true;g.drawImage(im,0,0,W,W);
+  // the jaw: everything under the lips slides down and the gap is the open mouth
+  const open=e==='scream'?7:e==='shock'?4:talk?2.6:0;
+  if(open){const my=(m.mouthR[1]+m.mouthL[1])/2,x0=m.mouthR[0],x1=m.mouthL[0],cx=(x0+x1)/2,o=Math.round(open*k);
+    const sx=Math.round((x0-12)*k),sw=Math.round((x1-x0+24)*k),sy=Math.round((my+0.5)*k),sh=W-sy-o;
+    if(sh>0)g.drawImage(g.canvas,sx,sy,sw,sh,sx,sy+o,sw,sh);
+    const gr=g.createLinearGradient(0,sy,0,sy+o);gr.addColorStop(0,'#2a0a08');gr.addColorStop(1,'#120303');g.fillStyle=gr;
+    g.beginPath();g.ellipse(cx*k,sy+o/2,(x1-x0)/2*k*0.78,o/2+k*0.4,0,0,TAU);g.fill();
+    if(open>3){g.fillStyle='rgba(225,215,195,.85)';g.fillRect((cx-6)*k,sy,12*k,Math.max(1,k));}}
+  // eyelids: skin sampled from just above each eye, drawn over it, with a lash line
+  if(blink||e==='dead'||e==='out'){[m.eyeR,m.eyeL].forEach(([x,y])=>{const d=g.getImageData(Math.round(x*k),Math.round((y-6)*k),1,1).data;
+    g.fillStyle=`rgb(${d[0]},${d[1]},${d[2]})`;g.beginPath();g.ellipse(x*k,y*k,7.5*k,4*k,0,0,TAU);g.fill();
+    g.fillStyle='rgba(25,12,10,.8)';g.fillRect((x-6)*k,(y+1.2)*k,12*k,Math.max(1,0.9*k));});}}
+/* the blocky head: a box pulled most of the way to an egg, the jaw narrowed. The photo is projected straight onto the
+   front at one scale both ways (crown to chin = the texture's height); the back third takes the hair band from the
+   top of the photo. Each triangle picks one or the other, so nothing smears across the seam. */
+function photoHeadGeo(hr){const H=hr*2.2,W=hr*1.5,D=hr*1.78;let g=new THREE.BoxGeometry(W,H,D,4,6,4);const p=g.attributes.position;
+  for(let i=0;i<p.count;i++){let nx=p.getX(i)/(W/2),ny=p.getY(i)/(H/2),nz=p.getZ(i)/(D/2);const l=Math.hypot(nx,ny,nz)||1;
+    nx=lerp(nx,nx/l*1.12,0.62);ny=lerp(ny,ny/l*1.08,0.55);nz=lerp(nz,nz/l*1.12,0.62);
+    const jaw=clamp((-0.15-ny)/0.85,0,1);nx*=1-0.24*jaw;nz*=1-0.12*jaw;if(nz>0)nz*=1-0.06*clamp(1-Math.abs(ny),0,1);
+    p.setXYZ(i,nx*W/2,ny*H/2,nz*D/2);}
+  g.computeVertexNormals();g=g.toNonIndexed();const P=g.attributes.position,uv=new Float32Array(P.count*2);
+  for(let t=0;t<P.count;t+=3){const cz=(P.getZ(t)+P.getZ(t+1)+P.getZ(t+2))/3,back=cz<-D*0.16;
+    for(let j=t;j<t+3;j++){const x=P.getX(j),y=P.getY(j),vy=(y+H/2)/H;
+      uv[j*2]=back?0.5+x/H*0.5:0.5+x/H;uv[j*2+1]=back?0.8+0.15*vy:vy;}}
+  g.setAttribute('uv',new THREE.BufferAttribute(uv,2));return g;}
 
 /* ---------- faces ---------- */
 const FACE_W=256,FACE_H=128;
@@ -113,7 +153,9 @@ const CAST={
 const CHARS={};
 function buildChar(id){const s=CAST[id];const ch={id,s,mats:[],j:{},pose:'stand',expr:'neutral',t:R()*10,blinkT:2+R()*3,talkT:0,x:0,z:0,yaw:0,y:0,root:new THREE.Group(),walkPh:0,speed:0,look:null,lookW:0,extra:{}};
   const H=s.h,b=s.build,S=H/1.78;
-  const fc=canvas(FACE_W,FACE_H);ch.faceCv=fc;ch.faceTex=texFrom(fc,false);ch.faceTex.magFilter=THREE.NearestFilter;
+  const photo=hasPhoto(id);if(photo)loadPhoto(id);
+  const skin=photo&&FACE_MARKS[id].skin?FACE_MARKS[id].skin:s.skin;   // a photo face sets the neck and hands to its own skin tone
+  const fc=photo?canvas(128,128):canvas(FACE_W,FACE_H);ch.faceCv=fc;ch.faceTex=texFrom(fc,false);ch.faceTex.magFilter=THREE.NearestFilter;
   const top=s.toni?clothTex('foam'):s.jacket?clothTex('suit'):clothTex('knit'),legs=s.toni?clothTex('foam'):id==='alex'||id==='ruben'?clothTex('denim'):clothTex('suit');
   // the blob shadow, under the hips so it follows him in every pose
   const shadow=new THREE.Mesh(new THREE.PlaneGeometry(0.78*b*(s.toni?1.25:1),0.7*b*(s.toni?1.25:1)).rotateX(-Math.PI/2),SHADOW_MAT);shadow.position.y=0.012;ch.root.add(shadow);ch.shadow=shadow;
@@ -149,19 +191,20 @@ function buildChar(id){const s=CAST[id];const ch={id,s,mats:[],j:{},pose:'stand'
     const belt=part(ch,GEO.cyl(0.172*b*S,0.172*b*S,0.035*S,12),'#16100c',{ink:0,map:clothTex('leather')});belt.scale.z=0.72;belt.position.y=0.06*S;hips.add(belt);
     const bk=part(ch,GEO.box(0.04*S,0.03*S,0.01),'#c8b070',{ink:0});bk.position.set(0,0.06*S,0.125*b*S);hips.add(bk);}
   const neck=J('neck');neck.position.y=0.52*S;spine.add(neck);
-  const nk=part(ch,GEO.cyl(0.05*S,0.06*S,0.1*S,9),s.skin,{ink:0,top:0.75,bottom:0.5});nk.position.y=0.04*S;neck.add(nk);
-  const head=J('head');head.position.y=0.1*S;neck.add(head);
-  const hr=(s.toni?0.165:0.125)*S;const hg=GEO.sph(hr,16,12);if(s.toni){const p=hg.attributes.position;const rr2=mulberry(41);for(let i=0;i<p.count;i++){const k=1+(rr2()-0.5)*0.12;p.setXYZ(i,p.getX(i)*k,p.getY(i)*k*1.05,p.getZ(i)*k*(p.getZ(i)>0?0.92:1));}}
-  const hm=part(ch,hg,'#ffffff',{map:ch.faceTex,top:1.05,bottom:0.85});hm.position.y=hr*0.95;hm.scale.set(1,1.08,1);head.add(hm);ch.headMesh=hm;
-  if(!s.toni){// ears and a nose, so the head has a profile
+  const nk=part(ch,photo?GEO.cyl(0.062*S,0.07*S,0.1*S,9):GEO.cyl(0.05*S,0.06*S,0.1*S,9),skin,{ink:0,top:0.75,bottom:0.5});nk.position.y=0.04*S;neck.add(nk);
+  const head=J('head');head.position.y=(photo?0.075:0.1)*S;neck.add(head);
+  const hr=(s.toni?0.165:photo?0.135:0.125)*S;const hg=GEO.sph(hr,16,12);if(s.toni){const p=hg.attributes.position;const rr2=mulberry(41);for(let i=0;i<p.count;i++){const k=1+(rr2()-0.5)*0.12;p.setXYZ(i,p.getX(i)*k,p.getY(i)*k*1.05,p.getZ(i)*k*(p.getZ(i)>0?0.92:1));}}
+  const hm=photo?part(ch,photoHeadGeo(hr),'#ffffff',{map:ch.faceTex,top:1.02,bottom:0.9,ink:0,smooth:true}):part(ch,hg,'#ffffff',{map:ch.faceTex,top:1.05,bottom:0.85});
+  hm.position.y=hr*0.95;if(!photo)hm.scale.set(1,1.08,1);head.add(hm);ch.headMesh=hm;
+  if(!s.toni&&!photo){// ears and a nose, so the head has a profile
     [-1,1].forEach(k=>{const e=part(ch,GEO.sph(hr*0.26,8,6),s.skin,{ink:0.005});e.scale.set(0.45,1,0.75);e.position.set(k*hr*0.98,hr*0.88,-hr*0.05);head.add(e);});
     const no=part(ch,GEO.cyl(hr*0.05,hr*0.13,hr*0.36,5),s.skin,{ink:0.004,top:1.05,bottom:0.8});no.rotation.x=0.32;no.position.set(0,hr*0.84,hr*0.97);head.add(no);}
-  if(s.hair&&!s.bald&&!s.toni){const cap=part(ch,new THREE.SphereGeometry(hr*1.07,16,9,0,TAU,0,Math.PI*0.42),s.hair,{map:clothTex('hair')});cap.position.y=hr*1.0;cap.rotation.x=-0.25;head.add(cap);
+  if(s.hair&&!s.bald&&!s.toni&&!photo){const cap=part(ch,new THREE.SphereGeometry(hr*1.07,16,9,0,TAU,0,Math.PI*0.42),s.hair,{map:clothTex('hair')});cap.position.y=hr*1.0;cap.rotation.x=-0.25;head.add(cap);
     const back=part(ch,GEO.sph(hr*1.02,14,9),s.hair,{map:clothTex('hair'),ink:0});back.scale.set(1.0,0.85,0.8);back.position.set(0,hr*0.98,-hr*0.32);head.add(back);}
-  if(s.bald){[-1,1].forEach(k=>{const tuft=part(ch,GEO.sph(hr*0.45,6,5),s.hair,{});tuft.scale.set(0.5,0.8,1.1);tuft.position.set(k*hr*0.9,hr*0.9,-hr*0.2);head.add(tuft);});}
+  if(s.bald&&!photo){[-1,1].forEach(k=>{const tuft=part(ch,GEO.sph(hr*0.45,6,5),s.hair,{});tuft.scale.set(0.5,0.8,1.1);tuft.position.set(k*hr*0.9,hr*0.9,-hr*0.2);head.add(tuft);});}
   if(s.pony){const pt=part(ch,GEO.cyl(0.045*S,0.018*S,0.3*S,8),s.hair,{map:clothTex('hair')});pt.position.set(0,hr*1.15,-hr*1.12);pt.rotation.x=0.42;head.add(pt);ch.extra.pony=pt;
     const tie=part(ch,GEO.cyl(0.04*S,0.04*S,0.025*S,8),'#7a1a2a',{ink:0});tie.position.set(0,hr*1.42,-hr*1.02);tie.rotation.x=0.42;head.add(tie);}
-  if(s.glasses&&!s.toni){// wire frames in front of the painted ones
+  if(s.glasses&&!s.toni&&!photo){// wire frames in front of the painted ones
     [-1,1].forEach(k=>{const f=part(ch,GEO.box(hr*0.42,hr*0.3,0.004),s.glasses,{ink:0});f.material.transparent=true;f.material.opacity=0.35;f.position.set(k*hr*0.36,hr*1.04,hr*0.97);head.add(f);});
     const br=part(ch,GEO.box(hr*0.2,0.006,0.006),s.glasses,{ink:0});br.position.set(0,hr*1.08,hr*1.0);head.add(br);}
   if(s.cap){const c=part(ch,GEO.cyl(hr*1.04,hr*1.08,hr*0.55,10),'#b8261a',{});c.position.y=hr*1.55;head.add(c);const br=part(ch,GEO.box(hr*1.6,0.015,hr*1.1),'#b8261a',{});br.position.set(0,hr*1.3,hr*0.95);head.add(br);}
@@ -176,10 +219,10 @@ function buildChar(id){const s=CAST[id];const ch={id,s,mats:[],j:{},pose:'stand'
     const el=J('el'+side);el.position.y=-0.29*S;sh.add(el);
     const fa=part(ch,limbGeo(0.26*S,0.045*b*S,0.038*b*S),s.jacket||s.shirt,{map:top});el.add(fa);
     if(s.jacket&&s.shirt&&!s.toni){const cuff=part(ch,GEO.cyl(0.04*b*S,0.04*b*S,0.025*S,9),s.shirt,{ink:0});cuff.position.y=-0.255*S;el.add(cuff);}
-    if(id==='manny'||id==='alex'||id==='lucia'){fa.material.userData.base=new THREE.Color(s.skin);}
+    if(id==='manny'||id==='alex'||id==='lucia'){fa.material.userData.base=new THREE.Color(skin);}
     const hd=J('hand'+side);hd.position.y=-0.27*S;el.add(hd);
-    const hand=part(ch,GEO.box(0.07*S,0.1*S,0.035*S),s.toni?'#f4f0e8':s.skin,{});hand.position.y=-0.04*S;hd.add(hand);
-    const th=part(ch,GEO.box(0.022*S,0.05*S,0.024*S),s.toni?'#f4f0e8':s.skin,{ink:0.006});th.position.set(k*0.042*S*(s.toni?1.3:1),-0.03*S,0.012*S);th.rotation.z=-k*0.45;hd.add(th);
+    const hand=part(ch,GEO.box(0.07*S,0.1*S,0.035*S),s.toni?'#f4f0e8':skin,{});hand.position.y=-0.04*S;hd.add(hand);
+    const th=part(ch,GEO.box(0.022*S,0.05*S,0.024*S),s.toni?'#f4f0e8':skin,{ink:0.006});th.position.set(k*0.042*S*(s.toni?1.3:1),-0.03*S,0.012*S);th.rotation.z=-k*0.45;hd.add(th);
     if(s.toni){const cuff=part(ch,GEO.cyl(0.055*S,0.05*S,0.05*S,7),'#f4f0e8',{});cuff.position.y=0.005;hd.add(cuff);hand.scale.set(1.3,1.15,1.4);}
     if(s.bracelet&&side==='L'){const br=part(ch,GEO.cyl(0.044*S,0.044*S,0.025,8),'#d42a1a',{ink:0.004});br.position.y=-0.23*S;el.add(br);ch.extra.bracelet=br;}
     if(s.watch&&side==='L'){const w=part(ch,GEO.cyl(0.044*S,0.044*S,0.03,8),'#e8c060',{ink:0.004});w.position.y=-0.23*S;el.add(w);}
@@ -202,7 +245,7 @@ function buildChar(id){const s=CAST[id];const ch={id,s,mats:[],j:{},pose:'stand'
 signTex('apron',32,48,(g,w,h)=>{g.clearRect(0,0,w,h);g.fillStyle='#c8321f';g.fillRect(3,0,26,34);const rr3=mulberry(12);for(let i=0;i<9;i++){const x=3+rr3()*24,l=6+rr3()*12;g.fillRect(x,30,2+rr3()*2,l);g.beginPath();g.arc(x+1.5,30+l,2,0,TAU);g.fill();}
   g.fillStyle='#e8b23a';g.fillRect(0,0,3,48);g.fillRect(29,0,3,48);g.fillStyle='rgba(120,10,5,.5)';g.fillRect(6,10,20,2);g.fillStyle='#f4f0e8';g.font='7px '+FONT_BRAND;g.fillText('TONI',5,20);});
 function setExpr(ch,e){ch.expr=e;paintFace(ch);}
-function paintFace(ch){const g=ch.faceCv.getContext('2d');drawFace(g,ch.s,ch.expr,ch.blinkNow,ch.talkOpen);ch.faceTex.needsUpdate=true;}
+function paintFace(ch){const g=ch.faceCv.getContext('2d');if(PHOTO[ch.id])drawPhotoFace(g,ch.id,ch.expr,ch.blinkNow,ch.talkOpen);else drawFace(g,ch.s,ch.expr,ch.blinkNow,ch.talkOpen);ch.faceTex.needsUpdate=true;}
 function place(ch,x,z,yaw,y=0){ch.x=x;ch.z=z;ch.yaw=yaw;ch.y=y;ch.root.position.set(x,y,z);ch.root.rotation.y=yaw;}
 function say(ch,dur){ch.talkT=Math.max(ch.talkT,dur);}
 
