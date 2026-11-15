@@ -45,7 +45,7 @@ function stepToni(dt){const T=CHARS.toni;if(!T||!T.root.visible)return;
         collide(o,0.32,true);saved.forEach(s=>s.on=true);T.x=o.x;T.z=o.z;T.yaw=T.yaw+angDiff(T.yaw,Math.atan2(dx,dz))*Math.min(1,dt*7);moving=true;}}
     else if(TONI.onArrive){const f=TONI.onArrive;TONI.onArrive=null;f();}}
   if(T.yawT!=null&&!moving){T.yaw+=angDiff(T.yaw,T.yawT)*Math.min(1,dt*5);if(Math.abs(angDiff(T.yaw,T.yawT))<0.02)T.yawT=null;}
-  T.speed=moving?TONI.speed:0;if(moving){T.walkPh+=dt*TONI.speed*4.2;TONI.stepT-=dt*TONI.speed;if(TONI.stepT<=0){TONI.stepT=0.72;at3(T.x,0.1,T.z,(p,t)=>SFX.squeak(p,t),2.2);}}
+  T.speed=moving?TONI.speed:0;if(moving){T.walkPh+=dt*TONI.speed*4.2;TONI.stepT-=dt*TONI.speed;if(TONI.stepT<=0){TONI.stepT=0.72;at3(T.x,0.1,T.z,(p,t)=>SFX.stomp(p,t),2.2);}}
   T.pose=(TONI.state==='aim'||T.aiming)?'aim':T.typing?(T.tilt?'typeHead':'type'):(T.carrying?'carry':'stand');
   if(T.extra.screen)T.extra.screen.material.color.setHex(T.typing?0xd8f0ff:0x5f7f9f);
   if(T.extra.gun)T.extra.gun.visible=!!TONI.armed;

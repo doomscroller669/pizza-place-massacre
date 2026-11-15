@@ -14,7 +14,10 @@ function hasVO(who,text){return typeof VO_DATA!=='undefined'&&!!VO_DATA[voKey(wh
 /* play a line; resolves with its length in seconds (0 when there's no recording) */
 async function voPlay(who,text,pos){if(!AC)return 0;const b=await voDecode(voKey(who,text));if(!b)return 0;voStop();
   if(!VO.gain){VO.gain=AC.createGain();VO.gain.gain.value=1.15;VO.gain.connect(comp);const v=AC.createGain();v.gain.value=0.18;VO.gain.connect(v);v.connect(verb);}
-  const s=AC.createBufferSource();s.buffer=b;let out=VO.gain;
-  if(pos){const p=AC.createPanner();p.panningModel='equalpower';p.distanceModel='inverse';p.refDistance=3;p.rolloffFactor=0.6;if(p.positionX){p.positionX.value=pos.x;p.positionY.value=pos.y;p.positionZ.value=pos.z;}else p.setPosition(pos.x,pos.y,pos.z);p.connect(VO.gain);out=p;}
-  const g=AC.createGain();g.gain.value=1;s.connect(g);g.connect(out);s.start(now());VO.src={s,g};s.onended=()=>{if(VO.src&&VO.src.s===s)VO.src=null;};return b.duration;}
+  const s=AC.createBufferSource();s.buffer=b;let out=VO.gain,lvl=1;
+  if(pos){// a gentle pan and a gentle distance fade: a voice off to one side leans that way but never drops out
+    const c=camera.position,dx=pos.x-c.x,dz=pos.z-c.z,d=Math.hypot(dx,dz)||1e-3,yaw=camera.rotation.y;
+    const pan=clamp((dx*Math.cos(yaw)-dz*Math.sin(yaw))/d,-1,1)*0.4;lvl=d<=3.5?1:3.5/(3.5+0.45*(d-3.5));
+    if(AC.createStereoPanner){const sp=AC.createStereoPanner();sp.pan.value=pan;sp.connect(VO.gain);out=sp;}}
+  const g=AC.createGain();g.gain.value=lvl;s.connect(g);g.connect(out);s.start(now());VO.src={s,g};s.onended=()=>{if(VO.src&&VO.src.s===s)VO.src=null;};return b.duration;}
 function voStop(fade=0.06){const v=VO.src;if(!v)return;VO.src=null;try{v.g.gain.setTargetAtTime(0,AC.currentTime,fade/3);v.s.stop(AC.currentTime+fade);}catch(e){}}

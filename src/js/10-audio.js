@@ -52,7 +52,9 @@ const SFX={
     else if(surface==='foam'){sNoise(busFx,t,0.1,'lowpass',300,0.7,0.2*k);}
     else if(surface==='metal'){sNoise(busFx,t,0.06,'bandpass',1800,2,0.12*k);sTone(busFx,t,0.08,'triangle',320,260,0.03*k);}
     else{sNoise(busFx,t,0.05,'bandpass',1300+Math.random()*400,1.4,0.2*k);sNoise(busFx,t+0.01,0.06,'lowpass',260,0.8,0.18*k);}},
-  squeak(p,t){sTone(p,t,0.07,'sine',1900+Math.random()*500,2600,0.14,0.01);sNoise(p,t,0.05,'bandpass',1100,1.5,0.35);sNoise(p,t+0.01,0.06,'lowpass',240,0.8,0.4);},
+  // Toni's step: a heavy, padded thud. A low body thump, a muffled knock that small phone speakers can still play, and the suit's swish
+  stomp(p,t){const r=Math.random();sTone(p,t,0.24,'sine',88+r*12,40,0.6,0.004);sTone(p,t,0.14,'sine',170+r*20,85,0.28,0.004);
+    sNoise(p,t,0.13,'lowpass',260,0.8,0.55,0.003,90);sNoise(p,t+0.004,0.07,'bandpass',380,1.1,0.16);sNoise(p,t+0.03,0.2,'lowpass',700,0.5,0.05,0.04);},
   pick(){if(!AC)return;const t=now();sNoise(busFx,t,0.09,'highpass',2600,0.7,0.2);sTone(busFx,t+0.02,0.08,'triangle',520,780,0.06);},
   paper(){if(!AC)return;const t=now();sNoise(busFx,t,0.14,'highpass',3200,0.7,0.22);sNoise(busFx,t+0.12,0.1,'highpass',3800,0.7,0.16);},
   door(p,t,heavy){sNoise(p,t,heavy?0.5:0.3,'bandpass',heavy?420:700,1.4,0.5,0.02,heavy?240:400);sTone(p,t+0.04,0.25,'sine',heavy?90:140,heavy?60:90,0.3);},

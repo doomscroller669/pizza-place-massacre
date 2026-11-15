@@ -22,8 +22,9 @@ const TONI_VO={src:null};
 function toniChain(channel,pos,vol){const hp=AC.createBiquadFilter();hp.type='highpass';hp.frequency.value=channel==='pa'?240:channel==='tape'?160:320;
   const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=channel==='pa'?4300:channel==='tape'?3600:5200;
   const pk=AC.createBiquadFilter();pk.type='peaking';pk.frequency.value=channel==='tape'?1200:1900;pk.Q.value=0.9;pk.gain.value=channel==='tape'?3:5;
-  const sh=AC.createWaveShaper();const n=1024,c=new Float32Array(n),k=channel==='pa'?3.2:2.2;for(let i=0;i<n;i++){const x=i/(n-1)*2-1;c[i]=Math.tanh(k*x)/Math.tanh(k);}sh.curve=c;
-  const g=AC.createGain();g.gain.value=vol*(channel==='pa'?1.05:1.2);hp.connect(pk);pk.connect(sh);sh.connect(lp);lp.connect(g);
+  const sh=AC.createWaveShaper();const n=1024,c=new Float32Array(n),k=channel==='pa'?3.2:2.2;for(let i=0;i<n;i++){const x=i/(n-1)*2-1;c[i]=Math.tanh(k*x)/k;}sh.curve=c;
+  // the shaper has unity gain at low level (it only crunches the peaks); these gains put Toni level with the family, a touch under
+  const g=AC.createGain();g.gain.value=vol*(channel==='pa'?1.15:channel==='tape'?1.0:1.1);hp.connect(pk);pk.connect(sh);sh.connect(lp);lp.connect(g);
   let out=g;if(channel==='phone'&&pos){const p=mkPanner(pos.x,1.45,pos.z,2.4);p.rolloffFactor=0.9;g.connect(p);out=p;}
   out.connect(comp);const v=AC.createGain();v.gain.value=channel==='pa'?0.42:channel==='tape'?0.08:0.2;out.connect(v);v.connect(verb);return hp;}
 async function toniPlay(text,pos,channel,vol=1){if(!AC||!hasVO('toni',text))return 0;const b=await voDecode(voKey('toni',text));if(!b)return 0;toniHush();

@@ -41,7 +41,7 @@ Every take is checked twice. A speech recognizer (faster-whisper) must hear the 
 - It only records lines whose text or direction changed (cached in `.vo_cache/`, which isn't committed).
 
 ```
-pip install chatterbox-tts kokoro-onnx soundfile faster-whisper transformers librosa   # plus ffmpeg on the PATH
+pip install chatterbox-tts kokoro-onnx soundfile faster-whisper transformers librosa pyloudnorm   # plus ffmpeg on the PATH
 # Kokoro's model files: kokoro-v1.0.onnx and voices-v1.0.bin from github.com/thewh1teagle/kokoro-onnx/releases (model-files-v1.0)
 # Chatterbox and both recognizers download their weights from huggingface.co on first use
 python3 tools/voices.py /path/to/kokoro-models

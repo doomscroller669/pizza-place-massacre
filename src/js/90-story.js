@@ -182,7 +182,7 @@ async function sceneTable(){const run=G.run;checkpoint('table');G.who='lucia';$(
   CHARS.ruben.pose='sitScared';setExpr(CHARS.ruben,'fear');await line('ruben','Why are there balloons? Nobody here has a birthday.',{expr:'fear'});if(!alive(run))return;
   postU.uWake.value=0;
   await toniSay('Ramirez, party of six. Your table is ready.',{pa:true});if(!alive(run))return;
-  CHARS.dad.pose='stand';CHARS.dad.y=0;setExpr(CHARS.dad,'angry');BOMB.fast=4;await line('dad','Okay, that’s it. Kids, up. We’re leaving—',{expr:'angry',dur:1.6});if(!alive(run))return;
+  CHARS.dad.pose='stand';CHARS.dad.y=0;setExpr(CHARS.dad,'angry');BOMB.fast=4;await line('dad','Okay, that’s it. Kids, up. We’re leaving—',{expr:'angry'});if(!alive(run))return;
   toniSay('Please remain seated. The table is wired to a bomb.',{pa:true});await gwait(2.2);if(!alive(run))return;
   CHARS.dad.pose='sitScared';setExpr(CHARS.dad,'shock');await nudge(40,0.85,15.5,0.8);if(!alive(run))return;await VOICE.busy;if(!alive(run))return;
   await line('lucia','Dad, stop! There’s wires. They go under all of us.',{name:'Lucia'});if(!alive(run))return;
@@ -228,7 +228,7 @@ async function sceneManny(){const run=G.run;G.who='manny';checkpoint('manny1');
   setAmb('freezer',0.55,0.5);setAmb('hum',0.18);setMode('cine');await titleCard('Pizza 1 of 12','Kiddie Pie',2.2);if(!alive(run))return;await fadeTo(0,1.6);if(!alive(run))return;
   thinkM('Still in the walk-in. I can’t feel my fingers anymore.',3.5);await gwait(3.4);if(!alive(run))return;
   // he unlocks it and walks off. Squeaking.
-  at3(11,1,6,(p,t)=>SFX.clunk(p,t));await gwait(0.5);for(let i=0;i<5;i++){at3(11.5+i*1.2,0.1,7.5+i*0.5,(p,t)=>SFX.squeak(p,t),2);await gwait(0.6);}if(!alive(run))return;
+  at3(11,1,6,(p,t)=>SFX.clunk(p,t));await gwait(0.5);for(let i=0;i<5;i++){at3(11.5+i*1.2,0.1,7.5+i*0.5,(p,t)=>SFX.stomp(p,t),2);await gwait(0.6);}if(!alive(run))return;
   G.flags.unlocked=true;await toniSay('New order. Ticket’s on the rail.',{pa:true});if(!alive(run))return;
   TICKET.visible=true;P.eyeOverride=null;thinkM('It’s open. Okay. Do what he says, and you go home.',3.5);
   setMode('play');setObj('Get out of the freezer.','The door is unlocked now. Walk up to it and push it.');}
