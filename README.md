@@ -34,6 +34,8 @@ Milestone 2: the prologue, the table and pizza 1.
 - Every build is signed with the same key (`app/pizza.keystore`), so updates install over the old app. That key is only suitable for sideloading, not for the Play Store.
 - Toni's lines are recorded (as `toni`) and play through a small-speaker filter: positional from his phone, or over the PA. A line with no recording falls back to the phone's TextToSpeech engine through `window.AndroidTTS` (`MainActivity`), or `speechSynthesis` in a browser.
 
+- Performance on phones: the game never draws faster than 60 frames a second (90 and 120 Hz screens included), and if frames run long for a few seconds it renders fewer pixels (down to 55%) until they don't; the scale is remembered (`ppm.resScale` in local storage). There are no CSS filters over the game canvas, and the HUD only touches the page when something on it changes.
+
 After editing anything in `src/`, run `python3 tools/assemble.py` and commit the regenerated files.
 
 ## Voices

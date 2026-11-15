@@ -209,7 +209,7 @@ function crCamera(t){const c=CR.cam;c.aspect=camera.aspect;c.fov=camera.aspect<1
 
 /* fire a one-off once the clock passes it */
 function crAt(t,key,fn){if(CR.t>=t&&!CR.fired[key]){CR.fired[key]=true;fn();}}
-function crReset(){CR.t=0;CR.skip=false;CR.ending=false;CR.fired={};CR.credit=-1;CR.sauceU=0;CR.cutK=[0,0,0,0];CR.sep=0;CR.bleed=0;CR.bake=0;CR.pepsPainted=false;CR.cheese=[];
+function crReset(){CR.t=0;CR.compT=0;CR.cutT=0;CR.skip=false;CR.ending=false;CR.fired={};CR.credit=-1;CR.sauceU=0;CR.cutK=[0,0,0,0];CR.sep=0;CR.bleed=0;CR.bake=0;CR.pepsPainted=false;CR.cheese=[];
   for(const p of CR.parts){CR.scene.remove(p.m);p.m.geometry.dispose();p.m.material.dispose();}CR.parts.length=0;for(const p of CR.peps)if(p.m)CR.scene.remove(p.m);CR.peps=[];
   crPaintDough();crComposite();CR.ttMat.opacity=0;CR.pool.material.opacity=1;crPoolPaint();CR.pz.position.set(0,0,0);CR.pz.scale.set(1,1,1);CR.pz.visible=false;CR.wedges.forEach(w=>w.position.set(0,0,0));
   CR.ball.visible=false;CR.pin.visible=false;CR.ladle.visible=false;CR.cutter.visible=false;CR.peel.visible=false;CR.pzMat.color.setRGB(1,1,1);
@@ -267,20 +267,21 @@ function stepCredits(dt){if(!CR.on)return;CR.t+=dt;const t=CR.t;
     const roll=crSeg(q,0.14,0.62),lift=q<0.14?1-q/0.14:q>0.62?crSeg(q,0.62,0.76):0;let x,z;
     if(q<=0.76){x=dir[0]*lerp(-L,L,roll);z=dir[1]*lerp(-L,L,roll);}else{const n=Math.min(3,k+1),th2=CUT0+n*Math.PI/4,m=crSeg(q,0.76,0.95);x=lerp(dir[0]*L,-Math.cos(th2)*L,m);z=lerp(dir[1]*L,Math.sin(th2)*L,m);}
     CR.cutter.visible=true;CR.cutter.position.set(x,0.046+PZH-0.004+lift*0.06,z);CR.cutter.rotation.y=Math.atan2(dir[0],dir[1]);CR.hub.rotation.x=roll*L*2/0.05;
-    if(roll>0){CR.cutK[k]=roll;for(let j=0;j<k;j++)CR.cutK[j]=1;crCutPaint();crTitleDraw();}
+    if(roll>0){CR.cutK[k]=roll;for(let j=0;j<k;j++)CR.cutK[j]=1;if(t-(CR.cutT||0)>0.066){CR.cutT=t;crCutPaint();crTitleDraw();}}
     crAt(44.6+k*0.95+0.14,'slice'+k,()=>{CRS.slice();if(AC){const g=AC.createGain();g.gain.value=1;g.connect(busMus);scoreVoices(g).tom(now(),70,0.55);setTimeout(()=>{try{g.disconnect();}catch(e){}},2000);}});}
   crAt(48.4,'cutsDone',()=>{CR.cutter.visible=false;CR.cutK=[1,1,1,1];crCutPaint();crTitleDraw();});
   crAt(48.6,'split',()=>{scoreHit(1);CRS.splat();postU.uFlash.value=0.55;postU.uRed.value=0.35;});
   if(t>=48.6){const k=easeOut(crSeg(t,48.6,49.2));CR.wedges.forEach(w=>w.position.copy(w.userData.dir).multiplyScalar(k*0.016));
     CR.bleed=crSeg(t,48.6,53.5);postU.uRed.value=Math.max(0,0.35*(1-crSeg(t,48.6,50)));
     for(const p of CR.drips){const tt=t-48.7-p.delay;p.cur=tt>0?Math.min(p.len,tt*p.v*(1-Math.min(0.7,tt*0.12))):0;}
-    if(((t*20)|0)!==CR.lastBleed){CR.lastBleed=(t*20)|0;crCutPaint();crTitleDraw();crPoolPaint();}}
+    if(((t*12)|0)!==CR.lastBleed){CR.lastBleed=(t*12)|0;crCutPaint();crTitleDraw();crPoolPaint();}}
   crAt(49.2,'score',()=>scoreBase(null));
-  crStepParts(dt);if(CR.dirty)crComposite();crCamera(t);}
+  crStepParts(dt);if(CR.dirty&&t-(CR.compT||0)>0.066){CR.compT=t;crComposite();}crCamera(t);}
 
 function crSkip(){if(CR.on&&CR.t>0.8)CR.skip=true;}
 $('credits').addEventListener('pointerdown',e=>{e.preventDefault();crSkip();});
 function crEnd(){if(!CR.on)return;CR.on=false;$('credits').hidden=true;$('crText').classList.remove('on');postU.uRed.value=0;}
+function crWarm(){try{crBuild();renderer.compile(CR.scene,CR.cam);}catch(e){}}
 async function sceneCredits(){const run=G.run;crBuild();crReset();CR.on=true;setMode('cine');$('hud').hidden=true;$('obj').hidden=true;bubble('off');$('credits').hidden=false;
   for(const k in amb)setAmb(k,0,0.4);scoreBase('theme',true);
   await fadeTo(0,1.6);if(!alive(run)){crEnd();return;}

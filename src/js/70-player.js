@@ -12,7 +12,7 @@ function alive(run){return run===G.run;}
 async function waitUntil(fn,step=0.1){const run=G.run;while(!fn()){await gwait(step);if(!alive(run))return new Promise(()=>{});}}
 
 function setMode(m){G.mode=m;const play=m==='play';$('hud').hidden=!(play||m==='cine'||m==='ui');$('touch').hidden=!(play&&touchMode);
-  $('reticle').style.visibility=play?'visible':'hidden';if(!play){$('prompt').hidden=true;releaseLock();}updateLockHint();}
+  $('reticle').style.visibility=play?'visible':'hidden';if(!play){$('prompt').hidden=true;PROMPT.on=false;releaseLock();}updateLockHint();}
 
 /* ---------- player ---------- */
 const P={x:0,z:0,yaw:0,pitch:0,eye:1.62,crouch:false,seated:null,hidden:null,speed:0,bob:0,stepT:0,lookYaw:0,lookPitch:0,inPit:false,limitYaw:null};
@@ -47,8 +47,10 @@ function scanFocus(){focus=null;if(G.mode!=='play')return;camera.getWorldDirecti
   for(const h of HIDES){if(!canHide())break;if(!!h.house!==(G.where==='house'))continue;const d=Math.hypot(h.ex-P.x,h.ez-P.z);if(d>1.3)continue;_d.set(h.x-camera.position.x,(h.kind==='bed'?0.4:1.2)-camera.position.y,h.z-camera.position.z).normalize();const dot=_d.dot(_f);
     if(dot>0.6&&(!focus||dot>best)){best=dot;focus={id:h.id,label:HIDE_LABEL[h.kind]||'Hide in the locker',use:()=>enterHide(h)};}}
   showPrompt();}
-function showPrompt(){const pr=$('prompt');if(!focus){pr.hidden=true;$('reticle').classList.remove('hot');$('bUse').classList.remove('ready');return;}
-  $('pKey').textContent=touchMode?'USE':'E';$('pText').textContent=typeof focus.label==='function'?focus.label():focus.label;pr.hidden=false;$('reticle').classList.add('hot');$('bUse').classList.add('ready');}
+const PROMPT={on:null,key:'',text:''};
+function showPrompt(){const pr=$('prompt');if(!focus){if(PROMPT.on!==false){PROMPT.on=false;pr.hidden=true;$('reticle').classList.remove('hot');$('bUse').classList.remove('ready');}return;}
+  const k=touchMode?'USE':'E',tx=typeof focus.label==='function'?focus.label():focus.label;if(k!==PROMPT.key){PROMPT.key=k;$('pKey').textContent=k;}if(tx!==PROMPT.text){PROMPT.text=tx;$('pText').textContent=tx;}
+  if(PROMPT.on!==true){PROMPT.on=true;pr.hidden=false;$('reticle').classList.add('hot');$('bUse').classList.add('ready');}}
 function tryUse(){if(G.mode!=='play')return;if(focus&&focus.use){SFX.ui();focus.use();}}
 const HIDE_LABEL={stall:'Hide in the stall',locker:'Hide in the locker',closet:'Hide in the closet',bed:'Hide under the bed',curtain:'Hide behind the shower curtain'};
 function canHide(){return (G.who==='manny'||G.flags.canHide)&&!P.seated;}

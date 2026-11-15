@@ -132,7 +132,7 @@ async function sceneCold(){const run=G.run;G.who='manny';G.where='pizzeria';chec
   // Manny at the window for what comes next
   setObj('');$('obj').hidden=true;setMode('cine');await fadeTo(1,0.35);if(!alive(run))return;
   P.x=11.0;P.z=5.5;P.yaw=Math.PI;P.pitch=-0.05;P.seated=true;P.limitYaw=[Math.PI,0.55];P.eyeOverride=1.62;await fadeTo(0,0.4);if(!alive(run))return;
-  G.flags.coldStage=1;await coldDevon();if(!alive(run))return;await coldBree();if(!alive(run))return;await coldManager();}
+  G.flags.coldStage=1;setTimeout(crWarm,200);await coldDevon();if(!alive(run))return;await coldBree();if(!alive(run))return;await coldManager();}
 async function coldDevon(){const run=G.run;const T=CHARS.toni,D=CHARS.devon;
   await nudge(11.9,1.4,8.75,0.8);if(!alive(run))return;
   await line('manny','Devon! DEVON! Behind you!',{expr:'fear'});if(!alive(run))return;

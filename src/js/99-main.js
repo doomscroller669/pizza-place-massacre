@@ -28,8 +28,12 @@ function ambience(){if(!AC||window.__noAmb)return;if(CR.on){for(const k in amb)s
   const inHouse=g.startsWith('h_');setAmb('rain',inHouse&&G.mode!=='title'?(g==='h_yard'?0.85:g==='h_garage'?0.55:0.36):0,0.8);setAmb('house',inHouse&&LIGHTSET==='on'&&G.mode!=='title'?0.28:0,0.3);
   if(inHouse){setAmb('freezer',0,0.5);setAmb('arcade',0,0.5);setAmb('oven',0,0.5);}}
 
-let last=performance.now(),hbT=0;
-function frame(t){requestAnimationFrame(frame);let dt=(t-last)/1000;last=t;if(!(dt>0))dt=0;if(dt>0.1)dt=0.1;if(window.__dtScale)dt*=window.__dtScale;
+let last=performance.now(),hbT=0;const HUDC={duck:null,joy:null};
+/* frame pacing and resolution: never draw faster than 60 a second (90 and 120 Hz phones were drawing every frame twice as often for
+   nothing), and if frames run long for a couple of seconds, render fewer pixels until they don't (the PS1 look hides it) */
+function perfStep(dt){PERF.acc+=dt;PERF.n++;PERF.t+=dt;if(PERF.t<2.5)return;const avg=PERF.acc/PERF.n;PERF.acc=PERF.n=PERF.t=0;
+  let s=PERF.scale;if(avg>0.026&&s>0.55)s=Math.max(0.55,s-0.15);else if(avg<0.0175&&s<1)s=Math.min(1,s+0.1);if(s!==PERF.scale){PERF.scale=s;LS.set('resScale',s);resize();}}
+function frame(t){requestAnimationFrame(frame);if(t-last<12.5)return;const PF=window.__pf,pf0=PF?performance.now():0;let dt=(t-last)/1000;last=t;if(!document.hidden&&dt<0.25)perfStep(dt);if(!(dt>0))dt=0;if(dt>0.1)dt=0.1;if(window.__dtScale)dt*=window.__dtScale;
   const live=G.mode==='play'||G.mode==='cine'||G.mode==='ui';
   if(live){G.time+=dt;tickWaits(dt);}
   if(G.mode==='title'){titleCam(dt);}
@@ -38,15 +42,17 @@ function frame(t){requestAnimationFrame(frame);let dt=(t-last)/1000;last=t;if(!(
   // the family only draws when you could see them: the party room, or through its door from the dining room and hall
   for(const k in CHARS)if(k!=='toni')CHARS[k].root.visible=castVisible(k);
   if(live||G.mode==='title'){for(const k in CHARS){const c=CHARS[k];if(c.root.visible)animChar(c,dt);}stepBomb(dt);stepBalloons(dt);if(G.mode==='title')updateDoors(dt);}
-  if(G.mode==='play')scanFocus();else{$('prompt').hidden=true;}
+  if(G.mode==='play')scanFocus();else if(PROMPT.on!==false){PROMPT.on=false;$('prompt').hidden=true;}
   if(PIE.hand.visible)lightPie(PIE.hand,camera.position.x,1.2,camera.position.z);
-  $('bDuck').hidden=!!P.seated||(G.who!=='manny'&&!G.flags.canHide);$('joyBase').style.display=P.seated||P.hidden?'none':'';
+  {const dh=!!P.seated||(G.who!=='manny'&&!G.flags.canHide),jd=P.seated||P.hidden?'none':'';if(dh!==HUDC.duck){HUDC.duck=dh;$('bDuck').hidden=dh;}if(jd!==HUDC.joy){HUDC.joy=jd;$('joyBase').style.display=jd;}}
   // the hunt: a heartbeat when he's close
   if(TONI.state==='hunt'||TONI.state==='chase'||TONI.state==='search'||TONI.state==='note'||TONI.state==='patrol'){const T=CHARS.toni;const d=Math.hypot(T.x-P.x,T.z-P.z);hbT-=dt;if(hbT<=0&&d<12){hbT=0.4+d*0.08;SFX.heartbeat(clamp(1-d/12,0.2,1)*0.8);}}
   postU.uWake.value=Math.max(0,postU.uWake.value-dt*0.04*(G.mode==='play'?1:0));
   postU.uFlash.value=Math.max(0,postU.uFlash.value-dt*2.5);postU.uTime.value=G.time+TCAM.t;
   ambience();updateListener();stepScore(dt);
-  renderer.setRenderTarget(rt);if(CR.on)renderer.render(CR.scene,CR.cam);else renderer.render(scene,camera);renderer.setRenderTarget(null);renderer.render(postScene,postCam);}
+  const pf1=PF?performance.now():0;renderer.setRenderTarget(rt);if(CR.on)renderer.render(CR.scene,CR.cam);else renderer.render(scene,camera);
+  if(PF){const i=renderer.info.render;PF.push([+(pf1-pf0).toFixed(2),+(performance.now()-pf1).toFixed(2),i.calls,i.triangles,+(dt*1000).toFixed(1)]);}
+  renderer.setRenderTarget(null);renderer.render(postScene,postCam);}
 
 /* ---------- title buttons ---------- */
 if(LS.get('save',null))$('contBtn').hidden=false;

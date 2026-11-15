@@ -48,6 +48,8 @@ const psx=m=>{m.onBeforeCompile=psxPatch;return m;};
 const basic=o=>psx(new THREE.MeshBasicMaterial(o));
 
 let LOW_H=400,lowW=860;
+/* resolution scale, lowered automatically on a phone that can't keep up (see perfStep in 99-main.js) */
+const PERF={acc:0,n:0,t:0,scale:clamp(+LS.get('resScale',1)||1,0.55,1)};
 const rt=new THREE.WebGLRenderTarget(360,270,{minFilter:THREE.NearestFilter,magFilter:THREE.NearestFilter,format:THREE.RGBAFormat,depthBuffer:true});
 const postU={tDiffuse:{value:rt.texture},uRes:{value:new THREE.Vector2(360,270)},uTime:{value:0},uFlash:{value:0},uDanger:{value:0},uWake:{value:0},uRed:{value:0}};
 const postMat=new THREE.ShaderMaterial({uniforms:postU,depthTest:false,depthWrite:false,
@@ -92,7 +94,7 @@ const held=new THREE.Group();camera.add(held);
 function resize(){
   const w=Math.max(1,innerWidth),h=Math.max(1,innerHeight);
   // crisper than The Abandoned: close to one game pixel per screen point on a phone, capped for speed
-  LOW_H=Math.round(clamp(h,320,440));
+  LOW_H=Math.round(clamp(h,320,440)*PERF.scale);
   lowW=Math.max(240,Math.round(LOW_H*w/h));
   renderer.setSize(lowW,LOW_H,false);
   rt.setSize(lowW,LOW_H);
